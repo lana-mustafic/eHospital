@@ -32,17 +32,52 @@ namespace EHosp.Api.Middleware
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            var response = new
+            // Create a consistent response object
+            object response;
+
+            switch (exception)
             {
-                context.Response.StatusCode,
-                Message = "An internal server error occurred",
-                Detailed = exception.Message
-            };
+                case ArgumentException:
+                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Message = exception.Message,
+                        Detailed = _env.IsDevelopment() ? exception.Message : null,
+                        StackTrace = _env.IsDevelopment() ? exception.StackTrace : null
+                    };
+                    break;
+                case KeyNotFoundException:
+                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    response = new
+                    {
+                        Message = "The requested resource was not found",
+                        Detailed = _env.IsDevelopment() ? exception.Message : null,
+                        StackTrace = _env.IsDevelopment() ? exception.StackTrace : null
+                    };
+                    break;
+                case UnauthorizedAccessException:
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    response = new
+                    {
+                        Message = "Access denied",
+                        Detailed = _env.IsDevelopment() ? exception.Message : null,
+                        StackTrace = _env.IsDevelopment() ? exception.StackTrace : null
+                    };
+                    break;
+                default:
+                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    response = new
+                    {
+                        Message = "An error occurred while processing your request",
+                        Detailed = _env.IsDevelopment() ? exception.Message : null,
+                        StackTrace = _env.IsDevelopment() ? exception.StackTrace : null
+                    };
+                    break;
+            }
 
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             var json = JsonSerializer.Serialize(response, options);

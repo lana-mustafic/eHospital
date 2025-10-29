@@ -42,6 +42,12 @@ namespace EHosp.Application.Services
             return appointments.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<AppointmentDto>> GetAppointmentsByDateAsync(DateTime date)
+        {
+            var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
+            return appointments.Select(MapToDto);
+        }
+
         public async Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto createAppointmentDto)
         {
             // Check if time slot is available

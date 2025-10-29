@@ -1,4 +1,6 @@
-﻿namespace EHosp.Application.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace EHosp.Application.DTOs
 {
     public class AppointmentDto
     {
@@ -13,20 +15,36 @@
         public string DoctorName { get; set; } = string.Empty;
         public string DoctorSpecialization { get; set; } = string.Empty;
     }
-
     public class CreateAppointmentDto
     {
+        [Required]
         public DateTime AppointmentDate { get; set; }
+
+        [Required]
         public TimeSpan StartTime { get; set; }
+
+        [Required]
         public TimeSpan EndTime { get; set; }
+
+        [Required]
+        [StringLength(500)]
         public string Reason { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
         public int PatientId { get; set; }
+
+        [Range(1, int.MaxValue)]
         public int DoctorId { get; set; }
     }
 
     public class UpdateAppointmentDto
     {
+        [Required]
+        [StringLength(20)]
         public string Status { get; set; } = string.Empty;
+
+        [StringLength(1000)]
         public string? Notes { get; set; }
     }
 }
+    

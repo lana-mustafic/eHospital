@@ -18,6 +18,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+// Add this after builder services
+builder.Services.AddAutoMapper(typeof(EHosp.Application.Profiles.MappingProfile));
 
 // Repositories
 builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));

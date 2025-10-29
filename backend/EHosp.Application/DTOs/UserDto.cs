@@ -1,4 +1,6 @@
-﻿namespace EHosp.Application.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace EHosp.Application.DTOs
 {
     public class UserDto
     {
@@ -14,19 +16,42 @@
 
     public class CreateUserDto
     {
+        [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
         public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
+
+        [Phone]
         public string PhoneNumber { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
         public int RoleId { get; set; }
     }
 
     public class UpdateUserDto
     {
+        [Required]
+        [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
+
+        [Phone]
         public string PhoneNumber { get; set; } = string.Empty;
+
         public bool IsActive { get; set; }
     }
 }
