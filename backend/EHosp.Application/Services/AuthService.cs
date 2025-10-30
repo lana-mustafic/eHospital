@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BCrypt.Net;
 
 namespace EHosp.Application.Services
 {
@@ -111,14 +112,14 @@ namespace EHosp.Application.Services
 
         private static string HashPassword(string password)
         {
-            // In production, use proper password hashing like BCrypt
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(password)); // Temporary - replace with proper hashing
+            // PROPER BCRYPT IMPLEMENTATION
+            return BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
         }
 
         private static bool VerifyPassword(string password, string passwordHash)
         {
-            // In production, use proper password verification
-            return HashPassword(password) == passwordHash;
+            // BCRYPT VERIFICATION
+            return BCrypt.Net.BCrypt.EnhancedVerify(password, passwordHash);
         }
 
         private static UserDto MapToUserDto(User user) => new()

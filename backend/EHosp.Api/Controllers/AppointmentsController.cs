@@ -1,11 +1,13 @@
 ﻿using EHosp.Application.DTOs;
 using EHosp.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EHosp.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] 
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;
@@ -18,6 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Doctor")] // Admin and doctors can see all appointments
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointments()
         {
             var appointments = await _appointmentService.GetAppointmentsByDateAsync(DateTime.Today);
@@ -25,6 +28,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Doctor,Patient")] // All roles can view specific appointments
         public async Task<ActionResult<AppointmentDto>> GetAppointment(int id)
         {
             var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
@@ -36,6 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}/{date}")]
+        [Authorize(Roles = "Admin,Doctor")] // Doctors can see their own schedule
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByDoctor(int doctorId, DateTime date)
         {
             var appointments = await _appointmentService.GetAppointmentsByDoctorAsync(doctorId, date);
@@ -43,6 +48,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("patient/{patientId}")]
+        [Authorize(Roles = "Admin,Patient")] // Patients can see their own appointments
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByPatient(int patientId)
         {
             var appointments = await _appointmentService.GetAppointmentsByPatientAsync(patientId);
@@ -50,6 +56,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Patient")] // Patients can book appointments
         public async Task<ActionResult<AppointmentDto>> CreateAppointment(CreateAppointmentDto createAppointmentDto)
         {
             try
@@ -69,6 +76,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin,Doctor")] // Doctors can update appointment status
         public async Task<IActionResult> UpdateAppointmentStatus(int id, UpdateAppointmentDto updateAppointmentDto)
         {
             try
@@ -88,6 +96,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("availability/{doctorId}/{date}/{startTime}/{endTime}")]
+        [AllowAnonymous] // Public can check availability
         public async Task<ActionResult<bool>> CheckTimeSlotAvailability(int doctorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
             var isAvailable = await _appointmentService.IsTimeSlotAvailableAsync(doctorId, date, startTime, endTime);

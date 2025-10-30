@@ -1,11 +1,13 @@
 ﻿using EHosp.Application.DTOs;
 using EHosp.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EHosp.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] 
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -18,6 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")] // Admin only
         public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -25,6 +28,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Doctor")] // Admin and Doctors can access
         public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
@@ -36,6 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")] // Admin only
         public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
         {
             try
@@ -51,6 +56,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")] // Admin only
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
         {
             try
@@ -70,6 +76,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // Admin only
         public async Task<IActionResult> DeleteUser(int id)
         {
             try
