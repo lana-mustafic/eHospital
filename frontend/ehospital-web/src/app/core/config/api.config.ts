@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  baseUrl: 'http://localhost:3000/api', // Update this to match your backend API URL
+  baseUrl: 'http://localhost:5039/api',
   endpoints: {
     auth: {
       login: '/auth/login',

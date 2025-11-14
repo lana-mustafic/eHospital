@@ -50,8 +50,7 @@ export class LoginComponent implements OnInit {
 
     const { email, password } = this.loginForm.value;
 
-    // Use mock login for development - replace with real API call when backend is ready
-    this.authService.mockLogin(email, password).subscribe({
+    this.authService.login({ email, password }).subscribe({
       next: () => {
         this.router.navigate([this.returnUrl]);
       },
@@ -60,17 +59,6 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
       }
     });
-
-    // Uncomment when backend is ready:
-    // this.authService.login({ email, password }).subscribe({
-    //   next: () => {
-    //     this.router.navigate([this.returnUrl]);
-    //   },
-    //   error: (error) => {
-    //     this.errorMessage = error.error?.message || 'Login failed. Please check your credentials.';
-    //     this.isLoading = false;
-    //   }
-    // });
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
