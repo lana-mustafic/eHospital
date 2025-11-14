@@ -1,4 +1,5 @@
 using EHosp.Api.Middleware;
+using EHosp.Api.Data;
 using EHosp.Application.Interfaces;
 using EHosp.Application.Profiles;
 using EHosp.Application.Services;
@@ -14,6 +15,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
+
+// CORS configuration to allow Angular dev server
+const string FrontendPolicy = "FrontendOrigin";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 // Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -85,6 +99,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+await DatabaseSeeder.SeedAsync(app.Services);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -92,7 +108,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+var httpsPort = builder.Configuration.GetValue<int?>("ASPNETCORE_HTTPS_PORT");
+if (httpsPort.HasValue && httpsPort.Value > 0)
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseCors(FrontendPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
