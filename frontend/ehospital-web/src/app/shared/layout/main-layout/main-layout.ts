@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter, map, Subscription } from 'rxjs';
+import { AuthService, User } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-main-layout',
@@ -13,7 +14,9 @@ import { filter, map, Subscription } from 'rxjs';
 export class MainLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = true;
   currentPageTitle = 'Dashboard';
+  currentUser: User | null = null;
   private routerSubscription?: Subscription;
+  private userSubscription?: Subscription;
 
   menuItems = [
     { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -25,9 +28,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: '/reports', icon: 'assessment', label: 'Reports' }
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
+    // Get current user
+    this.currentUser = this.authService.getCurrentUser();
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
     // Update page title based on current route
     this.routerSubscription = this.router.events
       .pipe(
@@ -49,6 +61,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.routerSubscription?.unsubscribe();
+    this.userSubscription?.unsubscribe();
   }
 
   toggleSidebar() {
@@ -56,8 +69,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    // TODO: Implement logout functionality
-    console.log('Logout clicked');
+    this.authService.logout();
   }
 }
 
