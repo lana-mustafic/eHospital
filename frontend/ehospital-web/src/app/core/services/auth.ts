@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 export interface LoginRequest {
@@ -42,12 +42,56 @@ export class AuthService {
   ) {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.login}`, credentials)
+    console.log('Attempting login to:', `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.login}`);
+    console.log('Login credentials:', { email: credentials.email, password: '***' });
+    
+    return this.http.post<any>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.login}`, credentials)
       .pipe(
-        tap(response => {
-          this.setToken(response.token);
-          this.setUser(response.user);
-          this.currentUserSubject.next(response.user);
+        tap((response) => {
+          console.log('Login response received:', response);
+          
+          // Handle different response formats
+          let token: string | undefined;
+          let user: any;
+          
+          // Check if response is wrapped in a data property
+          if (response.data) {
+            token = response.data.token || response.data.accessToken || response.data.jwtToken;
+            user = response.data.user || response.data.userData;
+          } else {
+            // Direct response format
+            token = response.token || response.accessToken || response.jwtToken;
+            user = response.user || response.userData;
+          }
+          
+          // Handle different user object structures
+          if (user) {
+            const userObj: User = {
+              id: user.id || user._id || user.userId || '',
+              email: user.email || user.emailAddress || credentials.email,
+              name: user.name || user.fullName || user.username || user.displayName || 'User',
+              role: user.role || user.userRole || user.roles?.[0] || 'user'
+            };
+            
+            if (token) {
+              this.setToken(token);
+              this.setUser(userObj);
+              this.currentUserSubject.next(userObj);
+              console.log('Login successful, user set:', userObj);
+            } else {
+              console.error('No token found in response:', response);
+              throw new Error('No authentication token received');
+            }
+          } else {
+            console.error('No user data found in response:', response);
+            throw new Error('No user data received');
+          }
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('Login HTTP error:', error);
+          console.error('Error status:', error.status);
+          console.error('Error body:', error.error);
+          return throwError(() => error);
         })
       );
   }

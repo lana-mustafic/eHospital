@@ -55,7 +55,29 @@ export class LoginComponent implements OnInit {
         this.router.navigate([this.returnUrl]);
       },
       error: (error) => {
-        this.errorMessage = error.error?.message || 'Login failed. Please check your credentials.';
+        console.error('Login error:', error);
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          message: error.message
+        });
+        
+        // Handle different error response formats
+        if (error.error) {
+          if (error.error.message) {
+            this.errorMessage = error.error.message;
+          } else if (error.error.error) {
+            this.errorMessage = error.error.error;
+          } else if (typeof error.error === 'string') {
+            this.errorMessage = error.error;
+          } else {
+            this.errorMessage = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
+          }
+        } else {
+          this.errorMessage = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
+        }
+        
         this.isLoading = false;
       }
     });
