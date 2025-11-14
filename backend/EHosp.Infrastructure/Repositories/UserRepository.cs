@@ -10,6 +10,14 @@ namespace EHosp.Infrastructure.Repositories
     {
         public UserRepository(ApplicationDbContext context) : base(context) { }
 
+        public override async Task<User?> GetByIdAsync(int id)
+            => await _dbSet.Include(u => u.Role)
+                           .FirstOrDefaultAsync(u => u.Id == id);
+
+        public override async Task<IEnumerable<User>> GetAllAsync()
+            => await _dbSet.Include(u => u.Role)
+                           .ToListAsync();
+
         public async Task<User?> GetByEmailAsync(string email)
             => await _dbSet.Include(u => u.Role)
                           .FirstOrDefaultAsync(u => u.Email == email);

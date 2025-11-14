@@ -140,9 +140,21 @@
       align-items: center;
       gap: 1rem;
 
-      .user-name {
-        color: #4b5563;
-        font-weight: 500;
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+
+        .user-name {
+          color: #4b5563;
+          font-weight: 500;
+        }
+
+        .user-role {
+          font-size: 0.85rem;
+          color: #6b7280;
+          text-transform: capitalize;
+        }
       }
 
       .logout-btn {

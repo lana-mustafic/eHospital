@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, switchMap } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 export interface LoginRequest {
@@ -41,7 +41,7 @@ export class AuthService {
     private router: Router
   ) {}
 
-  login(credentials: LoginRequest): Observable<LoginResponse> {
+  login(credentials: LoginRequest): Observable<User> {
     console.log('Attempting login to:', `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.login}`);
     console.log('Login credentials:', { email: credentials.email, password: '***' });
     
@@ -66,27 +66,17 @@ export class AuthService {
           
           // Handle different user object structures
           if (user) {
-            const userObj: User = {
-              id: user.id || user._id || user.userId || '',
-              email: user.email || user.emailAddress || credentials.email,
-              name: user.name || user.fullName || user.username || user.displayName || 'User',
-              role: user.role || user.userRole || user.roles?.[0] || 'user'
-            };
-            
-            if (token) {
-              this.setToken(token);
-              this.setUser(userObj);
-              this.currentUserSubject.next(userObj);
-              console.log('Login successful, user set:', userObj);
-            } else {
+            if (!token) {
               console.error('No token found in response:', response);
               throw new Error('No authentication token received');
             }
+            this.setToken(token);
           } else {
             console.error('No user data found in response:', response);
             throw new Error('No user data received');
           }
         }),
+        switchMap(() => this.fetchCurrentUser()),
         catchError((error: HttpErrorResponse) => {
           console.error('Login HTTP error:', error);
           console.error('Error status:', error.status);
@@ -126,6 +116,23 @@ export class AuthService {
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  fetchCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.me}`).pipe(
+      tap(user => {
+        this.setUser(user);
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
+  hasRole(...roles: string[]): boolean {
+    const user = this.getCurrentUser();
+    if (!user) {
+      return false;
+    }
+    return roles.map(r => r.toLowerCase()).includes(user.role.toLowerCase());
   }
 
   private setToken(token: string): void {

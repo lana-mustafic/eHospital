@@ -19,13 +19,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private userSubscription?: Subscription;
 
   menuItems = [
-    { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-    { path: '/patients', icon: 'people', label: 'Patients' },
-    { path: '/doctors', icon: 'medical_services', label: 'Doctors' },
-    { path: '/appointments', icon: 'event', label: 'Appointments' },
-    { path: '/departments', icon: 'business', label: 'Departments' },
-    { path: '/medications', icon: 'medication', label: 'Medications' },
-    { path: '/reports', icon: 'assessment', label: 'Reports' }
+    { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+    { path: '/patients', icon: 'people', label: 'Patients', roles: ['Admin', 'Doctor', 'Nurse'] },
+    { path: '/doctors', icon: 'medical_services', label: 'Doctors', roles: ['Admin'] },
+    { path: '/appointments', icon: 'event', label: 'Appointments', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+    { path: '/departments', icon: 'business', label: 'Departments', roles: ['Admin'] },
+    { path: '/medications', icon: 'medication', label: 'Medications', roles: ['Admin', 'Doctor'] },
+    { path: '/reports', icon: 'assessment', label: 'Reports', roles: ['Admin'] }
   ];
 
   constructor(
@@ -70,6 +70,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   logout() {
     this.authService.logout();
+  }
+
+  get visibleMenuItems() {
+    const userRole = this.currentUser?.role || '';
+    return this.menuItems.filter(item =>
+      !item.roles || item.roles.some(role => role.toLowerCase() === userRole.toLowerCase())
+    );
   }
 }
 
