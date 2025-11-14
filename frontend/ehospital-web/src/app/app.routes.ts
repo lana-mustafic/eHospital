@@ -12,7 +12,7 @@ export const routes: Routes = [
       { path: 'doctors', loadComponent: () => import('./features/doctors/doctors').then(m => m.Doctors) },
       { path: 'appointments', loadComponent: () => import('./features/appointments/appointments').then(m => m.Appointments) },
       { path: 'medications', loadComponent: () => import('./features/medications/medications').then(m => m.Medications) },
-      { path: 'departments', loadComponent: () => import('./features/departments/departments').then(m => m.Departments) },
+      { path: 'departments', loadComponent: () => import('./features/departments/departments').then(m => m.DepartmentsComponent) },
       { path: 'reports', loadComponent: () => import('./features/reports/reports').then(m => m.Reports) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
