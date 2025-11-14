@@ -1,1 +1,388 @@
-<p>doctors works!</p>
+<div class="doctors-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Doctors</h2>
+      <p>Manage doctor profiles and medical staff information</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Add Doctor
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by name, license, specialty, or department..."
+        [(ngModel)]="searchTerm"
+        (input)="search()"
+      />
+    </div>
+    <div class="results-count">
+      {{ filteredDoctors.length }} doctor(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading doctors...</p>
+    </div>
+  }
+
+  <!-- Doctors Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="doctors-table">
+        <thead>
+          <tr>
+            <th>License</th>
+            <th>Name</th>
+            <th>Specialty</th>
+            <th>Department</th>
+            <th>Experience</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doctor of filteredDoctors; track doctor.id) {
+            <tr>
+              <td class="license-cell">
+                <strong>{{ doctor.licenseNumber }}</strong>
+              </td>
+              <td class="name-cell">
+                <strong>Dr. {{ doctor.firstName }} {{ doctor.lastName }}</strong>
+                @if (doctor.qualifications) {
+                  <div class="qualifications">
+                    {{ doctor.qualifications }}
+                  </div>
+                }
+              </td>
+              <td>{{ doctor.specialty }}</td>
+              <td>{{ doctor.department || '—' }}</td>
+              <td>
+                @if (doctor.yearsOfExperience) {
+                  <span>{{ doctor.yearsOfExperience }} years</span>
+                } @else {
+                  <span>—</span>
+                }
+              </td>
+              <td class="contact-cell">
+                @if (doctor.email) {
+                  <div class="contact-info">
+                    <span class="material-icons">email</span>
+                    {{ doctor.email }}
+                  </div>
+                }
+                @if (doctor.phone) {
+                  <div class="contact-info">
+                    <span class="material-icons">phone</span>
+                    {{ doctor.phone }}
+                  </div>
+                }
+                @if (!doctor.email && !doctor.phone) {
+                  <span>—</span>
+                }
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(doctor.status)">
+                  {{ doctor.status }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditModal(doctor)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteDoctor(doctor)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (filteredDoctors.length === 0) {
+            <tr>
+              <td colspan="8" class="empty-state">
+                <span class="material-icons">medical_services</span>
+                <p>No doctors found</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Add/Edit Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditMode ? 'Edit Doctor' : 'Add New Doctor' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <form [formGroup]="doctorForm" (ngSubmit)="saveDoctor()" class="modal-body">
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h4>Basic Information</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="licenseNumber">License Number <span class="required">*</span></label>
+                <input
+                  id="licenseNumber"
+                  type="text"
+                  formControlName="licenseNumber"
+                  placeholder="MD-001"
+                  [class.error]="licenseNumber?.invalid && licenseNumber?.touched"
+                />
+                @if (licenseNumber?.invalid && licenseNumber?.touched) {
+                  <span class="error-message">
+                    License number is required
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="status">Status <span class="required">*</span></label>
+                <select
+                  id="status"
+                  formControlName="status"
+                  [class.error]="status?.invalid && status?.touched"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="On Leave">On Leave</option>
+                </select>
+                @if (status?.invalid && status?.touched) {
+                  <span class="error-message">
+                    Status is required
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name <span class="required">*</span></label>
+                <input
+                  id="firstName"
+                  type="text"
+                  formControlName="firstName"
+                  placeholder="John"
+                  [class.error]="firstName?.invalid && firstName?.touched"
+                />
+                @if (firstName?.invalid && firstName?.touched) {
+                  <span class="error-message">
+                    @if (firstName?.errors?.['required']) {
+                      <span>First name is required</span>
+                    }
+                    @if (firstName?.errors?.['minlength']) {
+                      <span>Name must be at least 2 characters</span>
+                    }
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="lastName">Last Name <span class="required">*</span></label>
+                <input
+                  id="lastName"
+                  type="text"
+                  formControlName="lastName"
+                  placeholder="Smith"
+                  [class.error]="lastName?.invalid && lastName?.touched"
+                />
+                @if (lastName?.invalid && lastName?.touched) {
+                  <span class="error-message">
+                    @if (lastName?.errors?.['required']) {
+                      <span>Last name is required</span>
+                    }
+                    @if (lastName?.errors?.['minlength']) {
+                      <span>Name must be at least 2 characters</span>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="specialty">Specialty <span class="required">*</span></label>
+                <input
+                  id="specialty"
+                  type="text"
+                  formControlName="specialty"
+                  placeholder="Cardiology"
+                  [class.error]="specialty?.invalid && specialty?.touched"
+                />
+                @if (specialty?.invalid && specialty?.touched) {
+                  <span class="error-message">
+                    Specialty is required
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="department">Department</label>
+                <input
+                  id="department"
+                  type="text"
+                  formControlName="department"
+                  placeholder="Cardiology"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="form-section">
+            <h4>Contact Information</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="doctor@ehospital.com"
+                  [class.error]="email?.invalid && email?.touched"
+                />
+                @if (email?.invalid && email?.touched) {
+                  <span class="error-message">
+                    @if (email?.errors?.['required']) {
+                      <span>Email is required</span>
+                    }
+                    @if (email?.errors?.['email']) {
+                      <span>Please enter a valid email address</span>
+                    }
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Phone <span class="required">*</span></label>
+                <input
+                  id="phone"
+                  type="tel"
+                  formControlName="phone"
+                  placeholder="+1-555-0100"
+                  [class.error]="phone?.invalid && phone?.touched"
+                />
+                @if (phone?.invalid && phone?.touched) {
+                  <span class="error-message">
+                    Phone number is required
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input
+                id="address"
+                type="text"
+                formControlName="address"
+                placeholder="123 Medical Center Dr"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City</label>
+                <input
+                  id="city"
+                  type="text"
+                  formControlName="city"
+                  placeholder="New York"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="state">State</label>
+                <input
+                  id="state"
+                  type="text"
+                  formControlName="state"
+                  placeholder="NY"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="zipCode">Zip Code</label>
+                <input
+                  id="zipCode"
+                  type="text"
+                  formControlName="zipCode"
+                  placeholder="10001"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Information -->
+          <div class="form-section">
+            <h4>Professional Information</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="yearsOfExperience">Years of Experience</label>
+                <input
+                  id="yearsOfExperience"
+                  type="number"
+                  formControlName="yearsOfExperience"
+                  placeholder="10"
+                  min="0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="qualifications">Qualifications</label>
+                <input
+                  id="qualifications"
+                  type="text"
+                  formControlName="qualifications"
+                  placeholder="MD, FACC"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="schedule">Schedule</label>
+              <input
+                id="schedule"
+                type="text"
+                formControlName="schedule"
+                placeholder="Mon-Fri, 9:00 AM - 5:00 PM"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bio">Bio</label>
+              <textarea
+                id="bio"
+                formControlName="bio"
+                rows="3"
+                placeholder="Brief professional biography..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="doctorForm.invalid">
+              {{ isEditMode ? 'Update' : 'Create' }} Doctor
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
