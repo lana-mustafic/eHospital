@@ -8,7 +8,7 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/layout/main-layout/main-layout').then(m => m.MainLayoutComponent),
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
-      { path: 'patients', loadComponent: () => import('./features/patients/patients').then(m => m.Patients) },
+      { path: 'patients', loadComponent: () => import('./features/patients/patients').then(m => m.PatientsComponent) },
       { path: 'doctors', loadComponent: () => import('./features/doctors/doctors').then(m => m.Doctors) },
       { path: 'appointments', loadComponent: () => import('./features/appointments/appointments').then(m => m.Appointments) },
       { path: 'medications', loadComponent: () => import('./features/medications/medications').then(m => m.Medications) },
