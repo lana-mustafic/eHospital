@@ -1,30 +1,27 @@
 export interface Appointment {
-  id?: string;
-  patientId: string;
-  patientName?: string; // For display purposes
-  doctorId: string;
-  doctorName?: string; // For display purposes
-  appointmentDate: string; // ISO date string
-  appointmentTime: string; // Time string (HH:mm)
-  duration?: number; // Duration in minutes
-  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'No Show';
-  appointmentType?: string; // e.g., 'Consultation', 'Follow-up', 'Check-up'
-  reason?: string;
+  id: number;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  reason: string;
   notes?: string;
-  department?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  patientName: string;
+  doctorName: string;
+  doctorSpecialization: string;
 }
 
-export interface AppointmentFormData {
-  patientId: string;
-  doctorId: string;
+export interface CreateAppointmentRequest {
   appointmentDate: string;
-  appointmentTime: string;
-  duration: number;
-  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'No Show';
-  appointmentType: string;
+  startTime: string;
+  endTime: string;
   reason: string;
-  notes: string;
+  patientId: number;
+  doctorId: number;
+}
+
+export interface UpdateAppointmentStatusRequest {
+  status: string;
+  notes?: string;
 }
 

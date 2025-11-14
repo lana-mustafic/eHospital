@@ -43,12 +43,10 @@
           <tr>
             <th>License</th>
             <th>Name</th>
-            <th>Specialty</th>
+            <th>Specialization</th>
             <th>Department</th>
             <th>Experience</th>
-            <th>Contact</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Email</th>
           </tr>
         </thead>
         <tbody>
@@ -59,56 +57,18 @@
               </td>
               <td class="name-cell">
                 <strong>Dr. {{ doctor.firstName }} {{ doctor.lastName }}</strong>
-                @if (doctor.qualifications) {
-                  <div class="qualifications">
-                    {{ doctor.qualifications }}
-                  </div>
-                }
               </td>
-              <td>{{ doctor.specialty }}</td>
-              <td>{{ doctor.department || '—' }}</td>
+              <td>{{ doctor.specialization }}</td>
+              <td>{{ doctor.departmentName || '—' }}</td>
               <td>
-                @if (doctor.yearsOfExperience) {
-                  <span>{{ doctor.yearsOfExperience }} years</span>
-                } @else {
-                  <span>—</span>
-                }
+                <span>{{ doctor.yearsOfExperience }} year(s)</span>
               </td>
-              <td class="contact-cell">
-                @if (doctor.email) {
-                  <div class="contact-info">
-                    <span class="material-icons">email</span>
-                    {{ doctor.email }}
-                  </div>
-                }
-                @if (doctor.phone) {
-                  <div class="contact-info">
-                    <span class="material-icons">phone</span>
-                    {{ doctor.phone }}
-                  </div>
-                }
-                @if (!doctor.email && !doctor.phone) {
-                  <span>—</span>
-                }
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="getStatusClass(doctor.status)">
-                  {{ doctor.status }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <button class="btn-icon" (click)="openEditModal(doctor)" title="Edit">
-                  <span class="material-icons">edit</span>
-                </button>
-                <button class="btn-icon btn-danger" (click)="deleteDoctor(doctor)" title="Delete">
-                  <span class="material-icons">delete</span>
-                </button>
-              </td>
+              <td>{{ doctor.email }}</td>
             </tr>
           }
           @if (filteredDoctors.length === 0) {
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="6" class="empty-state">
                 <span class="material-icons">medical_services</span>
                 <p>No doctors found</p>
               </td>
@@ -124,7 +84,7 @@
     <div class="modal-overlay" (click)="closeModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>{{ isEditMode ? 'Edit Doctor' : 'Add New Doctor' }}</h3>
+          <h3>Add New Doctor</h3>
           <button class="btn-close" (click)="closeModal()">
             <span class="material-icons">close</span>
           </button>
@@ -134,42 +94,6 @@
           <!-- Basic Information -->
           <div class="form-section">
             <h4>Basic Information</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="licenseNumber">License Number <span class="required">*</span></label>
-                <input
-                  id="licenseNumber"
-                  type="text"
-                  formControlName="licenseNumber"
-                  placeholder="MD-001"
-                  [class.error]="licenseNumber?.invalid && licenseNumber?.touched"
-                />
-                @if (licenseNumber?.invalid && licenseNumber?.touched) {
-                  <span class="error-message">
-                    License number is required
-                  </span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label for="status">Status <span class="required">*</span></label>
-                <select
-                  id="status"
-                  formControlName="status"
-                  [class.error]="status?.invalid && status?.touched"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="On Leave">On Leave</option>
-                </select>
-                @if (status?.invalid && status?.touched) {
-                  <span class="error-message">
-                    Status is required
-                  </span>
-                }
-              </div>
-            </div>
-
             <div class="form-row">
               <div class="form-group">
                 <label for="firstName">First Name <span class="required">*</span></label>
@@ -216,36 +140,41 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="specialty">Specialty <span class="required">*</span></label>
+                <label for="specialization">Specialization <span class="required">*</span></label>
                 <input
-                  id="specialty"
+                  id="specialization"
                   type="text"
-                  formControlName="specialty"
+                  formControlName="specialization"
                   placeholder="Cardiology"
-                  [class.error]="specialty?.invalid && specialty?.touched"
+                  [class.error]="specialization?.invalid && specialization?.touched"
                 />
-                @if (specialty?.invalid && specialty?.touched) {
+                @if (specialization?.invalid && specialization?.touched) {
                   <span class="error-message">
-                    Specialty is required
+                    Specialization is required
                   </span>
                 }
               </div>
 
               <div class="form-group">
-                <label for="department">Department</label>
+                <label for="licenseNumber">License Number <span class="required">*</span></label>
                 <input
-                  id="department"
+                  id="licenseNumber"
                   type="text"
-                  formControlName="department"
-                  placeholder="Cardiology"
+                  formControlName="licenseNumber"
+                  placeholder="MD-001"
+                  [class.error]="licenseNumber?.invalid && licenseNumber?.touched"
                 />
+                @if (licenseNumber?.invalid && licenseNumber?.touched) {
+                  <span class="error-message">
+                    License number is required
+                  </span>
+                }
               </div>
             </div>
           </div>
 
-          <!-- Contact Information -->
           <div class="form-section">
-            <h4>Contact Information</h4>
+            <h4>Contact & Credentials</h4>
             <div class="form-row">
               <div class="form-group">
                 <label for="email">Email <span class="required">*</span></label>
@@ -269,69 +198,61 @@
               </div>
 
               <div class="form-group">
-                <label for="phone">Phone <span class="required">*</span></label>
+                <label for="password">Temporary Password <span class="required">*</span></label>
                 <input
-                  id="phone"
-                  type="tel"
-                  formControlName="phone"
-                  placeholder="+1-555-0100"
-                  [class.error]="phone?.invalid && phone?.touched"
+                  id="password"
+                  type="password"
+                  formControlName="password"
+                  placeholder="At least 6 characters"
+                  [class.error]="password?.invalid && password?.touched"
                 />
-                @if (phone?.invalid && phone?.touched) {
+                @if (password?.invalid && password?.touched) {
                   <span class="error-message">
-                    Phone number is required
+                    Password must be at least 6 characters
                   </span>
                 }
               </div>
             </div>
 
             <div class="form-group">
-              <label for="address">Address</label>
+              <label for="phoneNumber">Phone <span class="required">*</span></label>
               <input
-                id="address"
-                type="text"
-                formControlName="address"
-                placeholder="123 Medical Center Dr"
+                id="phoneNumber"
+                type="tel"
+                formControlName="phoneNumber"
+                placeholder="+1-555-0100"
+                [class.error]="phoneNumber?.invalid && phoneNumber?.touched"
               />
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="city">City</label>
-                <input
-                  id="city"
-                  type="text"
-                  formControlName="city"
-                  placeholder="New York"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="state">State</label>
-                <input
-                  id="state"
-                  type="text"
-                  formControlName="state"
-                  placeholder="NY"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="zipCode">Zip Code</label>
-                <input
-                  id="zipCode"
-                  type="text"
-                  formControlName="zipCode"
-                  placeholder="10001"
-                />
-              </div>
+              @if (phoneNumber?.invalid && phoneNumber?.touched) {
+                <span class="error-message">
+                  Phone number is required
+                </span>
+              }
             </div>
           </div>
 
-          <!-- Professional Information -->
           <div class="form-section">
-            <h4>Professional Information</h4>
+            <h4>Assignment</h4>
             <div class="form-row">
+              <div class="form-group">
+                <label for="departmentId">Department <span class="required">*</span></label>
+                <select
+                  id="departmentId"
+                  formControlName="departmentId"
+                  [class.error]="departmentId?.invalid && departmentId?.touched"
+                >
+                  <option value="">Select Department</option>
+                  @for (department of departments; track department.id) {
+                    <option [value]="department.id">{{ department.name }}</option>
+                  }
+                </select>
+                @if (departmentId?.invalid && departmentId?.touched) {
+                  <span class="error-message">
+                    Department is required
+                  </span>
+                }
+              </div>
+
               <div class="form-group">
                 <label for="yearsOfExperience">Years of Experience</label>
                 <input
@@ -342,43 +263,13 @@
                   min="0"
                 />
               </div>
-
-              <div class="form-group">
-                <label for="qualifications">Qualifications</label>
-                <input
-                  id="qualifications"
-                  type="text"
-                  formControlName="qualifications"
-                  placeholder="MD, FACC"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="schedule">Schedule</label>
-              <input
-                id="schedule"
-                type="text"
-                formControlName="schedule"
-                placeholder="Mon-Fri, 9:00 AM - 5:00 PM"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="bio">Bio</label>
-              <textarea
-                id="bio"
-                formControlName="bio"
-                rows="3"
-                placeholder="Brief professional biography..."
-              ></textarea>
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
             <button type="submit" class="btn-primary" [disabled]="doctorForm.invalid">
-              {{ isEditMode ? 'Update' : 'Create' }} Doctor
+              Create Doctor
             </button>
           </div>
         </form>

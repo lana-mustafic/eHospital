@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AppointmentService } from './services/appointment.service';
-import { Appointment } from './models/appointment.model';
+import { Appointment, CreateAppointmentRequest, UpdateAppointmentStatusRequest } from './models/appointment.model';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { Patient } from '../patients/models/patient.model';
@@ -25,9 +25,10 @@ export class AppointmentsComponent implements OnInit {
   searchTerm = '';
   statusFilter = '';
   showModal = false;
-  isEditMode = false;
+  showStatusModal = false;
   selectedAppointment: Appointment | null = null;
   appointmentForm: FormGroup;
+  statusForm: FormGroup;
 
   constructor(
     private appointmentService: AppointmentService,
@@ -39,11 +40,13 @@ export class AppointmentsComponent implements OnInit {
       patientId: ['', [Validators.required]],
       doctorId: ['', [Validators.required]],
       appointmentDate: ['', [Validators.required]],
-      appointmentTime: ['', [Validators.required]],
-      duration: [30, [Validators.required, Validators.min(15)]],
+      startTime: ['', [Validators.required]],
+      endTime: ['', [Validators.required]],
+      reason: ['', [Validators.required, Validators.minLength(5)]]
+    });
+
+    this.statusForm = this.fb.group({
       status: ['Scheduled', [Validators.required]],
-      appointmentType: [''],
-      reason: [''],
       notes: ['']
     });
   }
@@ -100,7 +103,6 @@ export class AppointmentsComponent implements OnInit {
       filtered = filtered.filter(appointment =>
         appointment.patientName?.toLowerCase().includes(term) ||
         appointment.doctorName?.toLowerCase().includes(term) ||
-        appointment.appointmentType?.toLowerCase().includes(term) ||
         appointment.reason?.toLowerCase().includes(term)
       );
     }
@@ -119,7 +121,8 @@ export class AppointmentsComponent implements OnInit {
 
   formatDateTime(date: string, time: string): string {
     if (!date || !time) return '—';
-    const dateObj = new Date(date + 'T' + time);
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    const dateObj = new Date(`${date}T${normalizedTime}`);
     return dateObj.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -156,7 +159,8 @@ export class AppointmentsComponent implements OnInit {
 
   isPastAppointment(date: string, time: string): boolean {
     if (!date || !time) return false;
-    const appointmentDateTime = new Date(date + 'T' + time);
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    const appointmentDateTime = new Date(`${date}T${normalizedTime}`);
     return appointmentDateTime < new Date();
   }
 
@@ -165,36 +169,27 @@ export class AppointmentsComponent implements OnInit {
   }
 
   openAddModal() {
-    this.isEditMode = false;
     this.selectedAppointment = null;
     this.appointmentForm.reset();
-    this.appointmentForm.patchValue({
-      status: 'Scheduled',
-      duration: 30
-    });
+    this.statusForm.reset({ status: 'Scheduled', notes: '' });
     this.showModal = true;
+    this.showStatusModal = false;
   }
 
-  openEditModal(appointment: Appointment) {
-    this.isEditMode = true;
+  openStatusModal(appointment: Appointment) {
     this.selectedAppointment = appointment;
-    this.appointmentForm.patchValue({
-      patientId: appointment.patientId,
-      doctorId: appointment.doctorId,
-      appointmentDate: appointment.appointmentDate,
-      appointmentTime: appointment.appointmentTime,
-      duration: appointment.duration || 30,
+    this.statusForm.reset({
       status: appointment.status,
-      appointmentType: appointment.appointmentType || '',
-      reason: appointment.reason || '',
       notes: appointment.notes || ''
     });
-    this.showModal = true;
+    this.showModal = false;
+    this.showStatusModal = true;
   }
 
   closeModal() {
     this.showModal = false;
     this.appointmentForm.reset();
+    this.statusForm.reset({ status: 'Scheduled', notes: '' });
     this.selectedAppointment = null;
   }
 
@@ -205,55 +200,56 @@ export class AppointmentsComponent implements OnInit {
     }
 
     const formData = this.appointmentForm.value;
-    
-    // Get patient and doctor names for display
-    const patient = this.patients.find(p => p.id === formData.patientId);
-    const doctor = this.doctors.find(d => d.id === formData.doctorId);
-
-    const appointment: Appointment = {
-      ...formData,
-      id: this.selectedAppointment?.id,
-      patientName: patient ? `${patient.firstName} ${patient.lastName}` : '',
-      doctorName: doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : '',
-      department: doctor?.department
+    const payload: CreateAppointmentRequest = {
+      patientId: Number(formData.patientId),
+      doctorId: Number(formData.doctorId),
+      appointmentDate: formData.appointmentDate,
+      startTime: this.toTimeSpan(formData.startTime),
+      endTime: this.toTimeSpan(formData.endTime),
+      reason: formData.reason
     };
 
-    if (this.isEditMode && this.selectedAppointment?.id) {
-      this.appointmentService.update(this.selectedAppointment.id, appointment).subscribe({
-        next: () => {
-          this.loadAppointments();
-          this.closeModal();
-        },
-        error: (error) => {
-          console.error('Error updating appointment:', error);
-        }
-      });
-    } else {
-      this.appointmentService.create(appointment).subscribe({
-        next: () => {
-          this.loadAppointments();
-          this.closeModal();
-        },
-        error: (error) => {
-          console.error('Error creating appointment:', error);
-        }
-      });
-    }
+    this.appointmentService.create(payload).subscribe({
+      next: () => {
+        this.loadAppointments();
+        this.closeModal();
+      },
+      error: (error) => {
+        console.error('Error creating appointment:', error);
+      }
+    });
   }
 
-  deleteAppointment(appointment: Appointment) {
-    if (!appointment.id) return;
-    
-    if (confirm(`Are you sure you want to delete this appointment?`)) {
-      this.appointmentService.delete(appointment.id).subscribe({
-        next: () => {
-          this.loadAppointments();
-        },
-        error: (error) => {
-          console.error('Error deleting appointment:', error);
-        }
-      });
+  updateStatus() {
+    if (!this.selectedAppointment?.id) {
+      return;
     }
+
+    if (this.statusForm.invalid) {
+      this.markFormGroupTouched(this.statusForm);
+      return;
+    }
+
+    const payload: UpdateAppointmentStatusRequest = {
+      status: this.statusForm.value.status,
+      notes: this.statusForm.value.notes
+    };
+
+    this.appointmentService.updateStatus(this.selectedAppointment.id, payload).subscribe({
+      next: () => {
+        this.loadAppointments();
+        this.closeStatusModal();
+      },
+      error: (error) => {
+        console.error('Error updating appointment status:', error);
+      }
+    });
+  }
+
+  closeStatusModal() {
+    this.showStatusModal = false;
+    this.selectedAppointment = null;
+    this.statusForm.reset({ status: 'Scheduled', notes: '' });
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
@@ -261,6 +257,13 @@ export class AppointmentsComponent implements OnInit {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });
+  }
+
+  private toTimeSpan(time: string): string {
+    if (!time) {
+      return '';
+    }
+    return time.length === 5 ? `${time}:00` : time;
   }
 
   get patientId() {
@@ -275,11 +278,19 @@ export class AppointmentsComponent implements OnInit {
     return this.appointmentForm.get('appointmentDate');
   }
 
-  get appointmentTime() {
-    return this.appointmentForm.get('appointmentTime');
+  get startTime() {
+    return this.appointmentForm.get('startTime');
+  }
+
+  get endTime() {
+    return this.appointmentForm.get('endTime');
+  }
+
+  get reason() {
+    return this.appointmentForm.get('reason');
   }
 
   get status() {
-    return this.appointmentForm.get('status');
+    return this.statusForm.get('status');
   }
 }

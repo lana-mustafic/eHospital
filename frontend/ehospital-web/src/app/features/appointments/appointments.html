@@ -49,24 +49,25 @@
     <div class="table-container">
       <table class="appointments-table">
         <thead>
-          <tr>
-            <th>Date & Time</th>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Type</th>
-            <th>Duration</th>
-            <th>Status</th>
-            <th>Reason</th>
-            <th>Actions</th>
-          </tr>
+        <tr>
+          <th>Date & Time</th>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Status</th>
+          <th>Reason</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
           @for (appointment of filteredAppointments; track appointment.id) {
-            <tr [class.past-appointment]="isPastAppointment(appointment.appointmentDate, appointment.appointmentTime)">
+            <tr [class.past-appointment]="isPastAppointment(appointment.appointmentDate, appointment.startTime)">
               <td class="datetime-cell">
                 <div class="date">{{ formatDate(appointment.appointmentDate) }}</div>
-                <div class="time">{{ appointment.appointmentTime }}</div>
-                @if (isPastAppointment(appointment.appointmentDate, appointment.appointmentTime) && appointment.status === 'Scheduled') {
+                <div class="time">
+                  {{ appointment.startTime }} - {{ appointment.endTime }}
+                </div>
+                @if (isPastAppointment(appointment.appointmentDate, appointment.startTime) && appointment.status === 'Scheduled') {
                   <span class="past-badge">Past</span>
                 }
               </td>
@@ -75,31 +76,27 @@
               </td>
               <td class="name-cell">
                 {{ appointment.doctorName || '—' }}
-                @if (appointment.department) {
-                  <div class="department">{{ appointment.department }}</div>
+                @if (appointment.doctorSpecialization) {
+                  <div class="department">{{ appointment.doctorSpecialization }}</div>
                 }
               </td>
-              <td>{{ appointment.appointmentType || '—' }}</td>
-              <td>{{ appointment.duration }} min</td>
               <td>
                 <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
                   {{ appointment.status }}
                 </span>
               </td>
               <td class="reason-cell">{{ appointment.reason || '—' }}</td>
+              <td class="reason-cell">{{ appointment.notes || '—' }}</td>
               <td class="actions-cell">
-                <button class="btn-icon" (click)="openEditModal(appointment)" title="Edit">
-                  <span class="material-icons">edit</span>
-                </button>
-                <button class="btn-icon btn-danger" (click)="deleteAppointment(appointment)" title="Delete">
-                  <span class="material-icons">delete</span>
+                <button class="btn-icon" (click)="openStatusModal(appointment)" title="Update Status">
+                  <span class="material-icons">published_with_changes</span>
                 </button>
               </td>
             </tr>
           }
           @if (filteredAppointments.length === 0) {
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="7" class="empty-state">
                 <span class="material-icons">event</span>
                 <p>No appointments found</p>
               </td>
@@ -115,7 +112,7 @@
     <div class="modal-overlay" (click)="closeModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>{{ isEditMode ? 'Edit Appointment' : 'Schedule New Appointment' }}</h3>
+          <h3>Schedule New Appointment</h3>
           <button class="btn-close" (click)="closeModal()">
             <span class="material-icons">close</span>
           </button>
@@ -136,7 +133,7 @@
                   <option value="">Select Patient</option>
                   @for (patient of patients; track patient.id) {
                     <option [value]="patient.id">
-                      {{ patient.firstName }} {{ patient.lastName }} ({{ patient.medicalRecordNumber }})
+                      {{ patient.firstName }} {{ patient.lastName }}
                     </option>
                   }
                 </select>
@@ -157,7 +154,7 @@
                   <option value="">Select Doctor</option>
                   @for (doctor of doctors; track doctor.id) {
                     <option [value]="doctor.id">
-                      Dr. {{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialty }}
+                      Dr. {{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}
                     </option>
                   }
                 </select>
@@ -188,70 +185,34 @@
 
               <div class="form-row-inline">
                 <div class="form-group">
-                  <label for="appointmentTime">Time <span class="required">*</span></label>
+                  <label for="startTime">Start Time <span class="required">*</span></label>
                   <input
-                    id="appointmentTime"
+                    id="startTime"
                     type="time"
-                    formControlName="appointmentTime"
-                    [class.error]="appointmentTime?.invalid && appointmentTime?.touched"
+                    formControlName="startTime"
+                    [class.error]="startTime?.invalid && startTime?.touched"
                   />
-                  @if (appointmentTime?.invalid && appointmentTime?.touched) {
+                  @if (startTime?.invalid && startTime?.touched) {
                     <span class="error-message">
-                      Appointment time is required
+                      Start time is required
                     </span>
                   }
                 </div>
 
                 <div class="form-group">
-                  <label for="duration">Duration (min) <span class="required">*</span></label>
+                  <label for="endTime">End Time <span class="required">*</span></label>
                   <input
-                    id="duration"
-                    type="number"
-                    formControlName="duration"
-                    min="15"
-                    step="15"
-                    [class.error]="appointmentForm.get('duration')?.invalid && appointmentForm.get('duration')?.touched"
+                    id="endTime"
+                    type="time"
+                    formControlName="endTime"
+                    [class.error]="endTime?.invalid && endTime?.touched"
                   />
-                  @if (appointmentForm.get('duration')?.invalid && appointmentForm.get('duration')?.touched) {
+                  @if (endTime?.invalid && endTime?.touched) {
                     <span class="error-message">
-                      Duration must be at least 15 minutes
+                      End time is required
                     </span>
                   }
                 </div>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="status">Status <span class="required">*</span></label>
-                <select
-                  id="status"
-                  formControlName="status"
-                  [class.error]="status?.invalid && status?.touched"
-                >
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="No Show">No Show</option>
-                </select>
-                @if (status?.invalid && status?.touched) {
-                  <span class="error-message">
-                    Status is required
-                  </span>
-                }
-              </div>
-
-              <div class="form-group">
-                <label for="appointmentType">Appointment Type</label>
-                <select id="appointmentType" formControlName="appointmentType">
-                  <option value="">Select Type</option>
-                  <option value="Consultation">Consultation</option>
-                  <option value="Follow-up">Follow-up</option>
-                  <option value="Check-up">Check-up</option>
-                  <option value="Emergency">Emergency</option>
-                  <option value="Surgery">Surgery</option>
-                  <option value="Other">Other</option>
-                </select>
               </div>
             </div>
           </div>
@@ -260,30 +221,80 @@
           <div class="form-section">
             <h4>Additional Information</h4>
             <div class="form-group">
-              <label for="reason">Reason for Visit</label>
-              <input
-                id="reason"
-                type="text"
-                formControlName="reason"
-                placeholder="e.g., Routine check-up, Follow-up visit"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="notes">Notes</label>
+              <label for="reason">Reason for Visit <span class="required">*</span></label>
               <textarea
-                id="notes"
-                formControlName="notes"
+                id="reason"
+                formControlName="reason"
                 rows="3"
-                placeholder="Additional notes or instructions..."
+                placeholder="e.g., Routine check-up, Follow-up visit"
+                [class.error]="reason?.invalid && reason?.touched"
               ></textarea>
+              @if (reason?.invalid && reason?.touched) {
+                <span class="error-message">
+                  Please describe the reason (min 5 characters)
+                </span>
+              }
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
             <button type="submit" class="btn-primary" [disabled]="appointmentForm.invalid">
-              {{ isEditMode ? 'Update' : 'Schedule' }} Appointment
+              Schedule Appointment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Status Update Modal -->
+  @if (showStatusModal && selectedAppointment) {
+    <div class="modal-overlay" (click)="closeStatusModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Update Appointment Status</h3>
+          <button class="btn-close" (click)="closeStatusModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <form [formGroup]="statusForm" (ngSubmit)="updateStatus()" class="modal-body">
+          <div class="form-section">
+            <div class="form-group">
+              <label for="statusSelect">Status <span class="required">*</span></label>
+              <select
+                id="statusSelect"
+                formControlName="status"
+                [class.error]="status?.invalid && status?.touched"
+              >
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="No Show">No Show</option>
+              </select>
+              @if (status?.invalid && status?.touched) {
+                <span class="error-message">
+                  Status is required
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="statusNotes">Notes</label>
+              <textarea
+                id="statusNotes"
+                formControlName="notes"
+                rows="3"
+                placeholder="Optional notes about the change"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeStatusModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="statusForm.invalid">
+              Update Status
             </button>
           </div>
         </form>

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DepartmentService } from './services/department.service';
-import { Department } from './models/department.model';
+import { CreateDepartmentRequest, Department, UpdateDepartmentRequest } from './models/department.model';
 
 @Component({
   selector: 'app-departments',
@@ -29,10 +29,8 @@ export class DepartmentsComponent implements OnInit {
     this.departmentForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
-      headOfDepartment: [''],
-      contactEmail: ['', [Validators.email]],
-      contactPhone: [''],
-      location: ['']
+      phoneNumber: [''],
+      email: ['', [Validators.email]]
     });
   }
 
@@ -65,8 +63,8 @@ export class DepartmentsComponent implements OnInit {
     this.filteredDepartments = this.departments.filter(dept =>
       dept.name.toLowerCase().includes(term) ||
       dept.description?.toLowerCase().includes(term) ||
-      dept.headOfDepartment?.toLowerCase().includes(term) ||
-      dept.location?.toLowerCase().includes(term)
+      dept.email?.toLowerCase().includes(term) ||
+      dept.phoneNumber?.toLowerCase().includes(term)
     );
   }
 
@@ -83,10 +81,8 @@ export class DepartmentsComponent implements OnInit {
     this.departmentForm.patchValue({
       name: department.name,
       description: department.description || '',
-      headOfDepartment: department.headOfDepartment || '',
-      contactEmail: department.contactEmail || '',
-      contactPhone: department.contactPhone || '',
-      location: department.location || ''
+      phoneNumber: department.phoneNumber || '',
+      email: department.email || ''
     });
     this.showModal = true;
   }
@@ -104,13 +100,15 @@ export class DepartmentsComponent implements OnInit {
     }
 
     const formData = this.departmentForm.value;
-    const department: Department = {
-      ...formData,
-      id: this.selectedDepartment?.id
-    };
-
     if (this.isEditMode && this.selectedDepartment?.id) {
-      this.departmentService.update(this.selectedDepartment.id, department).subscribe({
+      const payload: UpdateDepartmentRequest = {
+        name: formData.name,
+        description: formData.description,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email
+      };
+
+      this.departmentService.update(this.selectedDepartment.id, payload).subscribe({
         next: () => {
           this.loadDepartments();
           this.closeModal();
@@ -120,7 +118,14 @@ export class DepartmentsComponent implements OnInit {
         }
       });
     } else {
-      this.departmentService.create(department).subscribe({
+      const payload: CreateDepartmentRequest = {
+        name: formData.name,
+        description: formData.description,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email
+      };
+
+      this.departmentService.create(payload).subscribe({
         next: () => {
           this.loadDepartments();
           this.closeModal();
@@ -158,7 +163,7 @@ export class DepartmentsComponent implements OnInit {
     return this.departmentForm.get('name');
   }
 
-  get contactEmail() {
-    return this.departmentForm.get('contactEmail');
+  get email() {
+    return this.departmentForm.get('email');
   }
 }

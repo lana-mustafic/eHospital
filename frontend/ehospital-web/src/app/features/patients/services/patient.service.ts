@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_CONFIG } from '../../../core/config/api.config';
-import { Patient } from '../models/patient.model';
+import { CreatePatientRequest, Patient, UpdatePatientRequest } from '../models/patient.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,19 +16,19 @@ export class PatientService {
     return this.http.get<Patient[]>(this.apiUrl);
   }
 
-  getById(id: string): Observable<Patient> {
+  getById(id: number): Observable<Patient> {
     return this.http.get<Patient>(`${this.apiUrl}/${id}`);
   }
 
-  create(patient: Patient): Observable<Patient> {
-    return this.http.post<Patient>(this.apiUrl, patient);
+  create(payload: CreatePatientRequest): Observable<Patient> {
+    return this.http.post<Patient>(this.apiUrl, payload);
   }
 
-  update(id: string, patient: Patient): Observable<Patient> {
-    return this.http.put<Patient>(`${this.apiUrl}/${id}`, patient);
+  update(id: number, payload: UpdatePatientRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
   }
 
-  delete(id: string): Observable<void> {
+  delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

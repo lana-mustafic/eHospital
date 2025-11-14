@@ -40,9 +40,9 @@
         <tr>
           <th>Name</th>
           <th>Description</th>
-          <th>Head of Department</th>
-          <th>Location</th>
-          <th>Contact</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Doctors</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -54,19 +54,9 @@
           <td class="description-cell">
             {{ department.description || '—' }}
           </td>
-          <td>{{ department.headOfDepartment || '—' }}</td>
-          <td>{{ department.location || '—' }}</td>
-          <td class="contact-cell">
-            <div *ngIf="department.contactEmail" class="contact-info">
-              <span class="material-icons">email</span>
-              {{ department.contactEmail }}
-            </div>
-            <div *ngIf="department.contactPhone" class="contact-info">
-              <span class="material-icons">phone</span>
-              {{ department.contactPhone }}
-            </div>
-            <span *ngIf="!department.contactEmail && !department.contactPhone">—</span>
-          </td>
+          <td>{{ department.phoneNumber || '—' }}</td>
+          <td>{{ department.email || '—' }}</td>
+          <td>{{ department.doctorCount }}</td>
           <td class="actions-cell">
             <button class="btn-icon" (click)="openEditModal(department)" title="Edit">
               <span class="material-icons">edit</span>
@@ -122,50 +112,30 @@
           ></textarea>
         </div>
 
-        <div class="form-group">
-          <label for="headOfDepartment">Head of Department</label>
-          <input
-            id="headOfDepartment"
-            type="text"
-            formControlName="headOfDepartment"
-            placeholder="e.g., Dr. John Smith"
-          />
-        </div>
-
         <div class="form-row">
           <div class="form-group">
-            <label for="contactEmail">Contact Email</label>
+            <label for="phoneNumber">Phone Number</label>
             <input
-              id="contactEmail"
-              type="email"
-              formControlName="contactEmail"
-              placeholder="department@ehospital.com"
-              [class.error]="contactEmail?.invalid && contactEmail?.touched"
-            />
-            <span class="error-message" *ngIf="contactEmail?.invalid && contactEmail?.touched">
-              Please enter a valid email address
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label for="contactPhone">Contact Phone</label>
-            <input
-              id="contactPhone"
+              id="phoneNumber"
               type="tel"
-              formControlName="contactPhone"
+              formControlName="phoneNumber"
               placeholder="+1-234-567-8900"
             />
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="location">Location</label>
-          <input
-            id="location"
-            type="text"
-            formControlName="location"
-            placeholder="e.g., Building A, Floor 2"
-          />
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="department@ehospital.com"
+              [class.error]="email?.invalid && email?.touched"
+            />
+            <span class="error-message" *ngIf="email?.invalid && email?.touched">
+              Please enter a valid email address
+            </span>
+          </div>
         </div>
 
         <div class="modal-footer">

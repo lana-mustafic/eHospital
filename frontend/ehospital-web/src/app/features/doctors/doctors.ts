@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DoctorService } from './services/doctor.service';
-import { Doctor } from './models/doctor.model';
+import { CreateDoctorRequest, Doctor } from './models/doctor.model';
+import { DepartmentService } from '../departments/services/department.service';
+import { Department } from '../departments/models/department.model';
 
 @Component({
   selector: 'app-doctors',
@@ -15,39 +17,33 @@ import { Doctor } from './models/doctor.model';
 export class DoctorsComponent implements OnInit {
   doctors: Doctor[] = [];
   filteredDoctors: Doctor[] = [];
+  departments: Department[] = [];
   isLoading = false;
   searchTerm = '';
   showModal = false;
-  isEditMode = false;
-  selectedDoctor: Doctor | null = null;
   doctorForm: FormGroup;
 
   constructor(
     private doctorService: DoctorService,
+    private departmentService: DepartmentService,
     private fb: FormBuilder
   ) {
     this.doctorForm = this.fb.group({
-      licenseNumber: ['', [Validators.required]],
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
-      specialty: ['', [Validators.required]],
-      department: [''],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required]],
-      address: [''],
-      city: [''],
-      state: [''],
-      zipCode: [''],
-      yearsOfExperience: [0],
-      qualifications: [''],
-      bio: [''],
-      status: ['Active', [Validators.required]],
-      schedule: ['']
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      phoneNumber: ['', [Validators.required]],
+      specialization: ['', [Validators.required]],
+      licenseNumber: ['', [Validators.required]],
+      yearsOfExperience: [0, [Validators.required, Validators.min(0)]],
+      departmentId: ['', [Validators.required]]
     });
   }
 
   ngOnInit() {
     this.loadDoctors();
+    this.loadDepartments();
   }
 
   loadDoctors() {
@@ -65,6 +61,17 @@ export class DoctorsComponent implements OnInit {
     });
   }
 
+  loadDepartments() {
+    this.departmentService.getAll().subscribe({
+      next: (data) => {
+        this.departments = data;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+      }
+    });
+  }
+
   search() {
     const term = this.searchTerm.toLowerCase().trim();
     if (!term) {
@@ -76,61 +83,20 @@ export class DoctorsComponent implements OnInit {
       doctor.firstName.toLowerCase().includes(term) ||
       doctor.lastName.toLowerCase().includes(term) ||
       doctor.licenseNumber.toLowerCase().includes(term) ||
-      doctor.specialty.toLowerCase().includes(term) ||
+      doctor.specialization.toLowerCase().includes(term) ||
       doctor.email.toLowerCase().includes(term) ||
-      doctor.department?.toLowerCase().includes(term)
+      doctor.departmentName.toLowerCase().includes(term)
     );
   }
 
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'Active':
-        return 'status-active';
-      case 'Inactive':
-        return 'status-inactive';
-      case 'On Leave':
-        return 'status-leave';
-      default:
-        return '';
-    }
-  }
-
   openAddModal() {
-    this.isEditMode = false;
-    this.selectedDoctor = null;
     this.doctorForm.reset();
-    this.doctorForm.patchValue({ status: 'Active' });
-    this.showModal = true;
-  }
-
-  openEditModal(doctor: Doctor) {
-    this.isEditMode = true;
-    this.selectedDoctor = doctor;
-    this.doctorForm.patchValue({
-      licenseNumber: doctor.licenseNumber,
-      firstName: doctor.firstName,
-      lastName: doctor.lastName,
-      specialty: doctor.specialty,
-      department: doctor.department || '',
-      email: doctor.email,
-      phone: doctor.phone,
-      address: doctor.address || '',
-      city: doctor.city || '',
-      state: doctor.state || '',
-      zipCode: doctor.zipCode || '',
-      yearsOfExperience: doctor.yearsOfExperience || 0,
-      qualifications: doctor.qualifications || '',
-      bio: doctor.bio || '',
-      status: doctor.status,
-      schedule: doctor.schedule || ''
-    });
     this.showModal = true;
   }
 
   closeModal() {
     this.showModal = false;
     this.doctorForm.reset();
-    this.selectedDoctor = null;
   }
 
   saveDoctor() {
@@ -140,47 +106,27 @@ export class DoctorsComponent implements OnInit {
     }
 
     const formData = this.doctorForm.value;
-    const doctor: Doctor = {
-      ...formData,
-      id: this.selectedDoctor?.id
+    const payload: CreateDoctorRequest = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      phoneNumber: formData.phoneNumber,
+      specialization: formData.specialization,
+      licenseNumber: formData.licenseNumber,
+      yearsOfExperience: Number(formData.yearsOfExperience),
+      departmentId: Number(formData.departmentId)
     };
 
-    if (this.isEditMode && this.selectedDoctor?.id) {
-      this.doctorService.update(this.selectedDoctor.id, doctor).subscribe({
-        next: () => {
-          this.loadDoctors();
-          this.closeModal();
-        },
-        error: (error) => {
-          console.error('Error updating doctor:', error);
-        }
-      });
-    } else {
-      this.doctorService.create(doctor).subscribe({
-        next: () => {
-          this.loadDoctors();
-          this.closeModal();
-        },
-        error: (error) => {
-          console.error('Error creating doctor:', error);
-        }
-      });
-    }
-  }
-
-  deleteDoctor(doctor: Doctor) {
-    if (!doctor.id) return;
-    
-    if (confirm(`Are you sure you want to delete Dr. "${doctor.firstName} ${doctor.lastName}"?`)) {
-      this.doctorService.delete(doctor.id).subscribe({
-        next: () => {
-          this.loadDoctors();
-        },
-        error: (error) => {
-          console.error('Error deleting doctor:', error);
-        }
-      });
-    }
+    this.doctorService.create(payload).subscribe({
+      next: () => {
+        this.loadDoctors();
+        this.closeModal();
+      },
+      error: (error) => {
+        console.error('Error creating doctor:', error);
+      }
+    });
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
@@ -188,10 +134,6 @@ export class DoctorsComponent implements OnInit {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });
-  }
-
-  get licenseNumber() {
-    return this.doctorForm.get('licenseNumber');
   }
 
   get firstName() {
@@ -202,19 +144,28 @@ export class DoctorsComponent implements OnInit {
     return this.doctorForm.get('lastName');
   }
 
-  get specialty() {
-    return this.doctorForm.get('specialty');
-  }
-
   get email() {
     return this.doctorForm.get('email');
   }
 
-  get phone() {
-    return this.doctorForm.get('phone');
+  get password() {
+    return this.doctorForm.get('password');
   }
 
-  get status() {
-    return this.doctorForm.get('status');
+  get phoneNumber() {
+    return this.doctorForm.get('phoneNumber');
+  }
+
+  get specialization() {
+    return this.doctorForm.get('specialization');
+  }
+
+  get licenseNumber() {
+    return this.doctorForm.get('licenseNumber');
+  }
+
+  get departmentId() {
+    return this.doctorForm.get('departmentId');
   }
 }
+

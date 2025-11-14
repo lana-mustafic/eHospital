@@ -1,41 +1,37 @@
 export interface Patient {
-  id?: string;
-  medicalRecordNumber: string;
+  id: number;
   firstName: string;
   lastName: string;
+  email: string;
+  phoneNumber: string;
   dateOfBirth: string;
-  gender: 'Male' | 'Female' | 'Other';
-  email?: string;
-  phone: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  bloodType?: string;
-  allergies?: string;
-  medicalHistory?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  gender: string;
+  address: string;
+  emergencyContact: string;
+  bloodType: string;
 }
 
-export interface PatientFormData {
-  medicalRecordNumber: string;
+export interface CreatePatientRequest {
+  email: string;
+  password: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
   dateOfBirth: string;
-  gender: 'Male' | 'Female' | 'Other';
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  bloodType: string;
-  allergies: string;
-  medicalHistory: string;
+  gender: string;
+  address?: string;
+  emergencyContact?: string;
+  bloodType?: string;
+}
+
+export interface UpdatePatientRequest {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  emergencyContact?: string;
+  bloodType?: string;
 }
 

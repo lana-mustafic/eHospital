@@ -1,21 +1,23 @@
 export interface Department {
-  id?: string;
-  name: string;
-  description?: string;
-  headOfDepartment?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  location?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface DepartmentFormData {
+  id: number;
   name: string;
   description: string;
-  headOfDepartment: string;
-  contactEmail: string;
-  contactPhone: string;
-  location: string;
+  phoneNumber: string;
+  email: string;
+  doctorCount: number;
+}
+
+export interface CreateDepartmentRequest {
+  name: string;
+  description?: string;
+  phoneNumber?: string;
+  email?: string;
+}
+
+export interface UpdateDepartmentRequest {
+  name?: string;
+  description?: string;
+  phoneNumber?: string;
+  email?: string;
 }
 

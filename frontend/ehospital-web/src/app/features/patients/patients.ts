@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PatientService } from './services/patient.service';
-import { Patient } from './models/patient.model';
+import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
 
 @Component({
   selector: 'app-patients',
@@ -27,22 +27,16 @@ export class PatientsComponent implements OnInit {
     private fb: FormBuilder
   ) {
     this.patientForm = this.fb.group({
-      medicalRecordNumber: ['', [Validators.required]],
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      phoneNumber: ['', [Validators.required]],
       dateOfBirth: ['', [Validators.required]],
       gender: ['', [Validators.required]],
-      email: ['', [Validators.email]],
-      phone: ['', [Validators.required]],
       address: [''],
-      city: [''],
-      state: [''],
-      zipCode: [''],
-      emergencyContactName: [''],
-      emergencyContactPhone: [''],
-      bloodType: [''],
-      allergies: [''],
-      medicalHistory: ['']
+      emergencyContact: [''],
+      bloodType: ['']
     });
   }
 
@@ -75,9 +69,8 @@ export class PatientsComponent implements OnInit {
     this.filteredPatients = this.patients.filter(patient =>
       patient.firstName.toLowerCase().includes(term) ||
       patient.lastName.toLowerCase().includes(term) ||
-      patient.medicalRecordNumber.toLowerCase().includes(term) ||
-      patient.email?.toLowerCase().includes(term) ||
-      patient.phone.includes(term)
+      patient.email.toLowerCase().includes(term) ||
+      patient.phoneNumber.includes(term)
     );
   }
 
@@ -102,6 +95,7 @@ export class PatientsComponent implements OnInit {
     this.isEditMode = false;
     this.selectedPatient = null;
     this.patientForm.reset();
+    this.setPasswordValidators(true);
     this.showModal = true;
   }
 
@@ -109,23 +103,18 @@ export class PatientsComponent implements OnInit {
     this.isEditMode = true;
     this.selectedPatient = patient;
     this.patientForm.patchValue({
-      medicalRecordNumber: patient.medicalRecordNumber,
       firstName: patient.firstName,
       lastName: patient.lastName,
       dateOfBirth: patient.dateOfBirth,
       gender: patient.gender,
-      email: patient.email || '',
-      phone: patient.phone,
-      address: patient.address || '',
-      city: patient.city || '',
-      state: patient.state || '',
-      zipCode: patient.zipCode || '',
-      emergencyContactName: patient.emergencyContactName || '',
-      emergencyContactPhone: patient.emergencyContactPhone || '',
-      bloodType: patient.bloodType || '',
-      allergies: patient.allergies || '',
-      medicalHistory: patient.medicalHistory || ''
+      email: patient.email,
+      phoneNumber: patient.phoneNumber,
+      address: patient.address,
+      emergencyContact: patient.emergencyContact,
+      bloodType: patient.bloodType
     });
+    this.patientForm.get('password')?.reset();
+    this.setPasswordValidators(false);
     this.showModal = true;
   }
 
@@ -142,13 +131,20 @@ export class PatientsComponent implements OnInit {
     }
 
     const formData = this.patientForm.value;
-    const patient: Patient = {
-      ...formData,
-      id: this.selectedPatient?.id
-    };
 
     if (this.isEditMode && this.selectedPatient?.id) {
-      this.patientService.update(this.selectedPatient.id, patient).subscribe({
+      const payload: UpdatePatientRequest = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        emergencyContact: formData.emergencyContact,
+        bloodType: formData.bloodType
+      };
+
+      this.patientService.update(this.selectedPatient.id, payload).subscribe({
         next: () => {
           this.loadPatients();
           this.closeModal();
@@ -158,7 +154,20 @@ export class PatientsComponent implements OnInit {
         }
       });
     } else {
-      this.patientService.create(patient).subscribe({
+      const payload: CreatePatientRequest = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        emergencyContact: formData.emergencyContact,
+        bloodType: formData.bloodType
+      };
+
+      this.patientService.create(payload).subscribe({
         next: () => {
           this.loadPatients();
           this.closeModal();
@@ -192,8 +201,19 @@ export class PatientsComponent implements OnInit {
     });
   }
 
-  get medicalRecordNumber() {
-    return this.patientForm.get('medicalRecordNumber');
+  private setPasswordValidators(isRequired: boolean) {
+    const passwordControl = this.patientForm.get('password');
+    if (!passwordControl) {
+      return;
+    }
+
+    if (isRequired) {
+      passwordControl.setValidators([Validators.required, Validators.minLength(6)]);
+    } else {
+      passwordControl.clearValidators();
+    }
+
+    passwordControl.updateValueAndValidity();
   }
 
   get firstName() {
@@ -212,11 +232,15 @@ export class PatientsComponent implements OnInit {
     return this.patientForm.get('gender');
   }
 
-  get phone() {
-    return this.patientForm.get('phone');
+  get phoneNumber() {
+    return this.patientForm.get('phoneNumber');
   }
 
   get email() {
     return this.patientForm.get('email');
+  }
+
+  get password() {
+    return this.patientForm.get('password');
   }
 }

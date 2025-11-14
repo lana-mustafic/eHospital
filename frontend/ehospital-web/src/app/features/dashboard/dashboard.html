@@ -98,7 +98,7 @@
             @for (appointment of recentAppointments; track appointment.id) {
               <div class="appointment-item">
                 <div class="appointment-date">
-                  <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.appointmentTime) }}</div>
+                  <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.startTime) }}</div>
                 </div>
                 <div class="appointment-details">
                   <div class="appointment-main">

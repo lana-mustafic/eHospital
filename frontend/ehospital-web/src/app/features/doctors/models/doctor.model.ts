@@ -1,41 +1,23 @@
 export interface Doctor {
-  id?: string;
+  id: number;
+  specialization: string;
   licenseNumber: string;
+  yearsOfExperience: number;
   firstName: string;
   lastName: string;
-  specialty: string;
-  department?: string;
   email: string;
-  phone: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  yearsOfExperience?: number;
-  qualifications?: string;
-  bio?: string;
-  status: 'Active' | 'Inactive' | 'On Leave';
-  schedule?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  departmentName: string;
 }
 
-export interface DoctorFormData {
-  licenseNumber: string;
+export interface CreateDoctorRequest {
+  email: string;
+  password: string;
   firstName: string;
   lastName: string;
-  specialty: string;
-  department: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  phoneNumber: string;
+  specialization: string;
+  licenseNumber: string;
   yearsOfExperience: number;
-  qualifications: string;
-  bio: string;
-  status: 'Active' | 'Inactive' | 'On Leave';
-  schedule: string;
+  departmentId: number;
 }
 

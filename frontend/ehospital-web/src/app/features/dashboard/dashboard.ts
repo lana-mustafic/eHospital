@@ -71,8 +71,8 @@ export class Dashboard implements OnInit {
         // Get recent appointments (last 5, sorted by date)
         this.recentAppointments = data.appointments
           .sort((a, b) => {
-            const dateA = new Date(a.appointmentDate + 'T' + a.appointmentTime);
-            const dateB = new Date(b.appointmentDate + 'T' + b.appointmentTime);
+            const dateA = new Date(`${a.appointmentDate}T${this.normalizeTime(a.startTime)}`);
+            const dateB = new Date(`${b.appointmentDate}T${this.normalizeTime(b.startTime)}`);
             return dateB.getTime() - dateA.getTime();
           })
           .slice(0, 5);
@@ -89,13 +89,20 @@ export class Dashboard implements OnInit {
 
   formatDateTime(date: string, time: string): string {
     if (!date || !time) return '—';
-    const dateObj = new Date(date + 'T' + time);
+    const dateObj = new Date(`${date}T${this.normalizeTime(time)}`);
     return dateObj.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  private normalizeTime(time: string): string {
+    if (!time) {
+      return '00:00:00';
+    }
+    return time.length === 5 ? `${time}:00` : time;
   }
 
   getStatusClass(status: string): string {
