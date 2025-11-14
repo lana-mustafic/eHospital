@@ -20,7 +20,7 @@ public static class DatabaseSeeder
         {
             var adminRoleId = await context.Roles
                 .Where(r => r.Name == "Admin")
-                .Select(r => r.Id)
+                .Select(r => (int?)r.Id)
                 .FirstOrDefaultAsync() ?? 1;
 
             var adminUser = new User
