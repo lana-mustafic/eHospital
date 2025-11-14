@@ -1,50 +1,148 @@
 <div class="dashboard">
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon patients">
-        <span class="material-icons">people</span>
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading dashboard...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="loadDashboardData()">Retry</button>
+    </div>
+  } @else {
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon patients">
+          <span class="material-icons">people</span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ totalPatients }}</h3>
+          <p class="stat-label">Total Patients</p>
+        </div>
       </div>
-      <div class="stat-content">
-        <h3 class="stat-value">0</h3>
-        <p class="stat-label">Total Patients</p>
+
+      <div class="stat-card">
+        <div class="stat-icon doctors">
+          <span class="material-icons">medical_services</span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ totalDoctors }}</h3>
+          <p class="stat-label">Doctors</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon appointments">
+          <span class="material-icons">event</span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ totalAppointments }}</h3>
+          <p class="stat-label">Total Appointments</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon departments">
+          <span class="material-icons">business</span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ totalDepartments }}</h3>
+          <p class="stat-label">Departments</p>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon doctors">
-        <span class="material-icons">medical_services</span>
+    <!-- Additional Stats -->
+    <div class="stats-grid-secondary">
+      <div class="stat-card-small">
+        <div class="stat-icon-small today">
+          <span class="material-icons">today</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ todayAppointments }}</h4>
+          <p class="stat-label-small">Today's Appointments</p>
+        </div>
       </div>
-      <div class="stat-content">
-        <h3 class="stat-value">0</h3>
-        <p class="stat-label">Doctors</p>
+
+      <div class="stat-card-small">
+        <div class="stat-icon-small upcoming">
+          <span class="material-icons">schedule</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ upcomingAppointments }}</h4>
+          <p class="stat-label-small">Upcoming (7 days)</p>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon appointments">
-        <span class="material-icons">event</span>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-value">0</h3>
-        <p class="stat-label">Appointments</p>
-      </div>
-    </div>
+    <!-- Recent Appointments -->
+    <div class="dashboard-content">
+      <div class="content-card">
+        <div class="card-header">
+          <h2>Recent Appointments</h2>
+          <a [routerLink]="['/appointments']" class="view-all-link">
+            View All
+            <span class="material-icons">arrow_forward</span>
+          </a>
+        </div>
 
-    <div class="stat-card">
-      <div class="stat-icon departments">
-        <span class="material-icons">business</span>
+        @if (recentAppointments.length === 0) {
+          <div class="empty-state">
+            <span class="material-icons">event_busy</span>
+            <p>No appointments found</p>
+          </div>
+        } @else {
+          <div class="appointments-list">
+            @for (appointment of recentAppointments; track appointment.id) {
+              <div class="appointment-item">
+                <div class="appointment-date">
+                  <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.appointmentTime) }}</div>
+                </div>
+                <div class="appointment-details">
+                  <div class="appointment-main">
+                    <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                    <span class="separator">•</span>
+                    <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                  </div>
+                  @if (appointment.reason) {
+                    <div class="appointment-reason">{{ appointment.reason }}</div>
+                  }
+                </div>
+                <div class="appointment-status">
+                  <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                    {{ appointment.status }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
-      <div class="stat-content">
-        <h3 class="stat-value">0</h3>
-        <p class="stat-label">Departments</p>
-      </div>
-    </div>
-  </div>
 
-  <div class="dashboard-content">
-    <div class="content-card">
-      <h2>Welcome to eHospital</h2>
-      <p>Your hospital management system is ready. Start by managing your departments, doctors, and patients.</p>
+      <!-- Quick Actions -->
+      <div class="content-card">
+        <h2>Quick Actions</h2>
+        <div class="quick-actions">
+          <a [routerLink]="['/patients']" class="action-button">
+            <span class="material-icons">person_add</span>
+            <span>Add Patient</span>
+          </a>
+          <a [routerLink]="['/doctors']" class="action-button">
+            <span class="material-icons">person_add</span>
+            <span>Add Doctor</span>
+          </a>
+          <a [routerLink]="['/appointments']" class="action-button">
+            <span class="material-icons">event</span>
+            <span>Schedule Appointment</span>
+          </a>
+          <a [routerLink]="['/departments']" class="action-button">
+            <span class="material-icons">business</span>
+            <span>Manage Departments</span>
+          </a>
+        </div>
+      </div>
     </div>
-  </div>
+  }
 </div>
