@@ -2,6 +2,7 @@
 using EHosp.Application.Interfaces;
 using EHosp.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace EHosp.Application.Services
 {
@@ -54,7 +55,7 @@ namespace EHosp.Application.Services
             var user = new User
             {
                 Email = createDoctorDto.Email,
-                PasswordHash = createDoctorDto.Password, // Temporary - will hash later
+                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(createDoctorDto.Password, 13),
                 FirstName = createDoctorDto.FirstName,
                 LastName = createDoctorDto.LastName,
                 PhoneNumber = createDoctorDto.PhoneNumber,

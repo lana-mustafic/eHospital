@@ -2,6 +2,7 @@
 using EHosp.Application.Interfaces;
 using EHosp.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace EHosp.Application.Services
 {
@@ -30,11 +31,10 @@ namespace EHosp.Application.Services
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
         {
-            // TODO: Add password hashing
             var user = new User
             {
                 Email = createUserDto.Email,
-                PasswordHash = createUserDto.Password, // Temporary - will hash later
+                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(createUserDto.Password, 13),
                 FirstName = createUserDto.FirstName,
                 LastName = createUserDto.LastName,
                 PhoneNumber = createUserDto.PhoneNumber,
