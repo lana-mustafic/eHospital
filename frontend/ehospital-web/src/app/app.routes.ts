@@ -5,6 +5,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
+    loadComponent: () => import('./shared/layout/main-layout/main-layout').then(m => m.MainLayoutComponent),
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'patients', loadComponent: () => import('./features/patients/patients').then(m => m.Patients) },
