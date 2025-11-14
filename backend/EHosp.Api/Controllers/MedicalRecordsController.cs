@@ -20,7 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view (assist doctor workflows)
         public async Task<ActionResult<MedicalRecordDto>> GetMedicalRecord(int id)
         {
             var medicalRecord = await _medicalRecordService.GetMedicalRecordByIdAsync(id);
@@ -32,7 +32,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("patient/{patientId}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view assigned patients
         public async Task<ActionResult<IEnumerable<MedicalRecordDto>>> GetMedicalRecordsByPatient(int patientId)
         {
             var medicalRecords = await _medicalRecordService.GetMedicalRecordsByPatientAsync(patientId);
@@ -40,7 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Nurse can view records by doctor
         public async Task<ActionResult<IEnumerable<MedicalRecordDto>>> GetMedicalRecordsByDoctor(int doctorId)
         {
             var medicalRecords = await _medicalRecordService.GetMedicalRecordsByDoctorAsync(doctorId);
@@ -48,7 +48,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("patient/{patientId}/doctor/{doctorId}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Nurse can view
         public async Task<ActionResult<IEnumerable<MedicalRecordDto>>> GetMedicalRecordsByPatientAndDoctor(int patientId, int doctorId)
         {
             var medicalRecords = await _medicalRecordService.GetMedicalRecordsByPatientAndDoctorAsync(patientId, doctorId);
@@ -96,7 +96,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin")] // Only Admin can delete (Nurse cannot delete)
         public async Task<IActionResult> DeleteMedicalRecord(int id)
         {
             try

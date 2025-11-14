@@ -20,7 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Doctor")] // Admin and doctors can see all appointments
+        [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist")] // Staff can see appointments
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointments()
         {
             var appointments = await _appointmentService.GetAppointmentsByDateAsync(DateTime.Today);
@@ -28,7 +28,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")] // All roles can view specific appointments
+        [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist,Patient")] // Staff and patient can view
         public async Task<ActionResult<AppointmentDto>> GetAppointment(int id)
         {
             var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
@@ -40,7 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}/{date}")]
-        [Authorize(Roles = "Admin,Doctor")] // Doctors can see their own schedule
+        [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist")] // Staff can see doctor schedules
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByDoctor(int doctorId, DateTime date)
         {
             var appointments = await _appointmentService.GetAppointmentsByDoctorAsync(doctorId, date);
@@ -56,7 +56,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Patient")] // Patients can book appointments
+        [Authorize(Roles = "Admin,Patient,Receptionist")] // Receptionist can schedule appointments
         public async Task<ActionResult<AppointmentDto>> CreateAppointment(CreateAppointmentDto createAppointmentDto)
         {
             try
@@ -76,7 +76,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,Doctor")] // Doctors can update appointment status
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Medical staff can update appointment status (check-in)
         public async Task<IActionResult> UpdateAppointmentStatus(int id, UpdateAppointmentDto updateAppointmentDto)
         {
             try

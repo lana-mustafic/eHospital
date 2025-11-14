@@ -20,7 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Admin, Doctor, and Nurse can view all patients
         public async Task<ActionResult<IEnumerable<PatientDto>>> GetPatients()
         {
             var patients = await _patientService.GetAllPatientsAsync();
@@ -28,7 +28,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Medical staff and patient can view
         public async Task<ActionResult<PatientDto>> GetPatient(int id)
         {
             var patient = await _patientService.GetPatientByIdAsync(id);
@@ -40,7 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Medical staff can view patients by doctor
         public async Task<ActionResult<IEnumerable<PatientDto>>> GetPatientsByDoctor(int doctorId)
         {
             var patients = await _patientService.GetPatientsByDoctorAsync(doctorId);
@@ -48,7 +48,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Receptionist")] // Receptionist can register new patients
         public async Task<ActionResult<PatientDto>> CreatePatient(CreatePatientDto createPatientDto)
         {
             try
@@ -68,7 +68,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Patient")]
+        [Authorize(Roles = "Admin,Patient,Receptionist")] // Receptionist can update personal data (address, phone)
         public async Task<IActionResult> UpdatePatient(int id, UpdatePatientDto updatePatientDto)
         {
             try

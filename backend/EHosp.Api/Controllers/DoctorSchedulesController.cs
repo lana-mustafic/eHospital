@@ -32,7 +32,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Public - needed for appointment scheduling
         public async Task<ActionResult<IEnumerable<DoctorScheduleDto>>> GetSchedulesByDoctor(
             int doctorId, 
             [FromQuery] bool availableOnly = false)

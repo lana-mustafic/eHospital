@@ -28,7 +28,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Doctor")] // Admin and Doctors can access
+        [Authorize(Roles = "Admin")] // Admin only - user management
         public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);

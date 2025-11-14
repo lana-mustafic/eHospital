@@ -37,9 +37,11 @@ namespace Infrastructure.Data
         {
             // Seed Roles
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "Admin", Description = "System Administrator" },
-                new Role { Id = 2, Name = "Doctor", Description = "Medical Doctor" },
-                new Role { Id = 3, Name = "Patient", Description = "Patient" }
+                new Role { Id = 1, Name = "Admin", Description = "System Administrator - Full access to all features" },
+                new Role { Id = 2, Name = "Doctor", Description = "Medical Doctor - Can view patients, add medical notes, prescribe medications" },
+                new Role { Id = 3, Name = "Patient", Description = "Patient - Can view own data and appointments" },
+                new Role { Id = 4, Name = "Nurse", Description = "Nurse/Technician - Can assist doctors, update vitals, check-in patients" },
+                new Role { Id = 5, Name = "Receptionist", Description = "Receptionist/Front Desk - Can register patients and schedule appointments" }
             );
 
             // Seed Departments

@@ -20,7 +20,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view (cannot prescribe)
         public async Task<ActionResult<PrescriptionDto>> GetPrescription(int id)
         {
             var prescription = await _prescriptionService.GetPrescriptionByIdAsync(id);
@@ -32,7 +32,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("medical-record/{medicalRecordId}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view
         public async Task<ActionResult<IEnumerable<PrescriptionDto>>> GetPrescriptionsByMedicalRecord(int medicalRecordId)
         {
             var prescriptions = await _prescriptionService.GetPrescriptionsByMedicalRecordAsync(medicalRecordId);
@@ -40,7 +40,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("patient/{patientId}")]
-        [Authorize(Roles = "Admin,Doctor,Patient")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view
         public async Task<ActionResult<IEnumerable<PrescriptionDto>>> GetPrescriptionsByPatient(int patientId)
         {
             var prescriptions = await _prescriptionService.GetPrescriptionsByPatientAsync(patientId);
@@ -48,7 +48,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("doctor/{doctorId}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Nurse")] // Nurse can view
         public async Task<ActionResult<IEnumerable<PrescriptionDto>>> GetPrescriptionsByDoctor(int doctorId)
         {
             var prescriptions = await _prescriptionService.GetPrescriptionsByDoctorAsync(doctorId);
@@ -108,7 +108,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin")] // Only Admin can delete (Nurse cannot delete)
         public async Task<IActionResult> DeletePrescription(int id)
         {
             try
