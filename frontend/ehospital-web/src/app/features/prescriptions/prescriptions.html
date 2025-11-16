@@ -1,0 +1,27 @@
+<div class="prescriptions">
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <table *ngIf="!isLoading" class="table">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Medication</th>
+        <th>Dosage</th>
+        <th>Issued</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of prescriptions">
+        <td>{{ p.patientName || p.patientId }}</td>
+        <td>{{ p.doctorName || '—' }}</td>
+        <td>{{ p.medicationName }}</td>
+        <td>{{ p.dosage }}</td>
+        <td>{{ p.issuedAt | date:'short' }}</td>
+      </tr>
+      <tr *ngIf="prescriptions.length === 0">
+        <td colspan="5" class="empty">No prescriptions</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+

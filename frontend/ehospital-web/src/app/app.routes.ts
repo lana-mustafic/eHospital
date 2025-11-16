@@ -71,6 +71,24 @@ export const routes: Routes = [
         data: { roles: ['Admin'] },
         loadComponent: () => import('./features/reports/reports').then(m => m.Reports)
       },
+      {
+        path: 'records',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor'] },
+        loadComponent: () => import('./features/medical-records/medical-records').then(m => m.MedicalRecordsComponent)
+      },
+      {
+        path: 'diagnoses',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor'] },
+        loadComponent: () => import('./features/diagnoses/diagnoses').then(m => m.DiagnosesComponent)
+      },
+      {
+        path: 'prescriptions',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor'] },
+        loadComponent: () => import('./features/prescriptions/prescriptions').then(m => m.PrescriptionsComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

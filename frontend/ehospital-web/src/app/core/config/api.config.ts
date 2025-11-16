@@ -12,6 +12,9 @@ export const API_CONFIG = {
     appointments: '/appointments',
     departments: '/departments',
     medications: '/medications',
+    medicalRecords: '/medicalrecords',
+    diagnoses: '/diagnoses',
+    prescriptions: '/prescriptions',
     reports: '/reports'
   }
 };

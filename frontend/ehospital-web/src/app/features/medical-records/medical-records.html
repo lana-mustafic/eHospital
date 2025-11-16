@@ -1,0 +1,27 @@
+<div class="records">
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <table *ngIf="!isLoading" class="table">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Diagnosis</th>
+        <th>Notes</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of records">
+        <td>{{ r.patientName || r.patientId }}</td>
+        <td>{{ r.doctorName || '—' }}</td>
+        <td>{{ r.diagnosis || '—' }}</td>
+        <td>{{ r.notes || '—' }}</td>
+        <td>{{ r.createdAt | date:'short' }}</td>
+      </tr>
+      <tr *ngIf="records.length === 0">
+        <td colspan="5" class="empty">No records</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
