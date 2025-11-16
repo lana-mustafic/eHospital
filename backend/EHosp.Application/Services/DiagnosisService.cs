@@ -114,6 +114,7 @@ namespace EHosp.Application.Services
             }
 
             await _diagnosisRepository.DeleteAsync(diagnosis);
+            await _auditService.WriteAsync("system", "Doctor", "Delete", "Diagnosis", diagnosis.Id.ToString(), diagnosis.Code);
         }
 
         private static DiagnosisDto MapToDto(Diagnosis diagnosis) => new()

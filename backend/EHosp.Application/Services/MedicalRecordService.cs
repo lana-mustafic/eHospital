@@ -124,6 +124,7 @@ namespace EHosp.Application.Services
             }
 
             await _medicalRecordRepository.DeleteAsync(medicalRecord);
+            await _auditService.WriteAsync("system", "Doctor", "Delete", "MedicalRecord", medicalRecord.Id.ToString(), "Deleted");
         }
 
         private static MedicalRecordDto MapToDto(MedicalRecord medicalRecord) => new()

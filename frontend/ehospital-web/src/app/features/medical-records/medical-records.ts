@@ -53,6 +53,14 @@ export class MedicalRecordsComponent implements OnInit {
     });
   }
 
+  onDelete(r: MedicalRecord) {
+    if (!r.id) return;
+    if (!confirm('Delete this medical record?')) return;
+    this.recordService.delete(r.id).subscribe({
+      next: () => this.reload()
+    });
+  }
+
   resetForm() {
     this.isEdit = false;
     this.editingId = null;

@@ -29,5 +29,9 @@ export class MedicalRecordService {
   update(id: number, payload: Partial<MedicalRecord>): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
   }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }
 

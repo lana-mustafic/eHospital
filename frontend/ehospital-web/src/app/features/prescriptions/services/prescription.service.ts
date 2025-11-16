@@ -30,5 +30,9 @@ export class PrescriptionService {
   update(id: number, payload: Partial<Prescription>): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
   }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }
 

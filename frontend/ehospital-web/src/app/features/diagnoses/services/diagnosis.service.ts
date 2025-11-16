@@ -29,5 +29,9 @@ export class DiagnosisService {
   update(id: number, payload: Partial<Diagnosis>): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
   }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }
 

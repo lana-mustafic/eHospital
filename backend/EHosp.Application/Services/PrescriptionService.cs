@@ -148,6 +148,7 @@ namespace EHosp.Application.Services
             }
 
             await _prescriptionRepository.DeleteAsync(prescription);
+            await _auditService.WriteAsync("system", "Doctor", "Delete", "Prescription", prescription.Id.ToString(), $"MedicationId={prescription.MedicationId}");
         }
 
         private static PrescriptionDto MapToDto(Prescription prescription) => new()

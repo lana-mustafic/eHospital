@@ -27,7 +27,10 @@
         <td>{{ r.diagnosis || '—' }}</td>
         <td>{{ r.notes || '—' }}</td>
         <td>{{ r.createdAt | date:'short' }}</td>
-        <td><button class="btn-small" (click)="edit(r)">Edit</button></td>
+        <td>
+          <button class="btn-small" (click)="edit(r)">Edit</button>
+          <button class="btn-small" (click)="onDelete(r)">Delete</button>
+        </td>
       </tr>
       <tr *ngIf="records.length === 0">
         <td colspan="6" class="empty">No records</td>
