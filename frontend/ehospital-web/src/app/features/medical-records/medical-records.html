@@ -1,4 +1,14 @@
 <div class="records">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <div class="row">
+      <input type="number" placeholder="Patient ID" formControlName="patientId" />
+      <input type="text" placeholder="Diagnosis" formControlName="diagnosis" />
+      <input type="text" placeholder="Notes" formControlName="notes" />
+      <button type="submit" class="btn-primary">{{ isEdit ? 'Update' : 'Create' }}</button>
+      <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="isEdit">Cancel</button>
+    </div>
+  </form>
+
   <div *ngIf="isLoading" class="loading">Loading...</div>
   <table *ngIf="!isLoading" class="table">
     <thead>
@@ -17,9 +27,10 @@
         <td>{{ r.diagnosis || '—' }}</td>
         <td>{{ r.notes || '—' }}</td>
         <td>{{ r.createdAt | date:'short' }}</td>
+        <td><button class="btn-small" (click)="edit(r)">Edit</button></td>
       </tr>
       <tr *ngIf="records.length === 0">
-        <td colspan="5" class="empty">No records</td>
+        <td colspan="6" class="empty">No records</td>
       </tr>
     </tbody>
   </table>

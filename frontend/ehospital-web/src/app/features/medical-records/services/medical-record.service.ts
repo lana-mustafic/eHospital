@@ -21,5 +21,13 @@ export class MedicalRecordService {
   getAll(): Observable<MedicalRecord[]> {
     return this.http.get<MedicalRecord[]>(this.apiUrl);
   }
+
+  create(payload: Partial<MedicalRecord>): Observable<MedicalRecord> {
+    return this.http.post<MedicalRecord>(this.apiUrl, payload);
+  }
+
+  update(id: number, payload: Partial<MedicalRecord>): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
+  }
 }
 

@@ -22,5 +22,13 @@ export class PrescriptionService {
   getAll(): Observable<Prescription[]> {
     return this.http.get<Prescription[]>(this.apiUrl);
   }
+
+  create(payload: Partial<Prescription>): Observable<Prescription> {
+    return this.http.post<Prescription>(this.apiUrl, payload);
+  }
+
+  update(id: number, payload: Partial<Prescription>): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
+  }
 }
 

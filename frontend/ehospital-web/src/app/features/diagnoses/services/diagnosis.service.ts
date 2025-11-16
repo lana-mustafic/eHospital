@@ -21,5 +21,13 @@ export class DiagnosisService {
   getAll(): Observable<Diagnosis[]> {
     return this.http.get<Diagnosis[]>(this.apiUrl);
   }
+
+  create(payload: Partial<Diagnosis>): Observable<Diagnosis> {
+    return this.http.post<Diagnosis>(this.apiUrl, payload);
+  }
+
+  update(id: number, payload: Partial<Diagnosis>): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
+  }
 }
 
