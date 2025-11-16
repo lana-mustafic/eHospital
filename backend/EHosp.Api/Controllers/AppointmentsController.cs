@@ -2,6 +2,7 @@
 using EHosp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EHosp.Api.Controllers
 {
@@ -24,6 +25,26 @@ namespace EHosp.Api.Controllers
         public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointments()
         {
             var appointments = await _appointmentService.GetAppointmentsByDateAsync(DateTime.Today);
+            return Ok(appointments);
+        }
+
+        [HttpGet("patient/me")]
+        [Authorize(Roles = "Patient")]
+        public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetMyAppointments([FromServices] IPatientRepository patientRepository)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user context" });
+            }
+
+            var patient = await patientRepository.GetByUserIdAsync(userId);
+            if (patient == null)
+            {
+                return NotFound(new { message = "Patient profile not found" });
+            }
+
+            var appointments = await _appointmentService.GetAppointmentsByPatientAsync(patient.Id);
             return Ok(appointments);
         }
 

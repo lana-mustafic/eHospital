@@ -6,5 +6,6 @@ namespace EHosp.Application.Interfaces
     {
         Task<Patient?> GetPatientWithDetailsAsync(int id);
         Task<IEnumerable<Patient>> GetPatientsByDoctorAsync(int doctorId);
+        Task<Patient?> GetByUserIdAsync(int userId);
     }
 }

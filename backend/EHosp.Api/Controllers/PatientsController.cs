@@ -2,6 +2,7 @@
 using EHosp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EHosp.Api.Controllers
 {
@@ -17,6 +18,24 @@ namespace EHosp.Api.Controllers
         {
             _patientService = patientService;
             _logger = logger;
+        }
+
+        [HttpGet("me")]
+        [Authorize(Roles = "Patient")]
+        public async Task<ActionResult<PatientDto>> GetMyProfile()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user context" });
+            }
+
+            var patient = await _patientService.GetCurrentPatientAsync(userId);
+            if (patient == null)
+            {
+                return NotFound(new { message = "Patient profile not found" });
+            }
+            return Ok(patient);
         }
 
         [HttpGet]

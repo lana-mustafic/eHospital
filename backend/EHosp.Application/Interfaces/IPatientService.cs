@@ -7,6 +7,7 @@ namespace EHosp.Application.Interfaces
         Task<PatientDto?> GetPatientByIdAsync(int id);
         Task<IEnumerable<PatientDto>> GetAllPatientsAsync();
         Task<IEnumerable<PatientDto>> GetPatientsByDoctorAsync(int doctorId);
+        Task<PatientDto?> GetCurrentPatientAsync(int userId);
         Task<PatientDto> CreatePatientAsync(CreatePatientDto createPatientDto);
         Task UpdatePatientAsync(int id, UpdatePatientDto updatePatientDto);
         Task DeletePatientAsync(int id);

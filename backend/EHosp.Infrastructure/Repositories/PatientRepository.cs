@@ -20,5 +20,9 @@ namespace EHosp.Infrastructure.Repositories
             => await _dbSet.Include(p => p.User)
                           .Where(p => p.Appointments.Any(a => a.DoctorId == doctorId))
                           .ToListAsync();
+
+        public async Task<Patient?> GetByUserIdAsync(int userId)
+            => await _dbSet.Include(p => p.User)
+                           .FirstOrDefaultAsync(p => p.UserId == userId);
     }
 }
