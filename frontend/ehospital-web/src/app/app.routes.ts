@@ -90,6 +90,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/prescriptions/prescriptions').then(m => m.PrescriptionsComponent)
       },
       {
+        path: 'schedules',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor'] },
+        loadComponent: () => import('./features/doctor-schedules/doctor-schedules').then(m => m.DoctorSchedulesComponent)
+      },
+      {
         path: 'audit',
         canActivate: [roleGuard],
         data: { roles: ['Admin'] },

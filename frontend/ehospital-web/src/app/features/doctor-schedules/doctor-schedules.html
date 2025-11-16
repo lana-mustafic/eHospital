@@ -1,0 +1,51 @@
+<div class="schedules">
+  <div class="controls">
+    <label>Doctor</label>
+    <select [(ngModel)]="selectedDoctorId" (change)="loadSchedules()">
+      <option [ngValue]="null">Select doctor...</option>
+      <option *ngFor="let d of doctors" [ngValue]="d.id">{{ d.firstName }} {{ d.lastName }} - {{ d.specialization }}</option>
+    </select>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form" *ngIf="selectedDoctorId">
+    <div class="row">
+      <select formControlName="dayOfWeek">
+        <option *ngFor="let day of days" [ngValue]="day.value">{{ day.label }}</option>
+      </select>
+      <input type="time" formControlName="startTime" />
+      <input type="time" formControlName="endTime" />
+      <label><input type="checkbox" formControlName="isAvailable" /> Available</label>
+      <button type="submit" class="btn-primary">{{ isEdit ? 'Update' : 'Add' }}</button>
+      <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="isEdit">Cancel</button>
+    </div>
+  </form>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <table *ngIf="!isLoading && selectedDoctorId" class="table">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Available</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of schedules">
+        <td>{{ days.find(d=>d.value===s.dayOfWeek)?.label }}</td>
+        <td>{{ s.startTime }}</td>
+        <td>{{ s.endTime }}</td>
+        <td>{{ s.isAvailable ? 'Yes' : 'No' }}</td>
+        <td>
+          <button class="btn-small" (click)="edit(s)">Edit</button>
+          <button class="btn-small" (click)="remove(s)">Delete</button>
+        </td>
+      </tr>
+      <tr *ngIf="schedules.length === 0">
+        <td colspan="5" class="empty">No schedules</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
