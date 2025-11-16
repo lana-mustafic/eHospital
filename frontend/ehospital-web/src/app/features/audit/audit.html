@@ -1,0 +1,31 @@
+<div class="audit">
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <table *ngIf="!isLoading" class="table">
+    <thead>
+      <tr>
+        <th>Time (UTC)</th>
+        <th>Actor</th>
+        <th>Role</th>
+        <th>Action</th>
+        <th>Entity</th>
+        <th>Entity Id</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let log of logs">
+        <td>{{ log.timestampUtc | date:'short' }}</td>
+        <td>{{ log.actorUserId }}</td>
+        <td>{{ log.actorRole }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.entityType }}</td>
+        <td>{{ log.entityId }}</td>
+        <td>{{ log.details }}</td>
+      </tr>
+      <tr *ngIf="logs.length === 0">
+        <td colspan="7" class="empty">No audit entries</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+

@@ -11,17 +11,20 @@ namespace EHosp.Application.Services
         private readonly IPatientRepository _patientRepository;
         private readonly IDoctorRepository _doctorRepository;
         private readonly ILogger<MedicalRecordService> _logger;
+        private readonly IAuditService _auditService;
 
         public MedicalRecordService(
             IMedicalRecordRepository medicalRecordRepository,
             IPatientRepository patientRepository,
             IDoctorRepository doctorRepository,
-            ILogger<MedicalRecordService> logger)
+            ILogger<MedicalRecordService> logger,
+            IAuditService auditService)
         {
             _medicalRecordRepository = medicalRecordRepository;
             _patientRepository = patientRepository;
             _doctorRepository = doctorRepository;
             _logger = logger;
+            _auditService = auditService;
         }
 
         public async Task<MedicalRecordDto?> GetMedicalRecordByIdAsync(int id)
@@ -77,6 +80,7 @@ namespace EHosp.Application.Services
             };
 
             var createdMedicalRecord = await _medicalRecordRepository.AddAsync(medicalRecord);
+            await _auditService.WriteAsync("system", "Doctor", "Create", "MedicalRecord", createdMedicalRecord.Id.ToString(), $"PatientId={createdMedicalRecord.PatientId}");
             var medicalRecordWithDetails = await _medicalRecordRepository.GetMedicalRecordWithDetailsAsync(createdMedicalRecord.Id);
             return MapToDto(medicalRecordWithDetails!);
         }
@@ -101,6 +105,7 @@ namespace EHosp.Application.Services
                 medicalRecord.DiagnosisId = updateMedicalRecordDto.DiagnosisId;
 
             await _medicalRecordRepository.UpdateAsync(medicalRecord);
+            await _auditService.WriteAsync("system", "Doctor", "Update", "MedicalRecord", medicalRecord.Id.ToString(), "Updated fields");
         }
 
         public async Task DeleteMedicalRecordAsync(int id)

@@ -99,11 +99,15 @@ namespace EHosp.Api.Controllers
 
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist")] // Receptionist can perform check-in
-        public async Task<IActionResult> UpdateAppointmentStatus(int id, UpdateAppointmentDto updateAppointmentDto)
+        public async Task<IActionResult> UpdateAppointmentStatus(int id, UpdateAppointmentDto updateAppointmentDto, [FromServices] IAuditService auditService)
         {
             try
             {
                 await _appointmentService.UpdateAppointmentStatusAsync(id, updateAppointmentDto);
+
+                var actorId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+                var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
+                await auditService.WriteAsync(actorId, actorRole, "UpdateStatus", "Appointment", id.ToString(), $"Status={updateAppointmentDto.Status}");
                 return NoContent();
             }
             catch (ArgumentException ex)
@@ -119,7 +123,7 @@ namespace EHosp.Api.Controllers
 
         [HttpPut("{id}/cancel")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> CancelMyAppointment(int id, [FromServices] IPatientRepository patientRepository)
+        public async Task<IActionResult> CancelMyAppointment(int id, [FromServices] IPatientRepository patientRepository, [FromServices] IAuditService auditService)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
@@ -148,12 +152,13 @@ namespace EHosp.Api.Controllers
 
             var dto = new UpdateAppointmentDto { Status = "Cancelled" };
             await _appointmentService.UpdateAppointmentStatusAsync(id, dto);
+            await auditService.WriteAsync(userIdClaim, "Patient", "Cancel", "Appointment", id.ToString(), "Cancelled by patient");
             return NoContent();
         }
 
         [HttpPut("{id}/reschedule")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> RescheduleMyAppointment(int id, RescheduleAppointmentDto rescheduleDto, [FromServices] IPatientRepository patientRepository)
+        public async Task<IActionResult> RescheduleMyAppointment(int id, RescheduleAppointmentDto rescheduleDto, [FromServices] IPatientRepository patientRepository, [FromServices] IAuditService auditService)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
@@ -174,6 +179,7 @@ namespace EHosp.Api.Controllers
             }
 
             await _appointmentService.RescheduleAppointmentAsync(id, rescheduleDto);
+            await auditService.WriteAsync(userIdClaim, "Patient", "Reschedule", "Appointment", id.ToString(), $"{rescheduleDto.AppointmentDate:yyyy-MM-dd} {rescheduleDto.StartTime}-{rescheduleDto.EndTime}");
             return NoContent();
         }
 

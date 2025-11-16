@@ -12,19 +12,22 @@ namespace EHosp.Application.Services
         private readonly IMedicationRepository _medicationRepository;
         private readonly IDoctorRepository _doctorRepository;
         private readonly ILogger<PrescriptionService> _logger;
+        private readonly IAuditService _auditService;
 
         public PrescriptionService(
             IPrescriptionRepository prescriptionRepository,
             IMedicalRecordRepository medicalRecordRepository,
             IMedicationRepository medicationRepository,
             IDoctorRepository doctorRepository,
-            ILogger<PrescriptionService> logger)
+            ILogger<PrescriptionService> logger,
+            IAuditService auditService)
         {
             _prescriptionRepository = prescriptionRepository;
             _medicalRecordRepository = medicalRecordRepository;
             _medicationRepository = medicationRepository;
             _doctorRepository = doctorRepository;
             _logger = logger;
+            _auditService = auditService;
         }
 
         public async Task<PrescriptionDto?> GetPrescriptionByIdAsync(int id)
@@ -110,6 +113,7 @@ namespace EHosp.Application.Services
             };
 
             var createdPrescription = await _prescriptionRepository.AddAsync(prescription);
+            await _auditService.WriteAsync("system", "Doctor", "Create", "Prescription", createdPrescription.Id.ToString(), $"MedicationId={createdPrescription.MedicationId}");
             var prescriptionWithDetails = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(createdPrescription.Id);
             return MapToDto(prescriptionWithDetails!);
         }
@@ -132,6 +136,7 @@ namespace EHosp.Application.Services
                 prescription.Instructions = updatePrescriptionDto.Instructions;
 
             await _prescriptionRepository.UpdateAsync(prescription);
+            await _auditService.WriteAsync("system", "Doctor", "Update", "Prescription", prescription.Id.ToString(), "Updated fields");
         }
 
         public async Task DeletePrescriptionAsync(int id)

@@ -21,6 +21,7 @@ namespace Infrastructure.Data
         public DbSet<Diagnosis> Diagnoses { get; set; }
         public DbSet<Medication> Medications { get; set; }
         public DbSet<Prescription> Prescriptions { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

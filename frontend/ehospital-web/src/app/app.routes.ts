@@ -89,6 +89,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Doctor'] },
         loadComponent: () => import('./features/prescriptions/prescriptions').then(m => m.PrescriptionsComponent)
       },
+      {
+        path: 'audit',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] },
+        loadComponent: () => import('./features/audit/audit').then(m => m.AuditComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

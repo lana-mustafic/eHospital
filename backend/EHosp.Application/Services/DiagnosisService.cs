@@ -9,11 +9,13 @@ namespace EHosp.Application.Services
     {
         private readonly IDiagnosisRepository _diagnosisRepository;
         private readonly ILogger<DiagnosisService> _logger;
+        private readonly IAuditService _auditService;
 
-        public DiagnosisService(IDiagnosisRepository diagnosisRepository, ILogger<DiagnosisService> logger)
+        public DiagnosisService(IDiagnosisRepository diagnosisRepository, ILogger<DiagnosisService> logger, IAuditService auditService)
         {
             _diagnosisRepository = diagnosisRepository;
             _logger = logger;
+            _auditService = auditService;
         }
 
         public async Task<DiagnosisDto?> GetDiagnosisByIdAsync(int id)
@@ -62,6 +64,7 @@ namespace EHosp.Application.Services
             };
 
             var createdDiagnosis = await _diagnosisRepository.AddAsync(diagnosis);
+            await _auditService.WriteAsync("system", "Doctor", "Create", "Diagnosis", createdDiagnosis.Id.ToString(), createdDiagnosis.Code);
             return MapToDto(createdDiagnosis);
         }
 
@@ -91,6 +94,7 @@ namespace EHosp.Application.Services
                 diagnosis.Description = updateDiagnosisDto.Description;
 
             await _diagnosisRepository.UpdateAsync(diagnosis);
+            await _auditService.WriteAsync("system", "Doctor", "Update", "Diagnosis", diagnosis.Id.ToString(), "Updated fields");
         }
 
         public async Task DeleteDiagnosisAsync(int id)
