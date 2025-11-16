@@ -1,6 +1,6 @@
 <div class="my-profile">
   <div *ngIf="isLoading" class="loading">Loading...</div>
-  <div *ngIf="!isLoading && me" class="card">
+  <div *ngIf="!isLoading && me && !isEdit" class="card">
     <h3>{{ me.firstName }} {{ me.lastName }}</h3>
     <div class="row"><span>Email</span><strong>{{ me.email }}</strong></div>
     <div class="row"><span>Phone</span><strong>{{ me.phoneNumber }}</strong></div>
@@ -9,6 +9,28 @@
     <div class="row"><span>Blood Type</span><strong>{{ me.bloodType || '—' }}</strong></div>
     <div class="row"><span>Address</span><strong>{{ me.address || '—' }}</strong></div>
     <div class="row"><span>Emergency Contact</span><strong>{{ me.emergencyContact || '—' }}</strong></div>
+    <button class="btn-primary" (click)="startEdit()">Edit</button>
+  </div>
+
+  <form *ngIf="!isLoading && me && isEdit" [formGroup]="form" (ngSubmit)="save()" class="card">
+    <h3>Edit Contact Info</h3>
+    <div class="row">
+      <span>Phone</span>
+      <input type="text" formControlName="phoneNumber" />
+    </div>
+    <div class="row">
+      <span>Address</span>
+      <input type="text" formControlName="address" />
+    </div>
+    <div class="row">
+      <span>Emergency Contact</span>
+      <input type="text" formControlName="emergencyContact" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">Save</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
   </div>
 </div>
 

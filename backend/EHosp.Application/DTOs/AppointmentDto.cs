@@ -46,5 +46,17 @@ namespace EHosp.Application.DTOs
         [StringLength(1000)]
         public string? Notes { get; set; }
     }
+
+    public class RescheduleAppointmentDto
+    {
+        [Required]
+        public DateTime AppointmentDate { get; set; }
+
+        [Required]
+        public TimeSpan StartTime { get; set; }
+
+        [Required]
+        public TimeSpan EndTime { get; set; }
+    }
 }
     

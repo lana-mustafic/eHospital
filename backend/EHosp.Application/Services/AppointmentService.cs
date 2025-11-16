@@ -92,6 +92,29 @@ namespace EHosp.Application.Services
         public async Task<bool> IsTimeSlotAvailableAsync(int doctorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
             => await _appointmentRepository.IsTimeSlotAvailableAsync(doctorId, date, startTime, endTime);
 
+        public async Task RescheduleAppointmentAsync(int id, RescheduleAppointmentDto rescheduleAppointmentDto)
+        {
+            var appointment = await _appointmentRepository.GetByIdAsync(id);
+            if (appointment == null) throw new ArgumentException("Appointment not found");
+
+            // Ensure new time slot is available for the same doctor
+            var isAvailable = await _appointmentRepository.IsTimeSlotAvailableAsync(
+                appointment.DoctorId,
+                rescheduleAppointmentDto.AppointmentDate,
+                rescheduleAppointmentDto.StartTime,
+                rescheduleAppointmentDto.EndTime);
+
+            if (!isAvailable)
+            {
+                throw new ArgumentException("The selected time slot is not available");
+            }
+
+            appointment.AppointmentDate = rescheduleAppointmentDto.AppointmentDate;
+            appointment.StartTime = rescheduleAppointmentDto.StartTime;
+            appointment.EndTime = rescheduleAppointmentDto.EndTime;
+            // keep status as Scheduled unless business rules say otherwise
+            await _appointmentRepository.UpdateAsync(appointment);
+        }
         private static AppointmentDto MapToDto(Appointment appointment) => new()
         {
             Id = appointment.Id,

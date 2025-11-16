@@ -3,6 +3,7 @@ using EHosp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using EHosp.Application.Interfaces;
 
 namespace EHosp.Api.Controllers
 {
@@ -114,6 +115,66 @@ namespace EHosp.Api.Controllers
                 _logger.LogError(ex, "Error updating appointment status");
                 return BadRequest(new { message = "Error updating appointment", error = ex.Message });
             }
+        }
+
+        [HttpPut("{id}/cancel")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> CancelMyAppointment(int id, [FromServices] IPatientRepository patientRepository)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user context" });
+            }
+
+            var patient = await patientRepository.GetByUserIdAsync(userId);
+            if (patient == null)
+            {
+                return NotFound(new { message = "Patient profile not found" });
+            }
+
+            var appt = await _appointmentService.GetAppointmentByIdAsync(id);
+            if (appt == null || appt.PatientName == null)
+            {
+                return NotFound(new { message = "Appointment not found" });
+            }
+
+            // Basic ownership check: service returns names; ensure appointment belongs to patient by querying service list
+            var myAppointments = await _appointmentService.GetAppointmentsByPatientAsync(patient.Id);
+            if (!myAppointments.Any(a => a.Id == id))
+            {
+                return Forbid();
+            }
+
+            var dto = new UpdateAppointmentDto { Status = "Cancelled" };
+            await _appointmentService.UpdateAppointmentStatusAsync(id, dto);
+            return NoContent();
+        }
+
+        [HttpPut("{id}/reschedule")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> RescheduleMyAppointment(int id, RescheduleAppointmentDto rescheduleDto, [FromServices] IPatientRepository patientRepository)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user context" });
+            }
+
+            var patient = await patientRepository.GetByUserIdAsync(userId);
+            if (patient == null)
+            {
+                return NotFound(new { message = "Patient profile not found" });
+            }
+
+            var myAppointments = await _appointmentService.GetAppointmentsByPatientAsync(patient.Id);
+            if (!myAppointments.Any(a => a.Id == id))
+            {
+                return Forbid();
+            }
+
+            await _appointmentService.RescheduleAppointmentAsync(id, rescheduleDto);
+            return NoContent();
         }
 
         [HttpGet("availability/{doctorId}/{date}/{startTime}/{endTime}")]

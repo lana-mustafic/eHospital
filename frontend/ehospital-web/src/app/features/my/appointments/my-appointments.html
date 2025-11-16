@@ -17,11 +17,37 @@
         <td>{{ a.doctorName }}</td>
         <td>{{ a.status }}</td>
         <td>{{ a.reason || '—' }}</td>
+        <td class="actions" *ngIf="a.status === 'Scheduled'">
+          <button class="btn-secondary" (click)="cancel(a)">Cancel</button>
+          <button class="btn-primary" (click)="openReschedule(a)">Reschedule</button>
+        </td>
       </tr>
       <tr *ngIf="appointments.length === 0">
-        <td colspan="5" class="empty">No appointments found</td>
+        <td colspan="6" class="empty">No appointments found</td>
       </tr>
     </tbody>
   </table>
+
+  <div class="modal" *ngIf="showReschedule">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Reschedule Appointment</h3>
+      <form (ngSubmit)="submitReschedule()">
+        <div class="row">
+          <label>Date</label>
+          <input type="date" [(ngModel)]="rescheduleDate" name="date" required />
+        </div>
+        <div class="row">
+          <label>Start</label>
+          <input type="time" [(ngModel)]="rescheduleStart" name="start" required />
+          <label>End</label>
+          <input type="time" [(ngModel)]="rescheduleEnd" name="end" required />
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn-primary">Save</button>
+          <button type="button" class="btn-secondary" (click)="closeReschedule()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 

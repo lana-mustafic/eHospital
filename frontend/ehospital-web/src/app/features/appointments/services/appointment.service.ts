@@ -31,5 +31,13 @@ export class AppointmentService {
   updateStatus(id: number, payload: UpdateAppointmentStatusRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/status`, payload);
   }
+
+  cancelMine(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/cancel`, {});
+  }
+
+  rescheduleMine(id: number, payload: { appointmentDate: string; startTime: string; endTime: string }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/reschedule`, payload);
+  }
 }
 

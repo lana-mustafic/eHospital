@@ -11,5 +11,6 @@ namespace EHosp.Application.Interfaces
         Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto createAppointmentDto);
         Task UpdateAppointmentStatusAsync(int id, UpdateAppointmentDto updateAppointmentDto);
         Task<bool> IsTimeSlotAvailableAsync(int doctorId, DateTime date, TimeSpan startTime, TimeSpan endTime);
+        Task RescheduleAppointmentAsync(int id, RescheduleAppointmentDto rescheduleAppointmentDto);
     }
 }
