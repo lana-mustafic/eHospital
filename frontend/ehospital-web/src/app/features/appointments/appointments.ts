@@ -8,6 +8,7 @@ import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { Patient } from '../patients/models/patient.model';
 import { Doctor } from '../doctors/models/doctor.model';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-appointments',
@@ -34,7 +35,8 @@ export class AppointmentsComponent implements OnInit {
     private appointmentService: AppointmentService,
     private patientService: PatientService,
     private doctorService: DoctorService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService: AuthService
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -146,6 +148,8 @@ export class AppointmentsComponent implements OnInit {
     switch (status) {
       case 'Scheduled':
         return 'status-scheduled';
+      case 'Checked-In':
+        return 'status-checkedin';
       case 'Completed':
         return 'status-completed';
       case 'Cancelled':
@@ -164,6 +168,25 @@ export class AppointmentsComponent implements OnInit {
     return appointmentDateTime < new Date();
   }
 
+  canQuickCheckIn(appointment: Appointment): boolean {
+    const isReception = this.authService.hasRole('Receptionist');
+    if (!isReception) return false;
+    if (appointment.status !== 'Scheduled') return false;
+    return true;
+  }
+
+  quickCheckIn(appointment: Appointment) {
+    if (!appointment.id) return;
+    const payload: UpdateAppointmentStatusRequest = { status: 'Checked-In' };
+    this.appointmentService.updateStatus(appointment.id, payload).subscribe({
+      next: () => {
+        this.loadAppointments();
+      },
+      error: (error) => {
+        console.error('Error checking in appointment:', error);
+      }
+    });
+  }
   getTodayDate(): string {
     return new Date().toISOString().split('T')[0];
   }

@@ -97,7 +97,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,Doctor,Nurse")] // Medical staff can update appointment status (check-in)
+        [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist")] // Receptionist can perform check-in
         public async Task<IActionResult> UpdateAppointmentStatus(int id, UpdateAppointmentDto updateAppointmentDto)
         {
             try
