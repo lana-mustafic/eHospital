@@ -9,30 +9,39 @@
     </div>
   </form>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
-  <table *ngIf="!isLoading" class="table">
-    <thead>
-      <tr>
-        <th>Patient</th>
-        <th>Doctor</th>
-        <th>Condition</th>
-        <th>Notes</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let d of diagnoses">
-        <td>{{ d.patientName || d.patientId }}</td>
-        <td>{{ d.doctorName || '—' }}</td>
-        <td>{{ d.condition }}</td>
-        <td>{{ d.notes || '—' }}</td>
-        <td>{{ d.createdAt | date:'short' }}</td>
-        <td><button class="btn-small" (click)="edit(d)">Edit</button></td>
-      </tr>
-      <tr *ngIf="diagnoses.length === 0">
-        <td colspan="6" class="empty">No diagnoses</td>
-      </tr>
-    </tbody>
-  </table>
+  @if (isLoading) {
+    <div class="loading">Loading...</div>
+  }
+  @if (!isLoading) {
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Condition</th>
+          <th>Notes</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of diagnoses; track d.id) {
+          <tr>
+            <td>{{ d.patientName || d.patientId }}</td>
+            <td>{{ d.doctorName || '—' }}</td>
+            <td>{{ d.condition }}</td>
+            <td>{{ d.notes || '—' }}</td>
+            <td>{{ d.createdAt | date:'short' }}</td>
+            <td><button class="btn-small" (click)="edit(d)">Edit</button></td>
+          </tr>
+        }
+        @if (diagnoses.length === 0) {
+          <tr>
+            <td colspan="6" class="empty">No diagnoses</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 </div>
 
