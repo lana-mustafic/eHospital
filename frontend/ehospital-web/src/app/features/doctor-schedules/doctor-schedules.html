@@ -33,7 +33,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let s of schedules">
-        <td>{{ days.find(d=>d.value===s.dayOfWeek)?.label }}</td>
+        <td>{{ dayLabel(s.dayOfWeek) }}</td>
         <td>{{ s.startTime }}</td>
         <td>{{ s.endTime }}</td>
         <td>{{ s.isAvailable ? 'Yes' : 'No' }}</td>

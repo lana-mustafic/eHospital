@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { DoctorSchedule, DoctorScheduleService } from './services/doctor-schedule.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { Doctor } from '../doctors/models/doctor.model';
@@ -8,7 +9,7 @@ import { Doctor } from '../doctors/models/doctor.model';
 @Component({
   selector: 'app-doctor-schedules',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './doctor-schedules.html',
   styleUrls: ['./doctor-schedules.scss']
 })
@@ -107,6 +108,11 @@ export class DoctorSchedulesComponent implements OnInit {
 
   private hhmm(t: string): string {
     return t.length === 5 ? t : t.slice(0, 5);
+  }
+
+  dayLabel(day: number): string {
+    const found = this.days.find(d => d.value === day);
+    return found ? found.label : '';
   }
 }
 
