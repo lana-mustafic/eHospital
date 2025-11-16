@@ -19,6 +19,8 @@ export class MyAppointmentsComponent implements OnInit {
   rescheduleDate = '';
   rescheduleStart = '';
   rescheduleEnd = '';
+  rescheduleDoctorId: number | null = null;
+  slots: { start: string; end: string; available: boolean }[] = [];
 
   constructor(private appointmentService: AppointmentService) {}
 
@@ -46,7 +48,9 @@ export class MyAppointmentsComponent implements OnInit {
     this.rescheduleDate = a.appointmentDate;
     this.rescheduleStart = a.startTime.length === 5 ? a.startTime : a.startTime.slice(0,5);
     this.rescheduleEnd = a.endTime.length === 5 ? a.endTime : a.endTime.slice(0,5);
+    this.rescheduleDoctorId = a.doctorId || null;
     this.showReschedule = true;
+    this.loadSlots();
   }
 
   closeReschedule() {
@@ -71,6 +75,41 @@ export class MyAppointmentsComponent implements OnInit {
 
   private normalize(t: string): string {
     return t.length === 5 ? `${t}:00` : t;
+  }
+
+  onDateChange() {
+    this.loadSlots();
+  }
+
+  selectSlot(slot: { start: string; end: string; available: boolean }) {
+    if (!slot.available) return;
+    this.rescheduleStart = slot.start;
+    this.rescheduleEnd = slot.end;
+  }
+
+  private loadSlots() {
+    if (!this.rescheduleDoctorId || !this.rescheduleDate) {
+      this.slots = [];
+      return;
+    }
+    const startHour = 8;
+    const endHour = 17;
+    const stepMinutes = 30;
+    const temp: { start: string; end: string; available: boolean }[] = [];
+    for (let h = startHour; h < endHour; h++) {
+      for (let m = 0; m < 60; m += stepMinutes) {
+        const start = `${('0'+h).slice(-2)}:${('0'+m).slice(-2)}:00`;
+        const endDate = new Date(0,0,0,h,m + stepMinutes);
+        const end = `${('0'+endDate.getHours()).slice(-2)}:${('0'+endDate.getMinutes()).slice(-2)}:00`;
+        temp.push({ start, end, available: false });
+      }
+    }
+    this.slots = temp;
+    // Check availability per slot (simple sequential requests)
+    temp.forEach((s, idx) => {
+      this.appointmentService.isAvailable(this.rescheduleDoctorId!, this.rescheduleDate, s.start, s.end)
+        .subscribe({ next: (ok) => { this.slots[idx].available = ok; } });
+    });
   }
 }
 

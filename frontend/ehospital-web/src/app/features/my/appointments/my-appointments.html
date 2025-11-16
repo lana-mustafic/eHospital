@@ -34,13 +34,20 @@
       <form (ngSubmit)="submitReschedule()">
         <div class="row">
           <label>Date</label>
-          <input type="date" [(ngModel)]="rescheduleDate" name="date" required />
+          <input type="date" [(ngModel)]="rescheduleDate" name="date" required (change)="onDateChange()" />
         </div>
-        <div class="row">
-          <label>Start</label>
-          <input type="time" [(ngModel)]="rescheduleStart" name="start" required />
-          <label>End</label>
-          <input type="time" [(ngModel)]="rescheduleEnd" name="end" required />
+        <div class="row slots">
+          <label>Available slots</label>
+          <div class="slot-list">
+            <button type="button"
+                    class="slot"
+                    *ngFor="let s of slots"
+                    [disabled]="!s.available"
+                    [class.selected]="s.start === rescheduleStart && s.end === rescheduleEnd"
+                    (click)="selectSlot(s)">
+              {{ s.start.slice(0,5) }} - {{ s.end.slice(0,5) }}
+            </button>
+          </div>
         </div>
         <div class="actions">
           <button type="submit" class="btn-primary">Save</button>

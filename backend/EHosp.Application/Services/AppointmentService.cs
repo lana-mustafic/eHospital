@@ -124,6 +124,7 @@ namespace EHosp.Application.Services
             Status = appointment.Status,
             Reason = appointment.Reason,
             Notes = appointment.Notes,
+            DoctorId = appointment.DoctorId,
             PatientName = $"{appointment.Patient?.User?.FirstName} {appointment.Patient?.User?.LastName}",
             DoctorName = $"{appointment.Doctor?.User?.FirstName} {appointment.Doctor?.User?.LastName}",
             DoctorSpecialization = appointment.Doctor?.Specialization ?? string.Empty
