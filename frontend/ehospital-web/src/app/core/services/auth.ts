@@ -119,10 +119,22 @@ export class AuthService {
   }
 
   fetchCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.me}`).pipe(
-      tap(user => {
+    return this.http.get<any>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.me}`).pipe(
+      // Normalize API UserDto -> frontend User
+      tap((dto) => {
+        const user: User = {
+          id: (dto.id ?? dto.userId ?? '').toString(),
+          email: dto.email ?? '',
+          name: `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim() || (dto.name ?? 'User'),
+          role: dto.roleName ?? dto.role ?? 'user'
+        };
         this.setUser(user);
         this.currentUserSubject.next(user);
+      }),
+      // Return the normalized user as the observable value
+      switchMap(() => {
+        const u = this.getCurrentUser();
+        return u ? new Observable<User>(obs => { obs.next(u); obs.complete(); }) : throwError(() => new Error('Failed to load user'));
       })
     );
   }
@@ -132,7 +144,11 @@ export class AuthService {
     if (!user) {
       return false;
     }
-    return roles.map(r => r.toLowerCase()).includes(user.role.toLowerCase());
+    const userRole = (user.role ?? '').toLowerCase();
+    if (!userRole) {
+      return false;
+    }
+    return roles.some(r => (r ?? '').toLowerCase() === userRole);
   }
 
   private setToken(token: string): void {
