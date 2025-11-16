@@ -1,0 +1,23 @@
+<div class="my-home">
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <section *ngIf="me" class="card">
+    <h3>Welcome, {{ me.firstName }} {{ me.lastName }}</h3>
+    <p>Email: {{ me.email }}</p>
+    <p>Phone: {{ me.phoneNumber }}</p>
+  </section>
+
+  <section class="card">
+    <h3>Upcoming Appointments</h3>
+    <div *ngIf="upcoming.length === 0" class="empty">No upcoming appointments</div>
+    <ul *ngIf="upcoming.length > 0" class="list">
+      <li *ngFor="let a of upcoming">
+        <strong>{{ a.appointmentDate }}</strong>
+        <span>{{ a.startTime }} - {{ a.endTime }}</span>
+        <span>{{ a.doctorName }}</span>
+        <span class="status">{{ a.status }}</span>
+      </li>
+    </ul>
+  </section>
+</div>
+

@@ -4,6 +4,27 @@ import { roleGuard } from './core/guards/role-guard';
 
 export const routes: Routes = [
   {
+    path: 'my',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Patient'] },
+    loadComponent: () => import('./features/my/layout/my-layout').then(m => m.MyLayoutComponent),
+    children: [
+      {
+        path: 'home',
+        loadComponent: () => import('./features/my/home/my-home').then(m => m.MyHomeComponent)
+      },
+      {
+        path: 'appointments',
+        loadComponent: () => import('./features/my/appointments/my-appointments').then(m => m.MyAppointmentsComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/my/profile/my-profile').then(m => m.MyProfileComponent)
+      },
+      { path: '', redirectTo: 'home', pathMatch: 'full' }
+    ]
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./shared/layout/main-layout/main-layout').then(m => m.MainLayoutComponent),

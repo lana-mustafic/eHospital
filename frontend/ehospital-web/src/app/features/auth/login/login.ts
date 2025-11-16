@@ -51,8 +51,15 @@ export class LoginComponent implements OnInit {
     const { email, password } = this.loginForm.value;
 
     this.authService.login({ email, password }).subscribe({
-      next: () => {
-        this.router.navigate([this.returnUrl]);
+      next: (user) => {
+        // If role is Patient, route to patient portal unless an explicit returnUrl was set
+        if (!this.returnUrl || this.returnUrl === '/dashboard') {
+          if (user && user.role && user.role.toLowerCase() === 'patient') {
+            this.router.navigate(['/my/home']);
+            return;
+          }
+        }
+        this.router.navigate([this.returnUrl || '/dashboard']);
       },
       error: (error) => {
         console.error('Login error:', error);

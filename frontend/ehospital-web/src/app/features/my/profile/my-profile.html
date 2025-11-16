@@ -1,0 +1,14 @@
+<div class="my-profile">
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <div *ngIf="!isLoading && me" class="card">
+    <h3>{{ me.firstName }} {{ me.lastName }}</h3>
+    <div class="row"><span>Email</span><strong>{{ me.email }}</strong></div>
+    <div class="row"><span>Phone</span><strong>{{ me.phoneNumber }}</strong></div>
+    <div class="row"><span>Date of Birth</span><strong>{{ me.dateOfBirth | date }}</strong></div>
+    <div class="row"><span>Gender</span><strong>{{ me.gender }}</strong></div>
+    <div class="row"><span>Blood Type</span><strong>{{ me.bloodType || '—' }}</strong></div>
+    <div class="row"><span>Address</span><strong>{{ me.address || '—' }}</strong></div>
+    <div class="row"><span>Emergency Contact</span><strong>{{ me.emergencyContact || '—' }}</strong></div>
+  </div>
+</div>
+
