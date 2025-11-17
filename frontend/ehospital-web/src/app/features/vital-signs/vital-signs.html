@@ -1,0 +1,365 @@
+<div class="vital-signs-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Vital Signs</h2>
+      <p>Record and manage patient vital signs measurements</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Record Vital Signs
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by patient name or notes..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredVitalSigns.length }} record(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="10" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Vital Signs Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="vital-signs-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Blood Pressure</th>
+            <th>Temperature</th>
+            <th>Heart Rate</th>
+            <th>Respiratory Rate</th>
+            <th>Weight</th>
+            <th>Height</th>
+            <th>SpO2</th>
+            <th>Glucose</th>
+            <th>BMI</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (vs of paginatedVitalSigns; track vs.id) {
+            <tr>
+              <td class="name-cell">
+                <strong>{{ vs.patientName || 'Patient #' + vs.patientId }}</strong>
+              </td>
+              <td>{{ vs.recordedDate | date:'short' }}</td>
+              <td>
+                @if (vs.bloodPressure) {
+                  <span class="value-badge">{{ vs.bloodPressure }}</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.temperature) {
+                  <span class="value-badge">{{ vs.temperature }}°C</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.heartRate) {
+                  <span class="value-badge">{{ vs.heartRate }} bpm</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.respiratoryRate) {
+                  <span class="value-badge">{{ vs.respiratoryRate }}</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.weight) {
+                  <span class="value-badge">{{ vs.weight }} kg</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.height) {
+                  <span class="value-badge">{{ vs.height }} cm</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.oxygenSaturation) {
+                  <span class="value-badge">{{ vs.oxygenSaturation }}%</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.bloodGlucose) {
+                  <span class="value-badge">{{ vs.bloodGlucose }} mg/dL</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td>
+                @if (vs.bmiIfAvailable) {
+                  <span class="value-badge bmi-badge">{{ vs.bmiIfAvailable }}</span>
+                } @else {
+                  <span class="empty-value">—</span>
+                }
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditModal(vs)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteVitalSigns(vs)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (filteredVitalSigns.length === 0) {
+            <tr>
+              <td colspan="12" class="empty-state">
+                <div class="empty-state-content">
+                  <span class="material-icons">monitor_heart</span>
+                  <h3>No vital signs found</h3>
+                  <p>
+                    @if (searchTerm || patientFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No vital signs have been recorded yet
+                    }
+                  </p>
+                  @if (!searchTerm && !patientFilter) {
+                    <button class="btn-primary" (click)="openAddModal()">
+                      <span class="material-icons">add</span>
+                      Record First Vital Signs
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages > 1) {
+      <div class="pagination-controls">
+        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        @for (page of [].constructor(totalPages); track $index) {
+          <button
+            class="btn-pagination"
+            [class.active]="currentPage === $index + 1"
+            (click)="goToPage($index + 1)"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Add/Edit Vital Signs Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEdit ? 'Edit Vital Signs' : 'Record New Vital Signs' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="patientId">Patient <span class="required">*</span></label>
+              <select
+                id="patientId"
+                formControlName="patientId"
+                [class.error]="form.get('patientId')?.invalid && form.get('patientId')?.touched"
+              >
+                <option value="">Select Patient</option>
+                @for (patient of patients; track patient.id) {
+                  <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                }
+              </select>
+              @if (form.get('patientId')?.invalid && form.get('patientId')?.touched) {
+                <span class="error-message">Patient is required</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="recordedDate">Recorded Date & Time <span class="required">*</span></label>
+              <input
+                id="recordedDate"
+                type="datetime-local"
+                formControlName="recordedDate"
+                [class.error]="form.get('recordedDate')?.invalid && form.get('recordedDate')?.touched"
+              />
+              @if (form.get('recordedDate')?.invalid && form.get('recordedDate')?.touched) {
+                <span class="error-message">Recorded date is required</span>
+              }
+            </div>
+
+            <div class="form-section">
+              <h4>Vital Signs Measurements</h4>
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label for="bloodPressureSystolic">BP Systolic (mmHg)</label>
+                  <input
+                    id="bloodPressureSystolic"
+                    type="number"
+                    formControlName="bloodPressureSystolic"
+                    placeholder="e.g., 120"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="bloodPressureDiastolic">BP Diastolic (mmHg)</label>
+                  <input
+                    id="bloodPressureDiastolic"
+                    type="number"
+                    formControlName="bloodPressureDiastolic"
+                    placeholder="e.g., 80"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label for="temperature">Temperature (°C)</label>
+                  <input
+                    id="temperature"
+                    type="number"
+                    step="0.1"
+                    formControlName="temperature"
+                    placeholder="e.g., 36.5"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="heartRate">Heart Rate (bpm)</label>
+                  <input
+                    id="heartRate"
+                    type="number"
+                    formControlName="heartRate"
+                    placeholder="e.g., 72"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label for="respiratoryRate">Respiratory Rate</label>
+                  <input
+                    id="respiratoryRate"
+                    type="number"
+                    formControlName="respiratoryRate"
+                    placeholder="e.g., 16"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="oxygenSaturation">Oxygen Saturation (%)</label>
+                  <input
+                    id="oxygenSaturation"
+                    type="number"
+                    formControlName="oxygenSaturation"
+                    placeholder="e.g., 98"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label for="weight">Weight (kg)</label>
+                  <input
+                    id="weight"
+                    type="number"
+                    step="0.1"
+                    formControlName="weight"
+                    placeholder="e.g., 70.5"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="height">Height (cm)</label>
+                  <input
+                    id="height"
+                    type="number"
+                    step="0.1"
+                    formControlName="height"
+                    placeholder="e.g., 175"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="bloodGlucose">Blood Glucose (mg/dL)</label>
+                <input
+                  id="bloodGlucose"
+                  type="number"
+                  formControlName="bloodGlucose"
+                  placeholder="e.g., 90"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea
+                  id="notes"
+                  formControlName="notes"
+                  rows="3"
+                  placeholder="Additional notes or observations..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="form.invalid">
+              {{ isEdit ? 'Update Vital Signs' : 'Record Vital Signs' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

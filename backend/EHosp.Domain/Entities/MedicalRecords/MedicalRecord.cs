@@ -18,4 +18,5 @@ public class MedicalRecord
     public Doctor Doctor { get; set; } = null!;
     public Diagnosis? Diagnosis { get; set; }
     public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
+    public ICollection<VitalSigns> VitalSigns { get; set; } = new List<VitalSigns>();
 }

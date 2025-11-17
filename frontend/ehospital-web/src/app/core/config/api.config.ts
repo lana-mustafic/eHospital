@@ -15,6 +15,7 @@ export const API_CONFIG = {
     medicalRecords: '/medicalrecords',
     diagnoses: '/diagnoses',
     prescriptions: '/prescriptions',
+    vitalSigns: '/vitalsigns',
     doctorSchedules: '/doctorschedules',
     reports: '/reports',
     audit: '/audit'

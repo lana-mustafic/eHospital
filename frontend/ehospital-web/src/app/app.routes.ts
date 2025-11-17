@@ -78,6 +78,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/medical-records/medical-records').then(m => m.MedicalRecordsComponent)
       },
       {
+        path: 'vital-signs',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        loadComponent: () => import('./features/vital-signs/vital-signs').then(m => m.VitalSignsComponent)
+      },
+      {
         path: 'diagnoses',
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Doctor'] },
