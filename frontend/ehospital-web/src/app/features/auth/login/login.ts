@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -21,7 +22,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toastService: ToastService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -52,6 +54,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login({ email, password }).subscribe({
       next: (user) => {
+        this.toastService.success('Login successful');
         // If role is Patient, route to patient portal unless an explicit returnUrl was set
         if (!this.returnUrl || this.returnUrl === '/dashboard') {
           if (user && user.role && user.role.toLowerCase() === 'patient') {
@@ -71,20 +74,23 @@ export class LoginComponent implements OnInit {
         });
         
         // Handle different error response formats
+        let errorMsg = 'Login failed';
         if (error.error) {
           if (error.error.message) {
-            this.errorMessage = error.error.message;
+            errorMsg = error.error.message;
           } else if (error.error.error) {
-            this.errorMessage = error.error.error;
+            errorMsg = error.error.error;
           } else if (typeof error.error === 'string') {
-            this.errorMessage = error.error;
+            errorMsg = error.error;
           } else {
-            this.errorMessage = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
+            errorMsg = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
           }
         } else {
-          this.errorMessage = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
+          errorMsg = `Login failed: ${error.status} ${error.statusText || 'Unknown error'}`;
         }
         
+        this.errorMessage = errorMsg;
+        this.toastService.error(errorMsg);
         this.isLoading = false;
       }
     });

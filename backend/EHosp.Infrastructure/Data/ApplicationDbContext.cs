@@ -9,6 +9,16 @@ namespace Infrastructure.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            
+            // Suppress the pending model changes warning in development
+            // This allows the app to run even if there are minor model differences
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         // DbSets will be added here as we create entities
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }

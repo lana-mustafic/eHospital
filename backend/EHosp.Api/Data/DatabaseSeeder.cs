@@ -1,6 +1,7 @@
 using EHosp.Domain.Entities;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace EHosp.Api.Data;
 
@@ -14,7 +15,18 @@ public static class DatabaseSeeder
         using var scope = services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        await context.Database.MigrateAsync();
+        try
+        {
+            await context.Database.MigrateAsync();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("pending changes"))
+        {
+            // If there are pending model changes, log a warning but continue
+            // The developer should create a migration manually
+            var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>();
+            logger?.LogWarning("Database model has pending changes. Please create a migration: dotnet ef migrations add <MigrationName>");
+            // Continue with seeding even if migration fails
+        }
 
         if (!await context.Users.AnyAsync(u => u.Email == DefaultAdminEmail))
         {

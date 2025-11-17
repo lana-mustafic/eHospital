@@ -9,6 +9,7 @@ import { DoctorService } from '../doctors/services/doctor.service';
 import { Patient } from '../patients/models/patient.model';
 import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-appointments',
@@ -36,7 +37,8 @@ export class AppointmentsComponent implements OnInit {
     private patientService: PatientService,
     private doctorService: DoctorService,
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastService: ToastService
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -70,6 +72,7 @@ export class AppointmentsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading appointments:', error);
         this.isLoading = false;
+        this.toastService.error('Failed to load appointments');
       }
     });
   }
@@ -180,10 +183,12 @@ export class AppointmentsComponent implements OnInit {
     const payload: UpdateAppointmentStatusRequest = { status: 'Checked-In' };
     this.appointmentService.updateStatus(appointment.id, payload).subscribe({
       next: () => {
+        this.toastService.success('Appointment checked in successfully');
         this.loadAppointments();
       },
       error: (error) => {
         console.error('Error checking in appointment:', error);
+        this.toastService.error(error.error?.message || 'Failed to check in appointment');
       }
     });
   }
@@ -234,11 +239,13 @@ export class AppointmentsComponent implements OnInit {
 
     this.appointmentService.create(payload).subscribe({
       next: () => {
+        this.toastService.success('Appointment created successfully');
         this.loadAppointments();
         this.closeModal();
       },
       error: (error) => {
         console.error('Error creating appointment:', error);
+        this.toastService.error(error.error?.message || 'Failed to create appointment');
       }
     });
   }
@@ -260,11 +267,13 @@ export class AppointmentsComponent implements OnInit {
 
     this.appointmentService.updateStatus(this.selectedAppointment.id, payload).subscribe({
       next: () => {
+        this.toastService.success('Appointment status updated successfully');
         this.loadAppointments();
         this.closeStatusModal();
       },
       error: (error) => {
         console.error('Error updating appointment status:', error);
+        this.toastService.error(error.error?.message || 'Failed to update appointment status');
       }
     });
   }

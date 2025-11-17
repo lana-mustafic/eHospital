@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PatientService } from './services/patient.service';
 import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-patients',
@@ -24,7 +25,8 @@ export class PatientsComponent implements OnInit {
 
   constructor(
     private patientService: PatientService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private toastService: ToastService
   ) {
     this.patientForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -55,6 +57,7 @@ export class PatientsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading patients:', error);
         this.isLoading = false;
+        this.toastService.error('Failed to load patients');
       }
     });
   }
@@ -146,11 +149,13 @@ export class PatientsComponent implements OnInit {
 
       this.patientService.update(this.selectedPatient.id, payload).subscribe({
         next: () => {
+          this.toastService.success('Patient updated successfully');
           this.loadPatients();
           this.closeModal();
         },
         error: (error) => {
           console.error('Error updating patient:', error);
+          this.toastService.error(error.error?.message || 'Failed to update patient');
         }
       });
     } else {
@@ -169,11 +174,13 @@ export class PatientsComponent implements OnInit {
 
       this.patientService.create(payload).subscribe({
         next: () => {
+          this.toastService.success('Patient created successfully');
           this.loadPatients();
           this.closeModal();
         },
         error: (error) => {
           console.error('Error creating patient:', error);
+          this.toastService.error(error.error?.message || 'Failed to create patient');
         }
       });
     }
@@ -185,10 +192,12 @@ export class PatientsComponent implements OnInit {
     if (confirm(`Are you sure you want to delete patient "${patient.firstName} ${patient.lastName}"?`)) {
       this.patientService.delete(patient.id).subscribe({
         next: () => {
+          this.toastService.success('Patient deleted successfully');
           this.loadPatients();
         },
         error: (error) => {
           console.error('Error deleting patient:', error);
+          this.toastService.error(error.error?.message || 'Failed to delete patient');
         }
       });
     }
