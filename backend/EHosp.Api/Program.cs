@@ -97,6 +97,9 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IVitalSignsService, VitalSignsService>();
         builder.Services.AddScoped<ILabTestRepository, LabTestRepository>();
         builder.Services.AddScoped<ILabTestService, LabTestService>();
+        builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+        builder.Services.AddScoped<IInvoiceService, InvoiceService>();
         builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         builder.Services.AddScoped<IAuditService, AuditService>();
 

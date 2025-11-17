@@ -17,4 +17,5 @@ public class Patient
     public ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
     public ICollection<VitalSigns> VitalSigns { get; set; } = new List<VitalSigns>();
     public ICollection<LabTest> LabTests { get; set; } = new List<LabTest>();
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 }

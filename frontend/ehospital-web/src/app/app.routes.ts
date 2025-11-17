@@ -90,6 +90,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/lab-tests/lab-tests').then(m => m.LabTestsComponent)
       },
       {
+        path: 'invoices',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Receptionist'] },
+        loadComponent: () => import('./features/invoices/invoices').then(m => m.InvoicesComponent)
+      },
+      {
         path: 'diagnoses',
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Doctor'] },

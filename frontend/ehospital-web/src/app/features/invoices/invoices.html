@@ -1,0 +1,577 @@
+<div class="invoices-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Billing & Invoices</h2>
+      <p>Manage invoices, payments, and billing records</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Create Invoice
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by invoice number, patient name..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="">All Statuses</option>
+        @for (status of invoiceStatuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredInvoices.length }} invoice(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="8" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Invoices Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="invoices-table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Due Date</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (invoice of paginatedInvoices; track invoice.id) {
+            <tr>
+              <td>
+                <strong>{{ invoice.invoiceNumber }}</strong>
+              </td>
+              <td>{{ invoice.patientName || 'Patient #' + invoice.patientId }}</td>
+              <td>{{ invoice.invoiceDate | date:'shortDate' }}</td>
+              <td>{{ invoice.dueDate | date:'shortDate' }}</td>
+              <td class="amount-cell">${{ invoice.totalAmount | number:'1.2-2' }}</td>
+              <td class="amount-cell">${{ invoice.paidAmount | number:'1.2-2' }}</td>
+              <td class="amount-cell" [class.overdue]="invoice.balanceAmount > 0 && invoice.status === 'Overdue'">
+                ${{ invoice.balanceAmount | number:'1.2-2' }}
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(invoice.status)">
+                  {{ invoice.status }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openDetailModal(invoice)" title="View Details">
+                  <span class="material-icons">visibility</span>
+                </button>
+                <button class="btn-icon" (click)="downloadPdf(invoice)" title="Download PDF">
+                  <span class="material-icons">download</span>
+                </button>
+                @if (invoice.balanceAmount > 0) {
+                  <button class="btn-icon btn-success" (click)="openPaymentModal(invoice)" title="Record Payment">
+                    <span class="material-icons">payment</span>
+                  </button>
+                }
+                <button class="btn-icon btn-danger" (click)="deleteInvoice(invoice)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (filteredInvoices.length === 0) {
+            <tr>
+              <td colspan="9" class="empty-state">
+                <div class="empty-state-content">
+                  <span class="material-icons">receipt</span>
+                  <h3>No invoices found</h3>
+                  <p>
+                    @if (searchTerm || patientFilter || statusFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No invoices have been created yet
+                    }
+                  </p>
+                  @if (!searchTerm && !patientFilter && !statusFilter) {
+                    <button class="btn-primary" (click)="openAddModal()">
+                      <span class="material-icons">add</span>
+                      Create First Invoice
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages > 1) {
+      <div class="pagination-controls">
+        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        @for (page of [].constructor(totalPages); track $index) {
+          <button
+            class="btn-pagination"
+            [class.active]="currentPage === $index + 1"
+            (click)="goToPage($index + 1)"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Create/Edit Invoice Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditMode ? 'Edit Invoice' : 'Create New Invoice' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="invoiceForm" (ngSubmit)="submitInvoice()">
+          <div class="modal-body">
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="patientId">Patient <span class="required">*</span></label>
+                <select
+                  id="patientId"
+                  formControlName="patientId"
+                  [class.error]="invoiceForm.get('patientId')?.invalid && invoiceForm.get('patientId')?.touched"
+                >
+                  <option value="">Select Patient</option>
+                  @for (patient of patients; track patient.id) {
+                    <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                  }
+                </select>
+                @if (invoiceForm.get('patientId')?.invalid && invoiceForm.get('patientId')?.touched) {
+                  <span class="error-message">Patient is required</span>
+                }
+              </div>
+              <div class="form-group">
+                <label for="appointmentId">Appointment (Optional)</label>
+                <select id="appointmentId" formControlName="appointmentId">
+                  <option [value]="null">None</option>
+                  @for (appointment of appointments; track appointment.id) {
+                    <option [value]="appointment.id">
+                      {{ appointment.patientName }} - {{ appointment.appointmentDate | date:'short' }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="invoiceDate">Invoice Date <span class="required">*</span></label>
+                <input
+                  id="invoiceDate"
+                  type="date"
+                  formControlName="invoiceDate"
+                  [class.error]="invoiceForm.get('invoiceDate')?.invalid && invoiceForm.get('invoiceDate')?.touched"
+                />
+                @if (invoiceForm.get('invoiceDate')?.invalid && invoiceForm.get('invoiceDate')?.touched) {
+                  <span class="error-message">Invoice date is required</span>
+                }
+              </div>
+              <div class="form-group">
+                <label for="dueDate">Due Date <span class="required">*</span></label>
+                <input
+                  id="dueDate"
+                  type="date"
+                  formControlName="dueDate"
+                  [class.error]="invoiceForm.get('dueDate')?.invalid && invoiceForm.get('dueDate')?.touched"
+                />
+                @if (invoiceForm.get('dueDate')?.invalid && invoiceForm.get('dueDate')?.touched) {
+                  <span class="error-message">Due date is required</span>
+                }
+              </div>
+            </div>
+
+            <!-- Invoice Items -->
+            <div class="invoice-items-section">
+              <div class="section-header">
+                <h4>Invoice Items</h4>
+                <button type="button" class="btn-secondary btn-sm" (click)="addInvoiceItem()">
+                  <span class="material-icons">add</span>
+                  Add Item
+                </button>
+              </div>
+              <div formArrayName="invoiceItems">
+                @for (item of invoiceItems.controls; track $index) {
+                  <div class="invoice-item-row" [formGroupName]="$index">
+                    <div class="item-description">
+                      <input
+                        type="text"
+                        formControlName="description"
+                        placeholder="Item description"
+                        [class.error]="item.get('description')?.invalid && item.get('description')?.touched"
+                      />
+                      @if (item.get('description')?.invalid && item.get('description')?.touched) {
+                        <span class="error-message">Description is required</span>
+                      }
+                    </div>
+                    <div class="item-quantity">
+                      <input
+                        type="number"
+                        formControlName="quantity"
+                        placeholder="Qty"
+                        min="1"
+                        [class.error]="item.get('quantity')?.invalid && item.get('quantity')?.touched"
+                      />
+                    </div>
+                    <div class="item-price">
+                      <input
+                        type="number"
+                        formControlName="unitPrice"
+                        placeholder="Unit Price"
+                        step="0.01"
+                        min="0"
+                        [class.error]="item.get('unitPrice')?.invalid && item.get('unitPrice')?.touched"
+                      />
+                    </div>
+                    <div class="item-total">
+                      ${{ (item.get('quantity')?.value || 0) * (item.get('unitPrice')?.value || 0) | number:'1.2-2' }}
+                    </div>
+                    <div class="item-actions">
+                      <button type="button" class="btn-icon btn-danger" (click)="removeInvoiceItem($index)" title="Remove">
+                        <span class="material-icons">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                }
+                @if (invoiceItems.length === 0) {
+                  <p class="empty-items">No items added. Click "Add Item" to add invoice items.</p>
+                }
+              </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="totals-section">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${{ calculateSubTotal() | number:'1.2-2' }}</span>
+              </div>
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label for="taxAmount">Tax Amount</label>
+                  <input
+                    id="taxAmount"
+                    type="number"
+                    formControlName="taxAmount"
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="discountAmount">Discount Amount</label>
+                  <input
+                    id="discountAmount"
+                    type="number"
+                    formControlName="discountAmount"
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div class="total-row total-final">
+                <span><strong>Total:</strong></span>
+                <span><strong>${{ calculateTotal() | number:'1.2-2' }}</strong></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea
+                id="notes"
+                formControlName="notes"
+                rows="3"
+                placeholder="Additional notes..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="invoiceForm.invalid || invoiceItems.length === 0">
+              {{ isEditMode ? 'Update Invoice' : 'Create Invoice' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Invoice Detail Modal -->
+  @if (showDetailModal && selectedInvoice) {
+    <div class="modal-overlay" (click)="closeDetailModal()">
+      <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Invoice Details - {{ selectedInvoice.invoiceNumber }}</h3>
+          <button class="btn-close" (click)="closeDetailModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="invoice-detail-header">
+            <div class="detail-row">
+              <span class="label">Patient:</span>
+              <span class="value">{{ selectedInvoice.patientName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Invoice Date:</span>
+              <span class="value">{{ selectedInvoice.invoiceDate | date:'short' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Due Date:</span>
+              <span class="value">{{ selectedInvoice.dueDate | date:'short' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Status:</span>
+              <span class="status-badge" [ngClass]="getStatusClass(selectedInvoice.status)">
+                {{ selectedInvoice.status }}
+              </span>
+            </div>
+          </div>
+
+          <div class="invoice-items-detail">
+            <h4>Items</h4>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of selectedInvoice.invoiceItems; track item.id) {
+                  <tr>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.unitPrice | number:'1.2-2' }}</td>
+                    <td>${{ item.totalPrice | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="invoice-totals-detail">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>${{ selectedInvoice.subTotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row">
+              <span>Tax:</span>
+              <span>${{ selectedInvoice.taxAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row">
+              <span>Discount:</span>
+              <span>${{ selectedInvoice.discountAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row total-final">
+              <span><strong>Total:</strong></span>
+              <span><strong>${{ selectedInvoice.totalAmount | number:'1.2-2' }}</strong></span>
+            </div>
+            <div class="total-row">
+              <span>Paid:</span>
+              <span>${{ selectedInvoice.paidAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row total-balance">
+              <span><strong>Balance:</strong></span>
+              <span><strong>${{ selectedInvoice.balanceAmount | number:'1.2-2' }}</strong></span>
+            </div>
+          </div>
+
+          @if (selectedInvoice.payments && selectedInvoice.payments.length > 0) {
+            <div class="payments-section">
+              <h4>Payments</h4>
+              <table class="payments-table">
+                <thead>
+                  <tr>
+                    <th>Payment #</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (payment of selectedInvoice.payments; track payment.id) {
+                    <tr>
+                      <td>{{ payment.paymentNumber }}</td>
+                      <td>{{ payment.paymentDate | date:'short' }}</td>
+                      <td>${{ payment.amount | number:'1.2-2' }}</td>
+                      <td>{{ payment.paymentMethod }}</td>
+                      <td>
+                        <span class="status-badge status-paid">{{ payment.status }}</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (selectedInvoice.notes) {
+            <div class="notes-section">
+              <h4>Notes</h4>
+              <p>{{ selectedInvoice.notes }}</p>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDetailModal()">Close</button>
+          @if (selectedInvoice.balanceAmount > 0) {
+            <button type="button" class="btn-primary" (click)="openPaymentModal(selectedInvoice)">
+              <span class="material-icons">payment</span>
+              Record Payment
+            </button>
+          }
+          <button type="button" class="btn-primary" (click)="downloadPdf(selectedInvoice)">
+            <span class="material-icons">download</span>
+            Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Payment Modal -->
+  @if (showPaymentModal && selectedInvoice) {
+    <div class="modal-overlay" (click)="closePaymentModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Record Payment - {{ selectedInvoice.invoiceNumber }}</h3>
+          <button class="btn-close" (click)="closePaymentModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="paymentForm" (ngSubmit)="submitPayment()">
+          <div class="modal-body">
+            <div class="payment-info">
+              <p><strong>Invoice Total:</strong> ${{ selectedInvoice.totalAmount | number:'1.2-2' }}</p>
+              <p><strong>Amount Paid:</strong> ${{ selectedInvoice.paidAmount | number:'1.2-2' }}</p>
+              <p><strong>Balance Due:</strong> ${{ selectedInvoice.balanceAmount | number:'1.2-2' }}</p>
+            </div>
+
+            <div class="form-group">
+              <label for="paymentAmount">Payment Amount <span class="required">*</span></label>
+              <input
+                id="paymentAmount"
+                type="number"
+                formControlName="amount"
+                step="0.01"
+                min="0.01"
+                [max]="selectedInvoice.balanceAmount"
+                [class.error]="paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched"
+              />
+              @if (paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched) {
+                <span class="error-message">Payment amount is required (max: ${{ selectedInvoice.balanceAmount | number:'1.2-2' }})</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="paymentMethod">Payment Method <span class="required">*</span></label>
+              <select
+                id="paymentMethod"
+                formControlName="paymentMethod"
+                [class.error]="paymentForm.get('paymentMethod')?.invalid && paymentForm.get('paymentMethod')?.touched"
+              >
+                <option value="">Select Method</option>
+                @for (method of paymentMethods; track method) {
+                  <option [value]="method">{{ method }}</option>
+                }
+              </select>
+              @if (paymentForm.get('paymentMethod')?.invalid && paymentForm.get('paymentMethod')?.touched) {
+                <span class="error-message">Payment method is required</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="paymentDate">Payment Date <span class="required">*</span></label>
+              <input
+                id="paymentDate"
+                type="datetime-local"
+                formControlName="paymentDate"
+                [class.error]="paymentForm.get('paymentDate')?.invalid && paymentForm.get('paymentDate')?.touched"
+              />
+              @if (paymentForm.get('paymentDate')?.invalid && paymentForm.get('paymentDate')?.touched) {
+                <span class="error-message">Payment date is required</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="transactionReference">Transaction Reference</label>
+              <input
+                id="transactionReference"
+                type="text"
+                formControlName="transactionReference"
+                placeholder="Check number, transaction ID, etc."
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="paymentNotes">Notes</label>
+              <textarea
+                id="paymentNotes"
+                formControlName="notes"
+                rows="3"
+                placeholder="Additional notes..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closePaymentModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="paymentForm.invalid">
+              <span class="material-icons">payment</span>
+              Record Payment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

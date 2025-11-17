@@ -17,4 +17,5 @@ public class Appointment
     // Navigation properties
     public Patient Patient { get; set; } = null!;
     public Doctor Doctor { get; set; } = null!;
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 }
