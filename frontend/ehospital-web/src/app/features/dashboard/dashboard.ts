@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppointmentRemindersComponent } from '../../shared/components/appointment-reminders/appointment-reminders.component';
+import { StatusPieChartComponent } from '../../shared/components/charts/status-pie-chart/status-pie-chart.component';
+import { LineChartComponent } from '../../shared/components/charts/line-chart/line-chart.component';
+import { BarChartComponent } from '../../shared/components/charts/bar-chart/bar-chart.component';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
@@ -16,7 +19,14 @@ import { catchError } from 'rxjs/operators';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AppointmentRemindersComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    AppointmentRemindersComponent,
+    StatusPieChartComponent,
+    LineChartComponent,
+    BarChartComponent
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -41,6 +51,10 @@ export class Dashboard implements OnInit {
   totalDiagnoses = 0;
   totalPrescriptions = 0;
   completedThisMonth = 0;
+  
+  // Chart data
+  appointmentTrendData: Array<{ label: string; value: number }> = [];
+  monthlyAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
   
   isLoading = false;
   error: string | null = null;
@@ -129,6 +143,10 @@ export class Dashboard implements OnInit {
           })
           .slice(0, 5);
 
+        // Calculate chart data
+        this.calculateAppointmentTrends(data.appointments);
+        this.calculateMonthlyAppointments(data.appointments);
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -182,5 +200,57 @@ export class Dashboard implements OnInit {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
+  }
+
+  private calculateAppointmentTrends(appointments: Appointment[]): void {
+    // Get appointments for the last 7 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const trendData: Array<{ label: string; value: number }> = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const count = appointments.filter(apt => apt.appointmentDate === dateStr).length;
+      
+      trendData.push({
+        label: dayName,
+        value: count
+      });
+    }
+    
+    this.appointmentTrendData = trendData;
+  }
+
+  private calculateMonthlyAppointments(appointments: Appointment[]): void {
+    // Get appointments for the last 6 months
+    const today = new Date();
+    const monthlyData: Array<{ label: string; value: number; color?: string }> = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      const year = date.getFullYear();
+      
+      const firstDay = new Date(year, date.getMonth(), 1);
+      const lastDay = new Date(year, date.getMonth() + 1, 0);
+      
+      const count = appointments.filter(apt => {
+        const aptDate = new Date(apt.appointmentDate);
+        return aptDate >= firstDay && aptDate <= lastDay;
+      }).length;
+      
+      monthlyData.push({
+        label: monthName,
+        value: count,
+        color: '#667eea'
+      });
+    }
+    
+    this.monthlyAppointmentData = monthlyData;
   }
 }

@@ -224,6 +224,22 @@
         color: #1f2937;
       }
 
+      .status-content {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2rem;
+        align-items: center;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .status-chart {
+        display: flex;
+        justify-content: center;
+      }
+
       .status-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -292,6 +308,31 @@
         &.noshow .status-icon {
           background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
         }
+      }
+    }
+  }
+
+  .charts-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+
+    .content-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 1.5rem 0;
+        color: #1f2937;
       }
     }
   }
