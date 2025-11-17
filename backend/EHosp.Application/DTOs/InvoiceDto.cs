@@ -92,6 +92,7 @@ public class CreatePaymentDto
     public string PaymentMethod { get; set; } = string.Empty;
     public string? TransactionReference { get; set; }
     public string? Notes { get; set; }
+    public string? Status { get; set; }
     public int InvoiceId { get; set; }
     public int? ProcessedByUserId { get; set; }
 }
