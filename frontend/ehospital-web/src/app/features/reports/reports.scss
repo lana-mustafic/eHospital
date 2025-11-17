@@ -210,6 +210,14 @@
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
 
+        &.medications {
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        &.inventory {
+          background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
         .material-icons {
           font-size: 32px;
         }
@@ -294,6 +302,37 @@
           font-weight: 700;
           color: #1f2937;
         }
+      }
+    }
+  }
+
+  .alert-section {
+    margin-bottom: 2rem;
+
+    .alert-warning {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 8px;
+      color: #92400e;
+
+      .material-icons {
+        font-size: 24px;
+        color: #f59e0b;
+      }
+
+      strong {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
       }
     }
   }

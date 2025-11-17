@@ -10,6 +10,7 @@ import { DoctorService } from '../doctors/services/doctor.service';
 import { MedicalRecordService } from '../medical-records/services/medical-record.service';
 import { DiagnosisService } from '../diagnoses/services/diagnosis.service';
 import { PrescriptionService } from '../prescriptions/services/prescription.service';
+import { MedicationService, Medication } from '../medications/services/medication.service';
 import { Appointment } from '../appointments/models/appointment.model';
 import { Patient } from '../patients/models/patient.model';
 import { Doctor } from '../doctors/models/doctor.model';
@@ -34,12 +35,13 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class Reports implements OnInit {
   filterForm: FormGroup;
-  selectedReportType: 'appointments' | 'patients' | 'doctors' | 'overview' = 'overview';
+  selectedReportType: 'appointments' | 'patients' | 'doctors' | 'medications' | 'overview' = 'overview';
   
   // Data
   appointments: Appointment[] = [];
   patients: Patient[] = [];
   doctors: Doctor[] = [];
+  medications: Medication[] = [];
   medicalRecords: any[] = [];
   diagnoses: any[] = [];
   prescriptions: any[] = [];
@@ -53,17 +55,23 @@ export class Reports implements OnInit {
   doctorAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
   patientAgeDistributionData: Array<{ label: string; value: number; color?: string }> = [];
   monthlyAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
+  medicationUsageData: Array<{ label: string; value: number; color?: string }> = [];
+  medicationFormData: Array<{ label: string; value: number; color?: string }> = [];
+  lowStockMedications: Medication[] = [];
   
   // Statistics
   totalAppointments = 0;
   totalPatients = 0;
   totalDoctors = 0;
+  totalMedications = 0;
   totalMedicalRecords = 0;
   totalDiagnoses = 0;
   totalPrescriptions = 0;
   averageAppointmentsPerDay = 0;
   completionRate = 0;
   cancellationRate = 0;
+  totalMedicationValue = 0;
+  lowStockCount = 0;
   
   isLoading = false;
   error: string | null = null;
@@ -76,6 +84,7 @@ export class Reports implements OnInit {
     private medicalRecordService: MedicalRecordService,
     private diagnosisService: DiagnosisService,
     private prescriptionService: PrescriptionService,
+    private medicationService: MedicationService,
     private exportService: ExportService,
     private toastService: ToastService
   ) {
@@ -108,12 +117,14 @@ export class Reports implements OnInit {
       doctors: this.doctorService.getAll().pipe(catchError(() => of([]))),
       medicalRecords: this.medicalRecordService.getAll().pipe(catchError(() => of([]))),
       diagnoses: this.diagnosisService.getAll().pipe(catchError(() => of([]))),
-      prescriptions: this.prescriptionService.getAll().pipe(catchError(() => of([])))
+      prescriptions: this.prescriptionService.getAll().pipe(catchError(() => of([]))),
+      medications: this.medicationService.getAll().pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
         this.appointments = data.appointments;
         this.patients = data.patients;
         this.doctors = data.doctors;
+        this.medications = data.medications;
         this.medicalRecords = data.medicalRecords;
         this.diagnoses = data.diagnoses;
         this.prescriptions = data.prescriptions;
@@ -151,9 +162,15 @@ export class Reports implements OnInit {
     this.totalAppointments = this.filteredAppointments.length;
     this.totalPatients = this.patients.length;
     this.totalDoctors = this.doctors.length;
+    this.totalMedications = this.medications.length;
     this.totalMedicalRecords = this.medicalRecords.length;
     this.totalDiagnoses = this.diagnoses.length;
     this.totalPrescriptions = this.prescriptions.length;
+    
+    // Medication statistics
+    this.totalMedicationValue = this.medications.reduce((sum, med) => sum + (med.price * med.stockQuantity), 0);
+    this.lowStockMedications = this.medications.filter(med => med.stockQuantity < 10 && med.isActive);
+    this.lowStockCount = this.lowStockMedications.length;
     
     // Status breakdown
     this.appointmentStatusData = {
@@ -188,6 +205,10 @@ export class Reports implements OnInit {
     
     // Monthly appointments
     this.calculateMonthlyAppointments();
+    
+    // Medication analytics
+    this.calculateMedicationUsage();
+    this.calculateMedicationFormDistribution();
   }
 
   private calculateAppointmentTrends(): void {
@@ -277,6 +298,41 @@ export class Reports implements OnInit {
       }));
   }
 
+  private calculateMedicationUsage(): void {
+    // Get top medications by prescription count
+    const medicationMap = new Map<string, number>();
+    
+    this.prescriptions.forEach(prescription => {
+      const medName = prescription.medicationName || 'Unknown';
+      medicationMap.set(medName, (medicationMap.get(medName) || 0) + 1);
+    });
+    
+    this.medicationUsageData = Array.from(medicationMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({
+        label: name.length > 20 ? name.substring(0, 20) + '...' : name,
+        value: count,
+        color: '#8b5cf6'
+      }));
+  }
+
+  private calculateMedicationFormDistribution(): void {
+    const formMap = new Map<string, number>();
+    
+    this.medications.forEach(med => {
+      const form = med.form || 'Unknown';
+      formMap.set(form, (formMap.get(form) || 0) + 1);
+    });
+    
+    this.medicationFormData = Array.from(formMap.entries())
+      .map(([form, count]) => ({
+        label: form,
+        value: count,
+        color: '#ec4899'
+      }));
+  }
+
   private getAge(dateOfBirth: string): number {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -334,6 +390,20 @@ export class Reports implements OnInit {
         }));
         headers = ['Name', 'Specialization', 'Department', 'Email', 'License Number', 'Years of Experience'];
         filename = 'doctors_report';
+        break;
+      case 'medications':
+        data = this.medications.map(m => ({
+          'Name': m.name,
+          'Form': m.form,
+          'Dosage': m.dosage,
+          'Price': m.price,
+          'Stock Quantity': m.stockQuantity,
+          'Total Value': (m.price * m.stockQuantity).toFixed(2),
+          'Status': m.isActive ? 'Active' : 'Inactive',
+          'Prescription Count': m.prescriptionCount || 0
+        }));
+        headers = ['Name', 'Form', 'Dosage', 'Price', 'Stock Quantity', 'Total Value', 'Status', 'Prescription Count'];
+        filename = 'medications_report';
         break;
       default:
         // Overview report

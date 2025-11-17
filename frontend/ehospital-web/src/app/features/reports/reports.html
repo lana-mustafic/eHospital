@@ -29,6 +29,7 @@
                 <option value="appointments">Appointments</option>
                 <option value="patients">Patients</option>
                 <option value="doctors">Doctors</option>
+                <option value="medications">Medications</option>
               </select>
             </div>
             <div class="form-group">
@@ -105,6 +106,24 @@
           <div class="stat-content">
             <h3 class="stat-value">{{ cancellationRate.toFixed(1) }}%</h3>
             <p class="stat-label">Cancellation Rate</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon medications">
+            <span class="material-icons">medication</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ totalMedications }}</h3>
+            <p class="stat-label">Total Medications</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon inventory">
+            <span class="material-icons">inventory_2</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">${{ totalMedicationValue.toFixed(0) }}</h3>
+            <p class="stat-label">Inventory Value</p>
           </div>
         </div>
       </div>
@@ -246,6 +265,61 @@
             [height]="250"
             defaultColor="#667eea"
           ></app-bar-chart>
+        </div>
+      </div>
+    }
+
+    <!-- Medications Report -->
+    @if (selectedReportType === 'medications') {
+      <div class="report-section">
+        <h2>Medications Report</h2>
+        <div class="report-stats">
+          <div class="report-stat">
+            <span class="stat-label">Total Medications:</span>
+            <span class="stat-value">{{ totalMedications }}</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-label">Total Inventory Value:</span>
+            <span class="stat-value">${{ totalMedicationValue.toFixed(2) }}</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-label">Low Stock Items:</span>
+            <span class="stat-value" [style.color]="lowStockCount > 0 ? '#ef4444' : '#10b981'">{{ lowStockCount }}</span>
+          </div>
+        </div>
+
+        @if (lowStockMedications.length > 0) {
+          <div class="alert-section">
+            <div class="alert-warning">
+              <span class="material-icons">warning</span>
+              <div>
+                <strong>Low Stock Alert</strong>
+                <p>{{ lowStockCount }} medication(s) have stock below 10 units</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <div class="charts-section">
+          <div class="chart-card">
+            <h3>Top Medications by Usage</h3>
+            <app-bar-chart
+              [data]="medicationUsageData"
+              [width]="600"
+              [height]="250"
+              defaultColor="#8b5cf6"
+            ></app-bar-chart>
+          </div>
+
+          <div class="chart-card">
+            <h3>Medication Form Distribution</h3>
+            <app-bar-chart
+              [data]="medicationFormData"
+              [width]="600"
+              [height]="250"
+              defaultColor="#ec4899"
+            ></app-bar-chart>
+          </div>
         </div>
       </div>
     }
