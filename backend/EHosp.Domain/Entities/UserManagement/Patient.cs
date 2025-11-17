@@ -16,4 +16,5 @@ public class Patient
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
     public ICollection<VitalSigns> VitalSigns { get; set; } = new List<VitalSigns>();
+    public ICollection<LabTest> LabTests { get; set; } = new List<LabTest>();
 }

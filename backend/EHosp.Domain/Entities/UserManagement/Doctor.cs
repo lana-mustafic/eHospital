@@ -20,4 +20,5 @@ public class Doctor
     public virtual ICollection<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
     public virtual ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
     public virtual ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
+    public virtual ICollection<LabTest> LabTests { get; set; } = new List<LabTest>();
 }

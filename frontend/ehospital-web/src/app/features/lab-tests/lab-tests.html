@@ -1,0 +1,367 @@
+<div class="lab-tests-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Lab Tests & Results</h2>
+      <p>Order lab tests, upload results, and manage test reports</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Order Lab Test
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by test name, type, code, patient, or doctor..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="">All Statuses</option>
+        @for (status of testStatuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredLabTests.length }} test(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="9" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Lab Tests Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="lab-tests-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Test Name</th>
+            <th>Type</th>
+            <th>Code</th>
+            <th>Status</th>
+            <th>Ordered Date</th>
+            <th>Completed Date</th>
+            <th>File</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (lt of paginatedLabTests; track lt.id) {
+            <tr>
+              <td class="name-cell">
+                <strong>{{ lt.patientName || 'Patient #' + lt.patientId }}</strong>
+                <p class="doctor-name">{{ lt.doctorName || 'Doctor #' + lt.doctorId }}</p>
+              </td>
+              <td>{{ lt.testName }}</td>
+              <td>
+                <span class="type-badge">{{ lt.testType }}</span>
+              </td>
+              <td>{{ lt.testCode || '—' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(lt.status)">
+                  {{ lt.status }}
+                </span>
+              </td>
+              <td>{{ lt.orderedDate | date:'short' }}</td>
+              <td>{{ lt.completedDate ? (lt.completedDate | date:'short') : '—' }}</td>
+              <td>
+                @if (lt.hasFile) {
+                  <button class="btn-icon btn-success" (click)="downloadFile(lt)" title="Download File">
+                    <span class="material-icons">download</span>
+                  </button>
+                } @else {
+                  <span class="empty-value">No file</span>
+                }
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditModal(lt)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                @if (!lt.hasFile) {
+                  <button class="btn-icon btn-info" (click)="openFileUploadModal(lt)" title="Upload File">
+                    <span class="material-icons">upload_file</span>
+                  </button>
+                }
+                @if (lt.status === 'Ordered' || lt.status === 'In Progress') {
+                  <button class="btn-icon btn-success" (click)="updateStatus(lt, 'Completed')" title="Mark as Completed">
+                    <span class="material-icons">check_circle</span>
+                  </button>
+                }
+                <button class="btn-icon btn-danger" (click)="deleteLabTest(lt)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (filteredLabTests.length === 0) {
+            <tr>
+              <td colspan="9" class="empty-state">
+                <div class="empty-state-content">
+                  <span class="material-icons">science</span>
+                  <h3>No lab tests found</h3>
+                  <p>
+                    @if (searchTerm || patientFilter || statusFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No lab tests have been ordered yet
+                    }
+                  </p>
+                  @if (!searchTerm && !patientFilter && !statusFilter) {
+                    <button class="btn-primary" (click)="openAddModal()">
+                      <span class="material-icons">add</span>
+                      Order First Lab Test
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages > 1) {
+      <div class="pagination-controls">
+        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        @for (page of [].constructor(totalPages); track $index) {
+          <button
+            class="btn-pagination"
+            [class.active]="currentPage === $index + 1"
+            (click)="goToPage($index + 1)"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Add/Edit Lab Test Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEdit ? 'Edit Lab Test' : 'Order New Lab Test' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="modal-body">
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="patientId">Patient <span class="required">*</span></label>
+                <select
+                  id="patientId"
+                  formControlName="patientId"
+                  [class.error]="form.get('patientId')?.invalid && form.get('patientId')?.touched"
+                >
+                  <option value="">Select Patient</option>
+                  @for (patient of patients; track patient.id) {
+                    <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                  }
+                </select>
+                @if (form.get('patientId')?.invalid && form.get('patientId')?.touched) {
+                  <span class="error-message">Patient is required</span>
+                }
+              </div>
+              <div class="form-group">
+                <label for="doctorId">Ordering Doctor <span class="required">*</span></label>
+                <select
+                  id="doctorId"
+                  formControlName="doctorId"
+                  [class.error]="form.get('doctorId')?.invalid && form.get('doctorId')?.touched"
+                >
+                  <option value="">Select Doctor</option>
+                  @for (doctor of doctors; track doctor.id) {
+                    <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}</option>
+                  }
+                </select>
+                @if (form.get('doctorId')?.invalid && form.get('doctorId')?.touched) {
+                  <span class="error-message">Doctor is required</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="orderedDate">Ordered Date & Time <span class="required">*</span></label>
+              <input
+                id="orderedDate"
+                type="datetime-local"
+                formControlName="orderedDate"
+                [class.error]="form.get('orderedDate')?.invalid && form.get('orderedDate')?.touched"
+              />
+              @if (form.get('orderedDate')?.invalid && form.get('orderedDate')?.touched) {
+                <span class="error-message">Ordered date is required</span>
+              }
+            </div>
+
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="testName">Test Name <span class="required">*</span></label>
+                <input
+                  id="testName"
+                  type="text"
+                  formControlName="testName"
+                  placeholder="e.g., Complete Blood Count"
+                  [class.error]="form.get('testName')?.invalid && form.get('testName')?.touched"
+                />
+                @if (form.get('testName')?.invalid && form.get('testName')?.touched) {
+                  <span class="error-message">Test name is required (min 2 characters)</span>
+                }
+              </div>
+              <div class="form-group">
+                <label for="testType">Test Type <span class="required">*</span></label>
+                <select
+                  id="testType"
+                  formControlName="testType"
+                  [class.error]="form.get('testType')?.invalid && form.get('testType')?.touched"
+                >
+                  <option value="">Select Type</option>
+                  @for (type of testTypes; track type) {
+                    <option [value]="type">{{ type }}</option>
+                  }
+                </select>
+                @if (form.get('testType')?.invalid && form.get('testType')?.touched) {
+                  <span class="error-message">Test type is required</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="testCode">Test Code</label>
+                <input
+                  id="testCode"
+                  type="text"
+                  formControlName="testCode"
+                  placeholder="e.g., CBC-001"
+                />
+              </div>
+              <div class="form-group">
+                <label for="status">Status <span class="required">*</span></label>
+                <select
+                  id="status"
+                  formControlName="status"
+                  [class.error]="form.get('status')?.invalid && form.get('status')?.touched"
+                >
+                  @for (status of testStatuses; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+                @if (form.get('status')?.invalid && form.get('status')?.touched) {
+                  <span class="error-message">Status is required</span>
+                }
+              </div>
+            </div>
+
+            @if (isEdit) {
+              <div class="form-group">
+                <label for="results">Test Results</label>
+                <textarea
+                  id="results"
+                  formControlName="results"
+                  rows="5"
+                  placeholder="Enter test results and findings..."
+                ></textarea>
+              </div>
+            }
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea
+                id="notes"
+                formControlName="notes"
+                rows="3"
+                placeholder="Additional notes or instructions..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="form.invalid">
+              {{ isEdit ? 'Update Lab Test' : 'Order Lab Test' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- File Upload Modal -->
+  @if (showFileUploadModal && selectedLabTestForFile) {
+    <div class="modal-overlay" (click)="closeFileUploadModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Upload Lab Test File</h3>
+          <button class="btn-close" (click)="closeFileUploadModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Lab Test: <strong>{{ selectedLabTestForFile.testName }}</strong></label>
+            <p class="file-info">Patient: {{ selectedLabTestForFile.patientName }}</p>
+          </div>
+          <div class="form-group">
+            <label for="fileInput">Select File <span class="required">*</span></label>
+            <input
+              id="fileInput"
+              type="file"
+              (change)="onFileSelected($event)"
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+            />
+            @if (selectedFile) {
+              <p class="file-selected">
+                <span class="material-icons">attach_file</span>
+                Selected: {{ selectedFile.name }} ({{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB)
+              </p>
+            }
+            <p class="file-hint">Allowed formats: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (Max 10MB)</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeFileUploadModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="uploadFile()" [disabled]="!selectedFile">
+            <span class="material-icons">upload</span>
+            Upload File
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
