@@ -115,6 +115,14 @@ namespace EHosp.Application.Services
             // keep status as Scheduled unless business rules say otherwise
             await _appointmentRepository.UpdateAsync(appointment);
         }
+
+        public async Task<IEnumerable<AppointmentDto>> GetUpcomingAppointmentsAsync(int daysAhead = 7)
+        {
+            var fromDate = DateTime.Today;
+            var toDate = fromDate.AddDays(daysAhead);
+            var appointments = await _appointmentRepository.GetUpcomingAppointmentsAsync(fromDate, toDate);
+            return appointments.Select(MapToDto);
+        }
         private static AppointmentDto MapToDto(Appointment appointment) => new()
         {
             Id = appointment.Id,
@@ -125,6 +133,7 @@ namespace EHosp.Application.Services
             Reason = appointment.Reason,
             Notes = appointment.Notes,
             DoctorId = appointment.DoctorId,
+            PatientId = appointment.PatientId,
             PatientName = $"{appointment.Patient?.User?.FirstName} {appointment.Patient?.User?.LastName}",
             DoctorName = $"{appointment.Doctor?.User?.FirstName} {appointment.Doctor?.User?.LastName}",
             DoctorSpecialization = appointment.Doctor?.Specialization ?? string.Empty

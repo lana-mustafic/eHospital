@@ -8,16 +8,7 @@
   </section>
 
   <section class="card">
-    <h3>Upcoming Appointments</h3>
-    <div *ngIf="upcoming.length === 0" class="empty">No upcoming appointments</div>
-    <ul *ngIf="upcoming.length > 0" class="list">
-      <li *ngFor="let a of upcoming">
-        <strong>{{ a.appointmentDate }}</strong>
-        <span>{{ a.startTime }} - {{ a.endTime }}</span>
-        <span>{{ a.doctorName }}</span>
-        <span class="status">{{ a.status }}</span>
-      </li>
-    </ul>
+    <app-appointment-reminders [daysAhead]="7" [maxItems]="5" [showForCurrentUser]="true"></app-appointment-reminders>
   </section>
 </div>
 

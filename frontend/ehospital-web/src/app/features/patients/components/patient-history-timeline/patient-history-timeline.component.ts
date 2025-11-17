@@ -102,6 +102,7 @@ export class PatientHistoryTimelineComponent implements OnInit {
       const patientRecords = records.filter(record => record.patientId === this.patientId);
       
       patientRecords.forEach(record => {
+        if (!record.createdAt) return;
         const date = new Date(record.createdAt);
         this.timelineItems.push({
           id: `record-${record.id}`,
@@ -125,13 +126,14 @@ export class PatientHistoryTimelineComponent implements OnInit {
       const patientDiagnoses = diagnoses.filter(diagnosis => diagnosis.patientId === this.patientId);
       
       patientDiagnoses.forEach(diagnosis => {
+        if (!diagnosis.createdAt) return;
         const date = new Date(diagnosis.createdAt);
         this.timelineItems.push({
           id: `diagnosis-${diagnosis.id}`,
           type: 'diagnosis',
           date,
           title: `Diagnosis: ${diagnosis.condition}`,
-          description: `${diagnosis.severity ? `Severity: ${diagnosis.severity}` : ''} ${diagnosis.notes ? `- ${diagnosis.notes}` : ''}`.trim(),
+          description: diagnosis.notes ? diagnosis.notes : 'No additional notes',
           icon: 'healing',
           color: '#f59e0b',
           data: diagnosis
@@ -148,6 +150,7 @@ export class PatientHistoryTimelineComponent implements OnInit {
       const patientPrescriptions = prescriptions.filter(prescription => prescription.patientId === this.patientId);
       
       patientPrescriptions.forEach(prescription => {
+        if (!prescription.issuedAt) return;
         const date = new Date(prescription.issuedAt);
         this.timelineItems.push({
           id: `prescription-${prescription.id}`,

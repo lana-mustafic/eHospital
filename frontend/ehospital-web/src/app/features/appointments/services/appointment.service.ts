@@ -43,5 +43,9 @@ export class AppointmentService {
   isAvailable(doctorId: number, date: string, startTime: string, endTime: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.apiUrl}/availability/${doctorId}/${date}/${startTime}/${endTime}`);
   }
+
+  getUpcoming(daysAhead: number = 7): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(`${this.apiUrl}/upcoming?daysAhead=${daysAhead}`);
+  }
 }
 

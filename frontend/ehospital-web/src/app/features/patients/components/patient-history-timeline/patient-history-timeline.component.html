@@ -62,9 +62,6 @@
             @if (item.type === 'diagnosis') {
               <div class="timeline-details">
                 <span><strong>Diagnosed by:</strong> {{ item.data.doctorName }}</span>
-                @if (item.data.severity) {
-                  <span><strong>Severity:</strong> {{ item.data.severity }}</span>
-                }
               </div>
             }
             

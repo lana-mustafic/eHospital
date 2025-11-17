@@ -181,12 +181,11 @@ export class DiagnosesComponent implements OnInit {
       return;
     }
     
-    const headers = ['Patient', 'Doctor', 'Condition', 'Severity', 'Notes', 'Created At'];
+    const headers = ['Patient', 'Doctor', 'Condition', 'Notes', 'Created At'];
     const data = this.filteredDiagnoses.map(diagnosis => ({
       'Patient': diagnosis.patientName || '—',
       'Doctor': diagnosis.doctorName || '—',
       'Condition': diagnosis.condition || '—',
-      'Severity': diagnosis.severity || '—',
       'Notes': diagnosis.notes || '—',
       'Created At': diagnosis.createdAt ? new Date(diagnosis.createdAt).toLocaleString() : '—'
     }));
@@ -201,12 +200,11 @@ export class DiagnosesComponent implements OnInit {
       return;
     }
     
-    const headers = ['Patient', 'Doctor', 'Condition', 'Severity', 'Notes', 'Created At'];
+    const headers = ['Patient', 'Doctor', 'Condition', 'Notes', 'Created At'];
     const data = this.filteredDiagnoses.map(diagnosis => ({
       'Patient': diagnosis.patientName || '—',
       'Doctor': diagnosis.doctorName || '—',
       'Condition': diagnosis.condition || '—',
-      'Severity': diagnosis.severity || '—',
       'Notes': diagnosis.notes || '—',
       'Created At': diagnosis.createdAt ? new Date(diagnosis.createdAt).toLocaleString() : '—'
     }));

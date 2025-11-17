@@ -320,4 +320,47 @@ export class PatientsComponent implements OnInit {
   get password() {
     return this.patientForm.get('password');
   }
+  
+  exportToCSV() {
+    if (this.filteredPatients.length === 0) {
+      this.toastService.warning('No patients to export');
+      return;
+    }
+    
+    const headers = ['Name', 'Gender', 'Age', 'Date of Birth', 'Email', 'Phone', 'Blood Type', 'Emergency Contact', 'Address'];
+    const data = this.filteredPatients.map(patient => ({
+      'Name': `${patient.firstName} ${patient.lastName}`,
+      'Gender': patient.gender,
+      'Age': `${this.getAge(patient.dateOfBirth)} years`,
+      'Date of Birth': this.formatDate(patient.dateOfBirth),
+      'Email': patient.email,
+      'Phone': patient.phoneNumber,
+      'Blood Type': patient.bloodType || '—',
+      'Emergency Contact': patient.emergencyContact || '—',
+      'Address': patient.address || '—'
+    }));
+    
+    this.exportService.exportToCSV(data, 'patients', headers);
+    this.toastService.success('Patients exported to CSV successfully');
+  }
+  
+  exportToPDF() {
+    if (this.filteredPatients.length === 0) {
+      this.toastService.warning('No patients to export');
+      return;
+    }
+    
+    const headers = ['Name', 'Gender', 'Age', 'Email', 'Phone', 'Blood Type'];
+    const data = this.filteredPatients.map(patient => ({
+      'Name': `${patient.firstName} ${patient.lastName}`,
+      'Gender': patient.gender,
+      'Age': `${this.getAge(patient.dateOfBirth)} years`,
+      'Email': patient.email,
+      'Phone': patient.phoneNumber,
+      'Blood Type': patient.bloodType || '—'
+    }));
+    
+    this.exportService.exportToPDF(data, 'patients', headers, 'Patients Report');
+    this.toastService.success('Patients exported to PDF successfully');
+  }
 }

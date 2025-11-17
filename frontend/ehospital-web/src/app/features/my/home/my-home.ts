@@ -4,11 +4,12 @@ import { PatientService } from '../../patients/services/patient.service';
 import { AppointmentService } from '../../appointments/services/appointment.service';
 import { Patient } from '../../patients/models/patient.model';
 import { Appointment } from '../../appointments/models/appointment.model';
+import { AppointmentRemindersComponent } from '../../../shared/components/appointment-reminders/appointment-reminders.component';
 
 @Component({
   selector: 'app-my-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppointmentRemindersComponent],
   templateUrl: './my-home.html',
   styleUrls: ['./my-home.scss']
 })

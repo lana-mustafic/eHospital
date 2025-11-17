@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { AppointmentRemindersComponent } from '../../shared/components/appointment-reminders/appointment-reminders.component';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
@@ -11,7 +12,7 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AppointmentRemindersComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })

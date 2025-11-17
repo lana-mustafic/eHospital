@@ -12,6 +12,7 @@ namespace EHosp.Application.DTOs
         public string Reason { get; set; } = string.Empty;
         public string? Notes { get; set; }
         public int DoctorId { get; set; }
+        public int PatientId { get; set; }
         public string PatientName { get; set; } = string.Empty;
         public string DoctorName { get; set; } = string.Empty;
         public string DoctorSpecialization { get; set; } = string.Empty;

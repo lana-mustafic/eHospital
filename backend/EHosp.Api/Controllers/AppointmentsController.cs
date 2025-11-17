@@ -190,5 +190,13 @@ namespace EHosp.Api.Controllers
             var isAvailable = await _appointmentService.IsTimeSlotAvailableAsync(doctorId, date, startTime, endTime);
             return Ok(isAvailable);
         }
+
+        [HttpGet("upcoming")]
+        [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist,Patient")]
+        public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetUpcomingAppointments([FromQuery] int daysAhead = 7)
+        {
+            var appointments = await _appointmentService.GetUpcomingAppointmentsAsync(daysAhead);
+            return Ok(appointments);
+        }
     }
 }

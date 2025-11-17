@@ -1,0 +1,58 @@
+<div class="appointment-reminders">
+  <div class="reminders-header">
+    <h3>
+      <span class="material-icons">notifications_active</span>
+      Upcoming Appointments
+    </h3>
+    <button class="btn-link" (click)="navigateToAppointments()" *ngIf="filteredAppointments.length > 0">
+      View All
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading reminders...</p>
+    </div>
+  } @else if (filteredAppointments.length === 0) {
+    <div class="empty-state">
+      <span class="material-icons">event_available</span>
+      <p>No upcoming appointments</p>
+    </div>
+  } @else {
+    <div class="reminders-list">
+      @for (appointment of filteredAppointments; track appointment.id) {
+        <div class="reminder-item" [class]="getReminderClass(appointment)">
+          <div class="reminder-icon">
+            <span class="material-icons">event</span>
+          </div>
+          <div class="reminder-content">
+            <div class="reminder-header">
+              <span class="reminder-badge" [class]="getReminderClass(appointment)">
+                {{ getReminderText(appointment) }}
+              </span>
+              <span class="reminder-time">{{ formatDateTime(appointment) }}</span>
+            </div>
+            <div class="reminder-details">
+              @if (showForCurrentUser) {
+                <strong>Dr. {{ appointment.doctorName || 'Doctor' }}</strong>
+                @if (appointment.doctorSpecialization) {
+                  <span> - {{ appointment.doctorSpecialization }}</span>
+                }
+              } @else {
+                <strong>{{ appointment.patientName || 'Patient' }}</strong>
+                @if (appointment.doctorName) {
+                  <span>with Dr. {{ appointment.doctorName }}</span>
+                }
+              }
+            </div>
+            @if (appointment.reason) {
+              <div class="reminder-reason">{{ appointment.reason }}</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
