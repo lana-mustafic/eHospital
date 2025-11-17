@@ -23,13 +23,23 @@
         (input)="search()"
       />
     </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
     <div class="results-count">
       {{ filteredPrescriptions.length }} prescription(s) found
     </div>
   </div>
 
   @if (isLoading) {
-    <div class="loading">Loading...</div>
+    <app-table-skeleton [headers]="6" [rows]="6"></app-table-skeleton>
   }
   @if (!isLoading) {
     <table class="table">
@@ -55,7 +65,19 @@
       }
       @if (filteredPrescriptions.length === 0) {
         <tr>
-        <td colspan="6" class="empty">No prescriptions</td>
+          <td colspan="6" class="empty-state">
+            <div class="empty-state-content">
+              <span class="material-icons">receipt_long</span>
+              <h3>No prescriptions found</h3>
+              <p>
+                @if (searchTerm) {
+                  Try adjusting your search criteria
+                } @else {
+                  No prescriptions have been issued yet
+                }
+              </p>
+            </div>
+          </td>
         </tr>
       }
     </tbody>

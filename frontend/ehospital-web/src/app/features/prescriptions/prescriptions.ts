@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Prescription, PrescriptionService } from './services/prescription.service';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
+import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-prescriptions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent],
   templateUrl: './prescriptions.html',
   styleUrls: ['./prescriptions.scss']
 })
@@ -29,7 +31,8 @@ export class PrescriptionsComponent implements OnInit {
   constructor(
     private prescriptionService: PrescriptionService,
     private fb: FormBuilder,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private exportService: ExportService
   ) {
     this.form = this.fb.group({
       patientId: ['', Validators.required],
@@ -173,6 +176,46 @@ export class PrescriptionsComponent implements OnInit {
       },
       error: () => this.toastService.error('Failed to reload prescriptions')
     });
+  }
+  
+  exportToCSV() {
+    if (this.filteredPrescriptions.length === 0) {
+      this.toastService.warning('No prescriptions to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Medication', 'Dosage', 'Instructions', 'Issued At'];
+    const data = this.filteredPrescriptions.map(prescription => ({
+      'Patient': prescription.patientName || '—',
+      'Doctor': prescription.doctorName || '—',
+      'Medication': prescription.medicationName || '—',
+      'Dosage': prescription.dosage || '—',
+      'Instructions': prescription.instructions || '—',
+      'Issued At': prescription.issuedAt ? new Date(prescription.issuedAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToCSV(data, 'prescriptions', headers);
+    this.toastService.success('Prescriptions exported to CSV successfully');
+  }
+  
+  exportToPDF() {
+    if (this.filteredPrescriptions.length === 0) {
+      this.toastService.warning('No prescriptions to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Medication', 'Dosage', 'Instructions', 'Issued At'];
+    const data = this.filteredPrescriptions.map(prescription => ({
+      'Patient': prescription.patientName || '—',
+      'Doctor': prescription.doctorName || '—',
+      'Medication': prescription.medicationName || '—',
+      'Dosage': prescription.dosage || '—',
+      'Instructions': prescription.instructions || '—',
+      'Issued At': prescription.issuedAt ? new Date(prescription.issuedAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToPDF(data, 'prescriptions', headers, 'Prescriptions Report');
+    this.toastService.success('Prescriptions exported to PDF successfully');
   }
 }
 

@@ -31,6 +31,16 @@
         <option value="No Show">No Show</option>
       </select>
     </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
     <div class="results-count">
       {{ filteredAppointments.length }} appointment(s) found
     </div>
@@ -38,10 +48,7 @@
 
   <!-- Loading State -->
   @if (isLoading) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading appointments...</p>
-    </div>
+    <app-table-skeleton [headers]="7" [rows]="8"></app-table-skeleton>
   }
 
   <!-- Appointments Table -->
@@ -102,8 +109,23 @@
           @if (filteredAppointments.length === 0) {
             <tr>
               <td colspan="7" class="empty-state">
-                <span class="material-icons">event</span>
-                <p>No appointments found</p>
+                <div class="empty-state-content">
+                  <span class="material-icons">event_busy</span>
+                  <h3>No appointments found</h3>
+                  <p>
+                    @if (searchTerm || statusFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No appointments have been scheduled yet
+                    }
+                  </p>
+                  @if (!searchTerm && !statusFilter) {
+                    <button class="btn-primary" (click)="openAddModal()">
+                      <span class="material-icons">add</span>
+                      Schedule First Appointment
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }
@@ -170,7 +192,7 @@
                 </select>
                 @if (patientId?.invalid && patientId?.touched) {
                   <span class="error-message">
-                    Patient is required
+                    {{ getFieldError('patientId') }}
                   </span>
                 }
               </div>
@@ -191,7 +213,7 @@
                 </select>
                 @if (doctorId?.invalid && doctorId?.touched) {
                   <span class="error-message">
-                    Doctor is required
+                    {{ getFieldError('doctorId') }}
                   </span>
                 }
               </div>
@@ -209,7 +231,7 @@
                 />
                 @if (appointmentDate?.invalid && appointmentDate?.touched) {
                   <span class="error-message">
-                    Appointment date is required
+                    {{ getFieldError('appointmentDate') }}
                   </span>
                 }
               </div>
@@ -225,7 +247,7 @@
                   />
                   @if (startTime?.invalid && startTime?.touched) {
                     <span class="error-message">
-                      Start time is required
+                      {{ getFieldError('startTime') }}
                     </span>
                   }
                 </div>
@@ -240,7 +262,7 @@
                   />
                   @if (endTime?.invalid && endTime?.touched) {
                     <span class="error-message">
-                      End time is required
+                      {{ getFieldError('endTime') }}
                     </span>
                   }
                 </div>
@@ -279,7 +301,7 @@
               ></textarea>
               @if (reason?.invalid && reason?.touched) {
                 <span class="error-message">
-                  Please describe the reason (min 5 characters)
+                  {{ getFieldError('reason') }}
                 </span>
               }
             </div>

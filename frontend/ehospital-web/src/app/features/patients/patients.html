@@ -22,16 +22,23 @@
         (input)="search()"
       />
     </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
     <div class="results-count">
       {{ filteredPatients.length }} patient(s) found
     </div>
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
-    <div class="spinner"></div>
-    <p>Loading patients...</p>
-  </div>
+  <app-table-skeleton *ngIf="isLoading" [headers]="9" [rows]="8"></app-table-skeleton>
 
   <!-- Patients Table -->
   <div *ngIf="!isLoading" class="table-container">
@@ -65,6 +72,9 @@
           </td>
           <td>{{ patient.emergencyContact || '—' }}</td>
           <td class="actions-cell">
+            <button class="btn-icon" (click)="openHistoryModal(patient)" title="View History">
+              <span class="material-icons">history</span>
+            </button>
             <button class="btn-icon" (click)="openEditModal(patient)" title="Edit">
               <span class="material-icons">edit</span>
             </button>
@@ -74,9 +84,19 @@
           </td>
         </tr>
         <tr *ngIf="filteredPatients.length === 0">
-          <td colspan="8" class="empty-state">
-            <span class="material-icons">people</span>
-            <p>No patients found</p>
+          <td colspan="9" class="empty-state">
+            <div class="empty-state-content">
+              <span class="material-icons">people_outline</span>
+              <h3>No patients found</h3>
+              <p>
+                <span *ngIf="searchTerm">Try adjusting your search criteria</span>
+                <span *ngIf="!searchTerm">No patients have been registered yet</span>
+              </p>
+              <button *ngIf="!searchTerm" class="btn-primary" (click)="openAddModal()">
+                <span class="material-icons">add</span>
+                Add First Patient
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -279,6 +299,24 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Patient History Modal -->
+  <div *ngIf="showHistoryModal && selectedPatientForHistory" class="modal-overlay" (click)="closeHistoryModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Patient History - {{ selectedPatientForHistory.firstName }} {{ selectedPatientForHistory.lastName }}</h3>
+        <button class="btn-close" (click)="closeHistoryModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <app-patient-history-timeline [patientId]="selectedPatientForHistory.id"></app-patient-history-timeline>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeHistoryModal()">Close</button>
+      </div>
     </div>
   </div>
 </div>

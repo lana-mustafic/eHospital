@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Diagnosis, DiagnosisService } from './services/diagnosis.service';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
+import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-diagnoses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent],
   templateUrl: './diagnoses.html',
   styleUrls: ['./diagnoses.scss']
 })
@@ -29,7 +31,8 @@ export class DiagnosesComponent implements OnInit {
   constructor(
     private diagnosisService: DiagnosisService,
     private fb: FormBuilder,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private exportService: ExportService
   ) {
     this.form = this.fb.group({
       patientId: ['', Validators.required],
@@ -170,6 +173,46 @@ export class DiagnosesComponent implements OnInit {
       },
       error: () => this.toastService.error('Failed to reload diagnoses')
     });
+  }
+  
+  exportToCSV() {
+    if (this.filteredDiagnoses.length === 0) {
+      this.toastService.warning('No diagnoses to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Condition', 'Severity', 'Notes', 'Created At'];
+    const data = this.filteredDiagnoses.map(diagnosis => ({
+      'Patient': diagnosis.patientName || '—',
+      'Doctor': diagnosis.doctorName || '—',
+      'Condition': diagnosis.condition || '—',
+      'Severity': diagnosis.severity || '—',
+      'Notes': diagnosis.notes || '—',
+      'Created At': diagnosis.createdAt ? new Date(diagnosis.createdAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToCSV(data, 'diagnoses', headers);
+    this.toastService.success('Diagnoses exported to CSV successfully');
+  }
+  
+  exportToPDF() {
+    if (this.filteredDiagnoses.length === 0) {
+      this.toastService.warning('No diagnoses to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Condition', 'Severity', 'Notes', 'Created At'];
+    const data = this.filteredDiagnoses.map(diagnosis => ({
+      'Patient': diagnosis.patientName || '—',
+      'Doctor': diagnosis.doctorName || '—',
+      'Condition': diagnosis.condition || '—',
+      'Severity': diagnosis.severity || '—',
+      'Notes': diagnosis.notes || '—',
+      'Created At': diagnosis.createdAt ? new Date(diagnosis.createdAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToPDF(data, 'diagnoses', headers, 'Diagnoses Report');
+    this.toastService.success('Diagnoses exported to PDF successfully');
   }
 }
 

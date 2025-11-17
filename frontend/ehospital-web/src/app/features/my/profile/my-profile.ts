@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { PatientService } from '../../patients/services/patient.service';
 import { Patient } from '../../patients/models/patient.model';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PatientHistoryTimelineComponent } from '../../patients/components/patient-history-timeline/patient-history-timeline.component';
 
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PatientHistoryTimelineComponent],
   templateUrl: './my-profile.html',
   styleUrls: ['./my-profile.scss']
 })

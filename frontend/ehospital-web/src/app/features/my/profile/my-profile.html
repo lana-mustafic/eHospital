@@ -12,6 +12,13 @@
     <button class="btn-primary" (click)="startEdit()">Edit</button>
   </div>
 
+  <!-- Patient History Timeline -->
+  @if (!isLoading && me) {
+    <div class="timeline-section">
+      <app-patient-history-timeline [patientId]="me.id"></app-patient-history-timeline>
+    </div>
+  }
+
   <form *ngIf="!isLoading && me && isEdit" [formGroup]="form" (ngSubmit)="save()" class="card">
     <h3>Edit Contact Info</h3>
     <div class="row">

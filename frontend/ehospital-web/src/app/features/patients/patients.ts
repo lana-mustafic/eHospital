@@ -5,11 +5,14 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { PatientService } from './services/patient.service';
 import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
 import { ToastService } from '../../core/services/toast.service';
+import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
+import { ExportService } from '../../core/services/export.service';
+import { PatientHistoryTimelineComponent } from './components/patient-history-timeline/patient-history-timeline.component';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent, PatientHistoryTimelineComponent],
   templateUrl: './patients.html',
   styleUrls: ['./patients.scss']
 })
@@ -20,8 +23,10 @@ export class PatientsComponent implements OnInit {
   isLoading = false;
   searchTerm = '';
   showModal = false;
+  showHistoryModal = false;
   isEditMode = false;
   selectedPatient: Patient | null = null;
+  selectedPatientForHistory: Patient | null = null;
   patientForm: FormGroup;
   
   // Pagination
@@ -32,7 +37,8 @@ export class PatientsComponent implements OnInit {
   constructor(
     private patientService: PatientService,
     private fb: FormBuilder,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private exportService: ExportService
   ) {
     this.patientForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -253,6 +259,16 @@ export class PatientsComponent implements OnInit {
         }
       });
     }
+  }
+  
+  openHistoryModal(patient: Patient) {
+    this.selectedPatientForHistory = patient;
+    this.showHistoryModal = true;
+  }
+  
+  closeHistoryModal() {
+    this.showHistoryModal = false;
+    this.selectedPatientForHistory = null;
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {

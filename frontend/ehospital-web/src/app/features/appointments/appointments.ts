@@ -11,11 +11,13 @@ import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
 import { DoctorScheduleService, DoctorSchedule } from '../doctor-schedules/services/doctor-schedule.service';
+import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent],
   templateUrl: './appointments.html',
   styleUrls: ['./appointments.scss']
 })
@@ -52,7 +54,8 @@ export class AppointmentsComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private toastService: ToastService,
-    private doctorScheduleService: DoctorScheduleService
+    private doctorScheduleService: DoctorScheduleService,
+    private exportService: ExportService
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -516,5 +519,78 @@ export class AppointmentsComponent implements OnInit {
 
   get status() {
     return this.statusForm.get('status');
+  }
+  
+  getFieldError(fieldName: string): string {
+    const field = this.appointmentForm.get(fieldName);
+    if (!field || !field.errors || !field.touched) {
+      return '';
+    }
+    
+    if (field.errors['required']) {
+      return `${this.getFieldLabel(fieldName)} is required`;
+    }
+    if (field.errors['minlength']) {
+      return `${this.getFieldLabel(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
+    }
+    if (field.errors['email']) {
+      return 'Please enter a valid email address';
+    }
+    
+    return 'Invalid value';
+  }
+  
+  private getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      'patientId': 'Patient',
+      'doctorId': 'Doctor',
+      'appointmentDate': 'Appointment date',
+      'startTime': 'Start time',
+      'endTime': 'End time',
+      'reason': 'Reason for visit'
+    };
+    return labels[fieldName] || fieldName;
+  }
+  
+  exportToCSV() {
+    if (this.filteredAppointments.length === 0) {
+      this.toastService.warning('No appointments to export');
+      return;
+    }
+    
+    const headers = ['Date', 'Time', 'Patient', 'Doctor', 'Specialization', 'Status', 'Reason', 'Notes'];
+    const data = this.filteredAppointments.map(apt => ({
+      'Date': this.formatDate(apt.appointmentDate),
+      'Time': `${apt.startTime} - ${apt.endTime}`,
+      'Patient': apt.patientName || '—',
+      'Doctor': apt.doctorName || '—',
+      'Specialization': apt.doctorSpecialization || '—',
+      'Status': apt.status,
+      'Reason': apt.reason || '—',
+      'Notes': apt.notes || '—'
+    }));
+    
+    this.exportService.exportToCSV(data, 'appointments', headers);
+    this.toastService.success('Appointments exported to CSV successfully');
+  }
+  
+  exportToPDF() {
+    if (this.filteredAppointments.length === 0) {
+      this.toastService.warning('No appointments to export');
+      return;
+    }
+    
+    const headers = ['Date', 'Time', 'Patient', 'Doctor', 'Status', 'Reason'];
+    const data = this.filteredAppointments.map(apt => ({
+      'Date': this.formatDate(apt.appointmentDate),
+      'Time': `${apt.startTime} - ${apt.endTime}`,
+      'Patient': apt.patientName || '—',
+      'Doctor': apt.doctorName || '—',
+      'Status': apt.status,
+      'Reason': apt.reason || '—'
+    }));
+    
+    this.exportService.exportToPDF(data, 'appointments', headers, 'Appointments Report');
+    this.toastService.success('Appointments exported to PDF successfully');
   }
 }

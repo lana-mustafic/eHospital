@@ -20,12 +20,22 @@
         (input)="search()"
       />
     </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
     <div class="results-count">
       {{ filteredRecords.length }} record(s) found
     </div>
   </div>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <app-table-skeleton *ngIf="isLoading" [headers]="6" [rows]="6"></app-table-skeleton>
   <table *ngIf="!isLoading" class="table">
     <thead>
       <tr>
@@ -49,7 +59,16 @@
         </td>
       </tr>
       <tr *ngIf="filteredRecords.length === 0">
-        <td colspan="6" class="empty">No records</td>
+        <td colspan="6" class="empty-state">
+          <div class="empty-state-content">
+            <span class="material-icons">folder_off</span>
+            <h3>No medical records found</h3>
+            <p>
+              <span *ngIf="searchTerm">Try adjusting your search criteria</span>
+              <span *ngIf="!searchTerm">No medical records have been created yet</span>
+            </p>
+          </div>
+        </td>
       </tr>
     </tbody>
   </table>

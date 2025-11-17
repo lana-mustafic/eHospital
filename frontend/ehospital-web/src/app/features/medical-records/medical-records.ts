@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { MedicalRecord, MedicalRecordService } from './services/medical-record.service';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
+import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent],
   templateUrl: './medical-records.html',
   styleUrls: ['./medical-records.scss']
 })
@@ -29,7 +31,8 @@ export class MedicalRecordsComponent implements OnInit {
   constructor(
     private recordService: MedicalRecordService,
     private fb: FormBuilder,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private exportService: ExportService
   ) {
     this.form = this.fb.group({
       patientId: ['', Validators.required],
@@ -184,6 +187,44 @@ export class MedicalRecordsComponent implements OnInit {
       },
       error: () => this.toastService.error('Failed to reload medical records')
     });
+  }
+  
+  exportToCSV() {
+    if (this.filteredRecords.length === 0) {
+      this.toastService.warning('No medical records to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Diagnosis', 'Notes', 'Created At'];
+    const data = this.filteredRecords.map(record => ({
+      'Patient': record.patientName || '—',
+      'Doctor': record.doctorName || '—',
+      'Diagnosis': record.diagnosis || '—',
+      'Notes': record.notes || '—',
+      'Created At': record.createdAt ? new Date(record.createdAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToCSV(data, 'medical-records', headers);
+    this.toastService.success('Medical records exported to CSV successfully');
+  }
+  
+  exportToPDF() {
+    if (this.filteredRecords.length === 0) {
+      this.toastService.warning('No medical records to export');
+      return;
+    }
+    
+    const headers = ['Patient', 'Doctor', 'Diagnosis', 'Notes', 'Created At'];
+    const data = this.filteredRecords.map(record => ({
+      'Patient': record.patientName || '—',
+      'Doctor': record.doctorName || '—',
+      'Diagnosis': record.diagnosis || '—',
+      'Notes': record.notes || '—',
+      'Created At': record.createdAt ? new Date(record.createdAt).toLocaleString() : '—'
+    }));
+    
+    this.exportService.exportToPDF(data, 'medical-records', headers, 'Medical Records Report');
+    this.toastService.success('Medical records exported to PDF successfully');
   }
 }
 

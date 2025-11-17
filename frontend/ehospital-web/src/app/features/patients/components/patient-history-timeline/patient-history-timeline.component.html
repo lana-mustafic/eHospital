@@ -1,0 +1,82 @@
+<div class="patient-history-timeline">
+  <div class="timeline-header">
+    <h3>Patient History Timeline</h3>
+    <div class="filter-controls">
+      <select [(ngModel)]="filterType" (change)="onFilterChange()" class="filter-select">
+        <option value="all">All Events</option>
+        <option value="appointment">Appointments</option>
+        <option value="medical-record">Medical Records</option>
+        <option value="diagnosis">Diagnoses</option>
+        <option value="prescription">Prescriptions</option>
+      </select>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading patient history...</p>
+    </div>
+  } @else if (filteredItems.length === 0) {
+    <div class="empty-state">
+      <span class="material-icons">history</span>
+      <h4>No history found</h4>
+      <p>This patient has no medical history records yet.</p>
+    </div>
+  } @else {
+    <div class="timeline-container">
+      @for (item of filteredItems; track item.id) {
+        <div class="timeline-item" [style.border-left-color]="item.color">
+          <div class="timeline-marker" [style.background-color]="item.color">
+            <span class="material-icons">{{ item.icon }}</span>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-header-item">
+              <div class="timeline-title">
+                <span class="type-badge" [style.background-color]="item.color + '20'" [style.color]="item.color">
+                  {{ getTypeLabel(item.type) }}
+                </span>
+                <h4>{{ item.title }}</h4>
+              </div>
+              <span class="timeline-date">{{ formatDate(item.date) }}</span>
+            </div>
+            <p class="timeline-description">{{ item.description }}</p>
+            
+            @if (item.type === 'appointment') {
+              <div class="timeline-details">
+                <span><strong>Doctor:</strong> {{ item.data.doctorName }}</span>
+                <span><strong>Time:</strong> {{ item.data.startTime }} - {{ item.data.endTime }}</span>
+                @if (item.data.notes) {
+                  <span><strong>Notes:</strong> {{ item.data.notes }}</span>
+                }
+              </div>
+            }
+            
+            @if (item.type === 'prescription') {
+              <div class="timeline-details">
+                <span><strong>Prescribed by:</strong> {{ item.data.doctorName }}</span>
+                <span><strong>Dosage:</strong> {{ item.data.dosage }}</span>
+              </div>
+            }
+            
+            @if (item.type === 'diagnosis') {
+              <div class="timeline-details">
+                <span><strong>Diagnosed by:</strong> {{ item.data.doctorName }}</span>
+                @if (item.data.severity) {
+                  <span><strong>Severity:</strong> {{ item.data.severity }}</span>
+                }
+              </div>
+            }
+            
+            @if (item.type === 'medical-record') {
+              <div class="timeline-details">
+                <span><strong>Recorded by:</strong> {{ item.data.doctorName }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
