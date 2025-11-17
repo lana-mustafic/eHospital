@@ -60,7 +60,7 @@
         </tr>
         </thead>
         <tbody>
-          @for (appointment of filteredAppointments; track appointment.id) {
+          @for (appointment of paginatedAppointments; track appointment.id) {
             <tr [class.past-appointment]="isPastAppointment(appointment.appointmentDate, appointment.startTime)">
               <td class="datetime-cell">
                 <div class="date">{{ formatDate(appointment.appointmentDate) }}</div>
@@ -109,6 +109,32 @@
           }
         </tbody>
       </table>
+      
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+            <span class="material-icons">chevron_left</span>
+          </button>
+          
+          @for (page of getPageNumbers(); track page) {
+            <button 
+              class="pagination-btn" 
+              [class.active]="page === currentPage"
+              (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          }
+          
+          <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+            <span class="material-icons">chevron_right</span>
+          </button>
+          
+          <span class="pagination-info">
+            Page {{ currentPage }} of {{ totalPages }} ({{ filteredAppointments.length }} total)
+          </span>
+        </div>
+      }
     </div>
   }
 

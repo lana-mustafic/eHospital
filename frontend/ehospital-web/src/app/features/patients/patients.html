@@ -50,7 +50,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let patient of filteredPatients">
+        <tr *ngFor="let patient of paginatedPatients">
           <td class="name-cell">
             <strong>{{ patient.firstName }} {{ patient.lastName }}</strong>
           </td>
@@ -81,6 +81,29 @@
         </tr>
       </tbody>
     </table>
+    
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="pagination">
+      <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+        <span class="material-icons">chevron_left</span>
+      </button>
+      
+      <button 
+        *ngFor="let page of getPageNumbers()" 
+        class="pagination-btn" 
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      
+      <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <span class="material-icons">chevron_right</span>
+      </button>
+      
+      <span class="pagination-info">
+        Page {{ currentPage }} of {{ totalPages }} ({{ filteredPatients.length }} total)
+      </span>
+    </div>
   </div>
 
   <!-- Add/Edit Modal -->

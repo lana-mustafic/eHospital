@@ -16,12 +16,18 @@ import { ToastService } from '../../core/services/toast.service';
 export class PatientsComponent implements OnInit {
   patients: Patient[] = [];
   filteredPatients: Patient[] = [];
+  paginatedPatients: Patient[] = [];
   isLoading = false;
   searchTerm = '';
   showModal = false;
   isEditMode = false;
   selectedPatient: Patient | null = null;
   patientForm: FormGroup;
+  
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalPages = 1;
 
   constructor(
     private patientService: PatientService,
@@ -52,6 +58,7 @@ export class PatientsComponent implements OnInit {
       next: (data) => {
         this.patients = data;
         this.filteredPatients = data;
+        this.updatePagination();
         this.isLoading = false;
       },
       error: (error) => {
@@ -66,15 +73,60 @@ export class PatientsComponent implements OnInit {
     const term = this.searchTerm.toLowerCase().trim();
     if (!term) {
       this.filteredPatients = this.patients;
-      return;
+    } else {
+      this.filteredPatients = this.patients.filter(patient =>
+        patient.firstName.toLowerCase().includes(term) ||
+        patient.lastName.toLowerCase().includes(term) ||
+        patient.email.toLowerCase().includes(term) ||
+        patient.phoneNumber.includes(term)
+      );
     }
-
-    this.filteredPatients = this.patients.filter(patient =>
-      patient.firstName.toLowerCase().includes(term) ||
-      patient.lastName.toLowerCase().includes(term) ||
-      patient.email.toLowerCase().includes(term) ||
-      patient.phoneNumber.includes(term)
-    );
+    this.currentPage = 1; // Reset to first page on search
+    this.updatePagination();
+  }
+  
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredPatients.length / this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedPatients = this.filteredPatients.slice(startIndex, endIndex);
+  }
+  
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+  
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+  
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+  
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxPages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+      startPage = Math.max(1, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   getAge(dateOfBirth: string): number {

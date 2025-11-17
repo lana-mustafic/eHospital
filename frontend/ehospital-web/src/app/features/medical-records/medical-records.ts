@@ -1,22 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MedicalRecord, MedicalRecordService } from './services/medical-record.service';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './medical-records.html',
   styleUrls: ['./medical-records.scss']
 })
 export class MedicalRecordsComponent implements OnInit {
   records: MedicalRecord[] = [];
+  filteredRecords: MedicalRecord[] = [];
+  paginatedRecords: MedicalRecord[] = [];
   isLoading = false;
+  searchTerm = '';
   form: FormGroup;
   isEdit = false;
   editingId: number | null = null;
+  
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalPages = 1;
 
   constructor(
     private recordService: MedicalRecordService,
@@ -33,7 +41,12 @@ export class MedicalRecordsComponent implements OnInit {
   ngOnInit(): void {
     this.isLoading = true;
     this.recordService.getAll().subscribe({
-      next: (data) => { this.records = data; this.isLoading = false; },
+      next: (data) => {
+        this.records = data;
+        this.filteredRecords = data;
+        this.updatePagination();
+        this.isLoading = false;
+      },
       error: (err) => {
         this.isLoading = false;
         this.toastService.error('Failed to load medical records');
@@ -100,10 +113,75 @@ export class MedicalRecordsComponent implements OnInit {
     this.form.reset();
   }
 
+  search() {
+    const term = this.searchTerm.toLowerCase().trim();
+    if (!term) {
+      this.filteredRecords = this.records;
+    } else {
+      this.filteredRecords = this.records.filter(record =>
+        (record.patientName?.toLowerCase().includes(term)) ||
+        (record.doctorName?.toLowerCase().includes(term)) ||
+        (record.diagnosis?.toLowerCase().includes(term)) ||
+        (record.notes?.toLowerCase().includes(term)) ||
+        (record.patientId?.toString().includes(term))
+      );
+    }
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+  
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredRecords.length / this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedRecords = this.filteredRecords.slice(startIndex, endIndex);
+  }
+  
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+  
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+  
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+  
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxPages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+      startPage = Math.max(1, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   private reload() {
     this.resetForm();
     this.recordService.getAll().subscribe({
-      next: d => this.records = d,
+      next: d => {
+        this.records = d;
+        this.filteredRecords = d;
+        this.updatePagination();
+      },
       error: () => this.toastService.error('Failed to reload medical records')
     });
   }

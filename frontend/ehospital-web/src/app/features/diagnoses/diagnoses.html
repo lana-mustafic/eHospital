@@ -9,6 +9,22 @@
     </div>
   </form>
 
+  <!-- Search -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by patient, doctor, condition, or notes..."
+        [(ngModel)]="searchTerm"
+        (input)="search()"
+      />
+    </div>
+    <div class="results-count">
+      {{ filteredDiagnoses.length }} diagnosis/diagnoses found
+    </div>
+  </div>
+
   @if (isLoading) {
     <div class="loading">Loading...</div>
   }
@@ -25,7 +41,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (d of diagnoses; track d.id) {
+        @for (d of paginatedDiagnoses; track d.id) {
           <tr>
             <td>{{ d.patientName || d.patientId }}</td>
             <td>{{ d.doctorName || '—' }}</td>
@@ -35,13 +51,39 @@
             <td><button class="btn-small" (click)="edit(d)">Edit</button></td>
           </tr>
         }
-        @if (diagnoses.length === 0) {
+        @if (filteredDiagnoses.length === 0) {
           <tr>
             <td colspan="6" class="empty">No diagnoses</td>
           </tr>
         }
       </tbody>
     </table>
+    
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        
+        @for (page of getPageNumbers(); track page) {
+          <button 
+            class="pagination-btn" 
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        }
+        
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <span class="material-icons">chevron_right</span>
+        </button>
+        
+        <span class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }} ({{ filteredDiagnoses.length }} total)
+        </span>
+      </div>
+    }
   }
 </div>
 
