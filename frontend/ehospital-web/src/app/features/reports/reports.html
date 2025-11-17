@@ -1,1 +1,253 @@
-<p>reports works!</p>
+<div class="reports-page">
+  <div class="page-header">
+    <h1>Analytics & Reports</h1>
+    <p class="page-subtitle">Comprehensive insights and analytics for hospital operations</p>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="loadReportsData()">Retry</button>
+    </div>
+  } @else {
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filter-card">
+        <h3>Report Filters</h3>
+        <form [formGroup]="filterForm" class="filter-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reportType">Report Type</label>
+              <select id="reportType" formControlName="reportType">
+                <option value="overview">Overview</option>
+                <option value="appointments">Appointments</option>
+                <option value="patients">Patients</option>
+                <option value="doctors">Doctors</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="startDate">Start Date</label>
+              <input id="startDate" type="date" formControlName="startDate" (change)="applyFilters()" />
+            </div>
+            <div class="form-group">
+              <label for="endDate">End Date</label>
+              <input id="endDate" type="date" formControlName="endDate" (change)="applyFilters()" />
+            </div>
+            <div class="form-group">
+              <button type="button" class="btn-export" (click)="exportReport()">
+                <span class="material-icons">file_download</span>
+                Export Report
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Overview Statistics -->
+    @if (selectedReportType === 'overview') {
+      <div class="stats-section">
+        <div class="stat-card">
+          <div class="stat-icon appointments">
+            <span class="material-icons">event</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ totalAppointments }}</h3>
+            <p class="stat-label">Total Appointments</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon patients">
+            <span class="material-icons">people</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ totalPatients }}</h3>
+            <p class="stat-label">Total Patients</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon doctors">
+            <span class="material-icons">medical_services</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ totalDoctors }}</h3>
+            <p class="stat-label">Total Doctors</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon rate">
+            <span class="material-icons">trending_up</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ completionRate.toFixed(1) }}%</h3>
+            <p class="stat-label">Completion Rate</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon avg">
+            <span class="material-icons">calendar_today</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ averageAppointmentsPerDay.toFixed(1) }}</h3>
+            <p class="stat-label">Avg Appointments/Day</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon cancel">
+            <span class="material-icons">cancel</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ cancellationRate.toFixed(1) }}%</h3>
+            <p class="stat-label">Cancellation Rate</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <div class="chart-card">
+          <h3>Appointment Status Distribution</h3>
+          <app-status-pie-chart
+            [scheduled]="appointmentStatusData.scheduled"
+            [completed]="appointmentStatusData.completed"
+            [cancelled]="appointmentStatusData.cancelled"
+            [noShow]="appointmentStatusData.noShow"
+          ></app-status-pie-chart>
+        </div>
+
+        <div class="chart-card">
+          <h3>Appointment Trends</h3>
+          <app-line-chart
+            [data]="appointmentTrendData"
+            [width]="600"
+            [height]="250"
+            lineColor="#667eea"
+          ></app-line-chart>
+        </div>
+
+        <div class="chart-card">
+          <h3>Top Doctors by Appointments</h3>
+          <app-bar-chart
+            [data]="doctorAppointmentData"
+            [width]="600"
+            [height]="250"
+            defaultColor="#667eea"
+          ></app-bar-chart>
+        </div>
+
+        <div class="chart-card">
+          <h3>Patient Age Distribution</h3>
+          <app-bar-chart
+            [data]="patientAgeDistributionData"
+            [width]="600"
+            [height]="250"
+            defaultColor="#10b981"
+          ></app-bar-chart>
+        </div>
+
+        <div class="chart-card full-width">
+          <h3>Monthly Appointments</h3>
+          <app-bar-chart
+            [data]="monthlyAppointmentData"
+            [width]="800"
+            [height]="250"
+            defaultColor="#f59e0b"
+          ></app-bar-chart>
+        </div>
+      </div>
+    }
+
+    <!-- Appointments Report -->
+    @if (selectedReportType === 'appointments') {
+      <div class="report-section">
+        <h2>Appointments Report</h2>
+        <div class="report-stats">
+          <div class="report-stat">
+            <span class="stat-label">Total:</span>
+            <span class="stat-value">{{ totalAppointments }}</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-label">Scheduled:</span>
+            <span class="stat-value">{{ appointmentStatusData.scheduled }}</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-label">Completed:</span>
+            <span class="stat-value">{{ appointmentStatusData.completed }}</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-label">Cancelled:</span>
+            <span class="stat-value">{{ appointmentStatusData.cancelled }}</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Appointment Status</h3>
+          <app-status-pie-chart
+            [scheduled]="appointmentStatusData.scheduled"
+            [completed]="appointmentStatusData.completed"
+            [cancelled]="appointmentStatusData.cancelled"
+            [noShow]="appointmentStatusData.noShow"
+          ></app-status-pie-chart>
+        </div>
+        <div class="chart-card">
+          <h3>Appointment Trends</h3>
+          <app-line-chart
+            [data]="appointmentTrendData"
+            [width]="600"
+            [height]="250"
+            lineColor="#667eea"
+          ></app-line-chart>
+        </div>
+      </div>
+    }
+
+    <!-- Patients Report -->
+    @if (selectedReportType === 'patients') {
+      <div class="report-section">
+        <h2>Patients Report</h2>
+        <div class="report-stats">
+          <div class="report-stat">
+            <span class="stat-label">Total Patients:</span>
+            <span class="stat-value">{{ totalPatients }}</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Age Distribution</h3>
+          <app-bar-chart
+            [data]="patientAgeDistributionData"
+            [width]="600"
+            [height]="250"
+            defaultColor="#10b981"
+          ></app-bar-chart>
+        </div>
+      </div>
+    }
+
+    <!-- Doctors Report -->
+    @if (selectedReportType === 'doctors') {
+      <div class="report-section">
+        <h2>Doctors Report</h2>
+        <div class="report-stats">
+          <div class="report-stat">
+            <span class="stat-label">Total Doctors:</span>
+            <span class="stat-value">{{ totalDoctors }}</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Top Doctors by Appointments</h3>
+          <app-bar-chart
+            [data]="doctorAppointmentData"
+            [width]="600"
+            [height]="250"
+            defaultColor="#667eea"
+          ></app-bar-chart>
+        </div>
+      </div>
+    }
+  }
+</div>
