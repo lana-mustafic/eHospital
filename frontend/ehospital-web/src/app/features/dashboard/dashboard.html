@@ -75,10 +75,138 @@
           <p class="stat-label-small">Upcoming (7 days)</p>
         </div>
       </div>
+
+      <div class="stat-card-small">
+        <div class="stat-icon-small completed">
+          <span class="material-icons">check_circle</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ completedThisMonth }}</h4>
+          <p class="stat-label-small">Completed This Month</p>
+        </div>
+      </div>
+
+      <div class="stat-card-small">
+        <div class="stat-icon-small records">
+          <span class="material-icons">folder_shared</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ totalMedicalRecords }}</h4>
+          <p class="stat-label-small">Medical Records</p>
+        </div>
+      </div>
+
+      <div class="stat-card-small">
+        <div class="stat-icon-small diagnoses">
+          <span class="material-icons">healing</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ totalDiagnoses }}</h4>
+          <p class="stat-label-small">Diagnoses</p>
+        </div>
+      </div>
+
+      <div class="stat-card-small">
+        <div class="stat-icon-small prescriptions">
+          <span class="material-icons">receipt_long</span>
+        </div>
+        <div class="stat-content-small">
+          <h4 class="stat-value-small">{{ totalPrescriptions }}</h4>
+          <p class="stat-label-small">Prescriptions</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Recent Appointments -->
+    <!-- Appointment Status Breakdown -->
+    <div class="status-breakdown">
+      <div class="content-card">
+        <h2>Appointment Status</h2>
+        <div class="status-grid">
+          <div class="status-item scheduled">
+            <div class="status-icon">
+              <span class="material-icons">event</span>
+            </div>
+            <div class="status-info">
+              <div class="status-value">{{ scheduledCount }}</div>
+              <div class="status-label">Scheduled</div>
+            </div>
+          </div>
+          <div class="status-item completed">
+            <div class="status-icon">
+              <span class="material-icons">check_circle</span>
+            </div>
+            <div class="status-info">
+              <div class="status-value">{{ completedCount }}</div>
+              <div class="status-label">Completed</div>
+            </div>
+          </div>
+          <div class="status-item cancelled">
+            <div class="status-icon">
+              <span class="material-icons">cancel</span>
+            </div>
+            <div class="status-info">
+              <div class="status-value">{{ cancelledCount }}</div>
+              <div class="status-label">Cancelled</div>
+            </div>
+          </div>
+          <div class="status-item noshow">
+            <div class="status-icon">
+              <span class="material-icons">event_busy</span>
+            </div>
+            <div class="status-info">
+              <div class="status-value">{{ noShowCount }}</div>
+              <div class="status-label">No Show</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
     <div class="dashboard-content">
+      <!-- Today's Schedule -->
+      <div class="content-card">
+        <div class="card-header">
+          <h2>Today's Schedule</h2>
+          <a [routerLink]="['/appointments']" class="view-all-link">
+            View All
+            <span class="material-icons">arrow_forward</span>
+          </a>
+        </div>
+
+        @if (todaySchedule.length === 0) {
+          <div class="empty-state">
+            <span class="material-icons">event_busy</span>
+            <p>No appointments scheduled for today</p>
+          </div>
+        } @else {
+          <div class="schedule-list">
+            @for (appointment of todaySchedule; track appointment.id) {
+              <div class="schedule-item">
+                <div class="schedule-time">
+                  <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                  <span class="time-end">{{ formatTime(appointment.endTime) }}</span>
+                </div>
+                <div class="schedule-details">
+                  <div class="schedule-main">
+                    <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                    <span class="separator">•</span>
+                    <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                  </div>
+                  @if (appointment.reason) {
+                    <div class="schedule-reason">{{ appointment.reason }}</div>
+                  }
+                </div>
+                <div class="schedule-status">
+                  <span class="status-badge status-scheduled">Scheduled</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Recent Appointments -->
       <div class="content-card">
         <div class="card-header">
           <h2>Recent Appointments</h2>

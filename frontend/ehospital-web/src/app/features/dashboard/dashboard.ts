@@ -6,8 +6,12 @@ import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
 import { DepartmentService } from '../departments/services/department.service';
+import { MedicalRecordService } from '../medical-records/services/medical-record.service';
+import { DiagnosisService } from '../diagnoses/services/diagnosis.service';
+import { PrescriptionService } from '../prescriptions/services/prescription.service';
 import { Appointment } from '../appointments/models/appointment.model';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,6 +28,20 @@ export class Dashboard implements OnInit {
   todayAppointments = 0;
   upcomingAppointments = 0;
   recentAppointments: Appointment[] = [];
+  todaySchedule: Appointment[] = [];
+  
+  // Status breakdown
+  scheduledCount = 0;
+  completedCount = 0;
+  cancelledCount = 0;
+  noShowCount = 0;
+  
+  // Additional stats
+  totalMedicalRecords = 0;
+  totalDiagnoses = 0;
+  totalPrescriptions = 0;
+  completedThisMonth = 0;
+  
   isLoading = false;
   error: string | null = null;
 
@@ -31,7 +49,10 @@ export class Dashboard implements OnInit {
     private patientService: PatientService,
     private doctorService: DoctorService,
     private appointmentService: AppointmentService,
-    private departmentService: DepartmentService
+    private departmentService: DepartmentService,
+    private medicalRecordService: MedicalRecordService,
+    private diagnosisService: DiagnosisService,
+    private prescriptionService: PrescriptionService
   ) {}
 
   ngOnInit() {
@@ -43,22 +64,38 @@ export class Dashboard implements OnInit {
     this.error = null;
 
     forkJoin({
-      patients: this.patientService.getAll(),
-      doctors: this.doctorService.getAll(),
-      appointments: this.appointmentService.getAll(),
-      departments: this.departmentService.getAll()
+      patients: this.patientService.getAll().pipe(catchError(() => of([]))),
+      doctors: this.doctorService.getAll().pipe(catchError(() => of([]))),
+      appointments: this.appointmentService.getAll().pipe(catchError(() => of([]))),
+      departments: this.departmentService.getAll().pipe(catchError(() => of([]))),
+      medicalRecords: this.medicalRecordService.getAll().pipe(catchError(() => of([]))),
+      diagnoses: this.diagnosisService.getAll().pipe(catchError(() => of([]))),
+      prescriptions: this.prescriptionService.getAll().pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
         this.totalPatients = data.patients.length;
         this.totalDoctors = data.doctors.length;
         this.totalAppointments = data.appointments.length;
         this.totalDepartments = data.departments.length;
+        this.totalMedicalRecords = data.medicalRecords.length;
+        this.totalDiagnoses = data.diagnoses.length;
+        this.totalPrescriptions = data.prescriptions.length;
 
         // Calculate today's appointments
         const today = new Date().toISOString().split('T')[0];
-        this.todayAppointments = data.appointments.filter(
+        const todayAppts = data.appointments.filter(
           apt => apt.appointmentDate === today
-        ).length;
+        );
+        this.todayAppointments = todayAppts.length;
+
+        // Today's schedule (sorted by time)
+        this.todaySchedule = todayAppts
+          .filter(apt => apt.status === 'Scheduled')
+          .sort((a, b) => {
+            const timeA = this.normalizeTime(a.startTime);
+            const timeB = this.normalizeTime(b.startTime);
+            return timeA.localeCompare(timeB);
+          });
 
         // Calculate upcoming appointments (next 7 days)
         const nextWeek = new Date();
@@ -67,6 +104,20 @@ export class Dashboard implements OnInit {
           const aptDate = new Date(apt.appointmentDate);
           const todayDate = new Date();
           return aptDate >= todayDate && aptDate <= nextWeek && apt.status === 'Scheduled';
+        }).length;
+
+        // Status breakdown
+        this.scheduledCount = data.appointments.filter(apt => apt.status === 'Scheduled').length;
+        this.completedCount = data.appointments.filter(apt => apt.status === 'Completed').length;
+        this.cancelledCount = data.appointments.filter(apt => apt.status === 'Cancelled').length;
+        this.noShowCount = data.appointments.filter(apt => apt.status === 'No Show').length;
+
+        // Completed this month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        this.completedThisMonth = data.appointments.filter(apt => {
+          const aptDate = new Date(apt.appointmentDate);
+          return apt.status === 'Completed' && aptDate >= firstDayOfMonth;
         }).length;
 
         // Get recent appointments (last 5, sorted by date)
@@ -82,7 +133,9 @@ export class Dashboard implements OnInit {
       },
       error: (error) => {
         console.error('Error loading dashboard data:', error);
-        this.error = 'Failed to load dashboard data. Please try again.';
+        // Even if forkJoin fails completely, try to show what we can
+        // Individual errors are already caught above
+        this.error = 'Some dashboard data could not be loaded. Please refresh the page.';
         this.isLoading = false;
       }
     });
@@ -119,5 +172,15 @@ export class Dashboard implements OnInit {
       default:
         return '';
     }
+  }
+
+  formatTime(time: string): string {
+    if (!time) return '—';
+    const normalized = this.normalizeTime(time);
+    const [hours, minutes] = normalized.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
   }
 }
