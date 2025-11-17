@@ -30,6 +30,12 @@ namespace EHosp.Application.Services
             _auditService = auditService;
         }
 
+        public async Task<IEnumerable<PrescriptionDto>> GetAllPrescriptionsAsync()
+        {
+            var prescriptions = await _prescriptionRepository.GetAllPrescriptionsWithDetailsAsync();
+            return prescriptions.Select(MapToDto);
+        }
+
         public async Task<PrescriptionDto?> GetPrescriptionByIdAsync(int id)
         {
             var prescription = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);

@@ -49,6 +49,17 @@ namespace EHosp.Infrastructure.Repositories
                           .Where(mr => mr.PatientId == patientId && mr.DoctorId == doctorId)
                           .OrderByDescending(mr => mr.VisitDate)
                           .ToListAsync();
+
+        public async Task<IEnumerable<MedicalRecord>> GetAllMedicalRecordsWithDetailsAsync()
+            => await _dbSet.Include(mr => mr.Patient)
+                          .ThenInclude(p => p.User)
+                          .Include(mr => mr.Doctor)
+                          .ThenInclude(d => d.User)
+                          .Include(mr => mr.Diagnosis)
+                          .Include(mr => mr.Prescriptions)
+                          .ThenInclude(p => p.Medication)
+                          .OrderByDescending(mr => mr.VisitDate)
+                          .ToListAsync();
     }
 }
 

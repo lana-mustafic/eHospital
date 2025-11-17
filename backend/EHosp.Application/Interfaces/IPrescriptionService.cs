@@ -4,6 +4,7 @@ namespace EHosp.Application.Interfaces
 {
     public interface IPrescriptionService
     {
+        Task<IEnumerable<PrescriptionDto>> GetAllPrescriptionsAsync();
         Task<PrescriptionDto?> GetPrescriptionByIdAsync(int id);
         Task<IEnumerable<PrescriptionDto>> GetPrescriptionsByMedicalRecordAsync(int medicalRecordId);
         Task<IEnumerable<PrescriptionDto>> GetPrescriptionsByPatientAsync(int patientId);

@@ -27,6 +27,12 @@ namespace EHosp.Application.Services
             _auditService = auditService;
         }
 
+        public async Task<IEnumerable<MedicalRecordDto>> GetAllMedicalRecordsAsync()
+        {
+            var medicalRecords = await _medicalRecordRepository.GetAllMedicalRecordsWithDetailsAsync();
+            return medicalRecords.Select(MapToDto);
+        }
+
         public async Task<MedicalRecordDto?> GetMedicalRecordByIdAsync(int id)
         {
             var medicalRecord = await _medicalRecordRepository.GetMedicalRecordWithDetailsAsync(id);

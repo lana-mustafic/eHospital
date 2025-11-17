@@ -19,6 +19,14 @@ namespace EHosp.Api.Controllers
             _logger = logger;
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,Doctor,Nurse")]
+        public async Task<ActionResult<IEnumerable<PrescriptionDto>>> GetAllPrescriptions()
+        {
+            var prescriptions = await _prescriptionService.GetAllPrescriptionsAsync();
+            return Ok(prescriptions);
+        }
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Doctor,Nurse,Patient")] // Nurse can view (cannot prescribe)
         public async Task<ActionResult<PrescriptionDto>> GetPrescription(int id)
