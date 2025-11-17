@@ -40,6 +40,7 @@ namespace Infrastructure.Data
         public DbSet<PatientAllergy> PatientAllergies { get; set; }
         public DbSet<ChronicCondition> ChronicConditions { get; set; }
         public DbSet<FamilyMedicalHistory> FamilyMedicalHistories { get; set; }
+        public DbSet<DischargeSummary> DischargeSummaries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

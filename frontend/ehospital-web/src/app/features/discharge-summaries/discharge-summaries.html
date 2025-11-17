@@ -1,0 +1,286 @@
+<div class="discharge-summaries-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Discharge Summaries</h2>
+      <p>Generate and manage patient discharge summaries with post-discharge instructions</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Create Discharge Summary
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by discharge number, patient name, or diagnosis..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Statuses</option>
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportData()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredSummaries.length }} summary(ies) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="8" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Discharge Summaries Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Discharge #</th>
+            <th>Patient</th>
+            <th>Discharge Date</th>
+            <th>Type</th>
+            <th>Condition</th>
+            <th>Diagnosis</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (summary of paginatedSummaries; track summary.id) {
+            <tr>
+              <td>
+                <strong>{{ summary.dischargeNumber }}</strong>
+              </td>
+              <td class="name-cell">
+                <strong>{{ summary.patientName || 'Patient #' + summary.patientId }}</strong>
+              </td>
+              <td>{{ summary.dischargeDate | date:'short' }}</td>
+              <td><span class="badge">{{ summary.dischargeType }}</span></td>
+              <td>{{ summary.conditionOnDischarge }}</td>
+              <td>{{ (summary.dischargeDiagnosis | slice:0:50) + (summary.dischargeDiagnosis.length > 50 ? '...' : '') }}</td>
+              <td>
+                <span class="status-badge" [class.finalized]="summary.status === 'Finalized'">
+                  {{ summary.status }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditModal(summary)" title="Edit" [disabled]="summary.status === 'Finalized'">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon" (click)="downloadPdf(summary.id)" title="Download PDF">
+                  <span class="material-icons">download</span>
+                </button>
+                @if (summary.status !== 'Finalized') {
+                  <button class="btn-icon btn-success" (click)="finalizeSummary(summary.id)" title="Finalize">
+                    <span class="material-icons">check_circle</span>
+                  </button>
+                  <button class="btn-icon btn-danger" (click)="deleteSummary(summary.id)" title="Delete">
+                    <span class="material-icons">delete</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">No discharge summaries found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (!isLoading && filteredSummaries.length > 0) {
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+    </div>
+  }
+
+  <!-- Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEdit ? 'Edit' : 'Create' }} Discharge Summary</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="form" (ngSubmit)="save()">
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h4>Basic Information</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Patient *</label>
+                  <select formControlName="patientId">
+                    <option value="">Select Patient</option>
+                    @for (patient of patients; track patient.id) {
+                      <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Discharging Doctor *</label>
+                  <select formControlName="dischargingDoctorId">
+                    <option value="">Select Doctor</option>
+                    @for (doctor of doctors; track doctor.id) {
+                      <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Admission Date</label>
+                  <input type="datetime-local" formControlName="admissionDate">
+                </div>
+                <div class="form-group">
+                  <label>Discharge Date *</label>
+                  <input type="datetime-local" formControlName="dischargeDate">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Discharge Type *</label>
+                  <select formControlName="dischargeType">
+                    <option value="">Select Type</option>
+                    @for (type of dischargeTypes; track type) {
+                      <option [value]="type">{{ type }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Condition on Discharge *</label>
+                  <select formControlName="conditionOnDischarge">
+                    <option value="">Select Condition</option>
+                    @for (condition of conditionsOnDischarge; track condition) {
+                      <option [value]="condition">{{ condition }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clinical Summary -->
+            <div class="form-section">
+              <h4>Clinical Summary</h4>
+              <div class="form-group">
+                <label>Chief Complaint</label>
+                <textarea formControlName="chiefComplaint" rows="2" placeholder="Primary reason for admission..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>History of Present Illness</label>
+                <textarea formControlName="historyOfPresentIllness" rows="3" placeholder="Detailed history..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Hospital Course</label>
+                <textarea formControlName="hospitalCourse" rows="4" placeholder="Summary of treatment and progress..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Procedures Performed</label>
+                <textarea formControlName="proceduresPerformed" rows="2" placeholder="List of procedures..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Discharge Diagnosis</label>
+                <textarea formControlName="dischargeDiagnosis" rows="2" placeholder="Final diagnosis..."></textarea>
+              </div>
+            </div>
+
+            <!-- Post-Discharge Instructions -->
+            <div class="form-section">
+              <h4>Post-Discharge Instructions</h4>
+              <div class="form-group">
+                <label>General Instructions</label>
+                <textarea formControlName="postDischargeInstructions" rows="4" placeholder="General post-discharge care instructions..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Activity Restrictions</label>
+                <textarea formControlName="activityRestrictions" rows="2" placeholder="Activity limitations and recommendations..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Diet Instructions</label>
+                <textarea formControlName="dietInstructions" rows="2" placeholder="Dietary recommendations..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Medication Instructions</label>
+                <textarea formControlName="medicationInstructions" rows="3" placeholder="Medication schedule and instructions..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Warning Signs</label>
+                <textarea formControlName="warningSigns" rows="2" placeholder="When to seek immediate medical attention..."></textarea>
+              </div>
+            </div>
+
+            <!-- Follow-up -->
+            <div class="form-section">
+              <h4>Follow-up</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Follow-up Date</label>
+                  <input type="datetime-local" formControlName="followUpDate">
+                </div>
+                <div class="form-group">
+                  <label>Follow-up Doctor</label>
+                  <select formControlName="followUpDoctorId">
+                    <option [value]="null">Select Doctor</option>
+                    @for (doctor of doctors; track doctor.id) {
+                      <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Follow-up Instructions</label>
+                <textarea formControlName="followUpInstructions" rows="2" placeholder="Follow-up care instructions..."></textarea>
+              </div>
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="form-section">
+              <h4>Additional Information</h4>
+              <div class="form-group">
+                <label>Additional Notes</label>
+                <textarea formControlName="additionalNotes" rows="3" placeholder="Any additional information..."></textarea>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+              <button type="submit" class="btn-primary" [disabled]="form.invalid">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

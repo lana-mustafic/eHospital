@@ -108,6 +108,8 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IChronicConditionService, ChronicConditionService>();
         builder.Services.AddScoped<IFamilyMedicalHistoryRepository, FamilyMedicalHistoryRepository>();
         builder.Services.AddScoped<IFamilyMedicalHistoryService, FamilyMedicalHistoryService>();
+        builder.Services.AddScoped<IDischargeSummaryRepository, DischargeSummaryRepository>();
+        builder.Services.AddScoped<IDischargeSummaryService, DischargeSummaryService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -20,4 +20,5 @@ public class MedicalRecord
     public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
     public ICollection<VitalSigns> VitalSigns { get; set; } = new List<VitalSigns>();
     public ICollection<LabTest> LabTests { get; set; } = new List<LabTest>();
+    public ICollection<DischargeSummary> DischargeSummaries { get; set; } = new List<DischargeSummary>();
 }
