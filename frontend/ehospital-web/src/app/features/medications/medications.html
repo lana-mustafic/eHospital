@@ -1,1 +1,291 @@
-<p>medications works!</p>
+<div class="medications-page">
+  <div class="page-header">
+    <h1>Medications</h1>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-icons">add</span>
+      Add Medication
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-input-group">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search medications by name, description, dosage, or form..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      />
+    </div>
+    <div class="filters-group">
+      <select [(ngModel)]="formFilter" (change)="onFilterChange()">
+        <option value="">All Forms</option>
+        @for (form of medicationForms; track form) {
+          <option [value]="form">{{ form }}</option>
+        }
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="low-stock">Low Stock</option>
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+        <span class="material-icons">picture_as_pdf</span>
+        PDF
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredMedications.length }} medication(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="8" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Medications Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="medications-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Form</th>
+            <th>Dosage</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Prescriptions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (medication of paginatedMedications; track medication.id) {
+            <tr>
+              <td>
+                <div class="medication-name">
+                  <strong>{{ medication.name }}</strong>
+                  @if (medication.description) {
+                    <span class="description">{{ medication.description }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-form">{{ medication.form }}</span>
+              </td>
+              <td>{{ medication.dosage }}</td>
+              <td>${{ medication.price.toFixed(2) }}</td>
+              <td>
+                <span class="stock-badge" [ngClass]="getStockStatusClass(medication.stockQuantity, medication.isActive)">
+                  {{ medication.stockQuantity }}
+                  <span class="stock-status">{{ getStockStatusText(medication.stockQuantity, medication.isActive) }}</span>
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="medication.isActive ? 'badge-active' : 'badge-inactive'">
+                  {{ medication.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ medication.prescriptionCount || 0 }}</td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditModal(medication)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button
+                  class="btn-icon"
+                  [ngClass]="medication.isActive ? 'btn-warning' : 'btn-success'"
+                  (click)="toggleActiveStatus(medication)"
+                  [title]="medication.isActive ? 'Deactivate' : 'Activate'"
+                >
+                  <span class="material-icons">{{ medication.isActive ? 'toggle_on' : 'toggle_off' }}</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteMedication(medication)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (filteredMedications.length === 0) {
+            <tr>
+              <td colspan="8" class="empty-state">
+                <div class="empty-state-content">
+                  <span class="material-icons">medication</span>
+                  <h3>No medications found</h3>
+                  <p>
+                    @if (searchTerm || formFilter || statusFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No medications have been added yet
+                    }
+                  </p>
+                  @if (!searchTerm && !formFilter && !statusFilter) {
+                    <button class="btn-primary" (click)="openAddModal()">
+                      <span class="material-icons">add</span>
+                      Add First Medication
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button
+          class="pagination-btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+        >
+          <span class="material-icons">chevron_left</span>
+        </button>
+        @for (page of [].constructor(totalPages); track $index) {
+          <button
+            class="pagination-btn"
+            [class.active]="currentPage === $index + 1"
+            (click)="goToPage($index + 1)"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+        <button
+          class="pagination-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+        >
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Add/Edit Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditMode ? 'Edit Medication' : 'Add New Medication' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="medicationForm" (ngSubmit)="saveMedication()" class="modal-body">
+          <div class="form-group">
+            <label for="name">Name <span class="required">*</span></label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              [class.error]="medicationForm.get('name')?.invalid && medicationForm.get('name')?.touched"
+            />
+            @if (medicationForm.get('name')?.invalid && medicationForm.get('name')?.touched) {
+              <span class="error-message">
+                {{ getFieldError('name') }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dosage">Dosage <span class="required">*</span></label>
+              <input
+                id="dosage"
+                type="text"
+                formControlName="dosage"
+                placeholder="e.g., 500mg"
+                [class.error]="medicationForm.get('dosage')?.invalid && medicationForm.get('dosage')?.touched"
+              />
+              @if (medicationForm.get('dosage')?.invalid && medicationForm.get('dosage')?.touched) {
+                <span class="error-message">
+                  {{ getFieldError('dosage') }}
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="form">Form <span class="required">*</span></label>
+              <select
+                id="form"
+                formControlName="form"
+                [class.error]="medicationForm.get('form')?.invalid && medicationForm.get('form')?.touched"
+              >
+                <option value="">Select Form</option>
+                @for (form of medicationForms; track form) {
+                  <option [value]="form">{{ form }}</option>
+                }
+              </select>
+              @if (medicationForm.get('form')?.invalid && medicationForm.get('form')?.touched) {
+                <span class="error-message">
+                  {{ getFieldError('form') }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="price">Price <span class="required">*</span></label>
+              <input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                formControlName="price"
+                [class.error]="medicationForm.get('price')?.invalid && medicationForm.get('price')?.touched"
+              />
+              @if (medicationForm.get('price')?.invalid && medicationForm.get('price')?.touched) {
+                <span class="error-message">
+                  {{ getFieldError('price') }}
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="stockQuantity">Stock Quantity <span class="required">*</span></label>
+              <input
+                id="stockQuantity"
+                type="number"
+                min="0"
+                formControlName="stockQuantity"
+                [class.error]="medicationForm.get('stockQuantity')?.invalid && medicationForm.get('stockQuantity')?.touched"
+              />
+              @if (medicationForm.get('stockQuantity')?.invalid && medicationForm.get('stockQuantity')?.touched) {
+                <span class="error-message">
+                  {{ getFieldError('stockQuantity') }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="medicationForm.invalid">
+              {{ isEditMode ? 'Update' : 'Create' }} Medication
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
