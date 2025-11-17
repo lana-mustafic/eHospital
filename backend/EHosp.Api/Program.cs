@@ -102,6 +102,12 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IInvoiceService, InvoiceService>();
         builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         builder.Services.AddScoped<IAuditService, AuditService>();
+        builder.Services.AddScoped<IPatientAllergyRepository, PatientAllergyRepository>();
+        builder.Services.AddScoped<IPatientAllergyService, PatientAllergyService>();
+        builder.Services.AddScoped<IChronicConditionRepository, ChronicConditionRepository>();
+        builder.Services.AddScoped<IChronicConditionService, ChronicConditionService>();
+        builder.Services.AddScoped<IFamilyMedicalHistoryRepository, FamilyMedicalHistoryRepository>();
+        builder.Services.AddScoped<IFamilyMedicalHistoryService, FamilyMedicalHistoryService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

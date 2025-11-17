@@ -37,6 +37,9 @@ namespace Infrastructure.Data
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<PatientAllergy> PatientAllergies { get; set; }
+        public DbSet<ChronicCondition> ChronicConditions { get; set; }
+        public DbSet<FamilyMedicalHistory> FamilyMedicalHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

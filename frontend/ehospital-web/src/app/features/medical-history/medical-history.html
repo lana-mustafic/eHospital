@@ -1,0 +1,451 @@
+<div class="medical-history-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Medical History</h2>
+      <p>Manage patient allergies, chronic conditions, and family medical history</p>
+    </div>
+    <button class="btn-primary" (click)="activeTab === 'allergies' ? openAddAllergyModal() : activeTab === 'conditions' ? openAddConditionModal() : openAddFamilyModal()">
+      <span class="material-icons">add</span>
+      Add {{ activeTab === 'allergies' ? 'Allergy' : activeTab === 'conditions' ? 'Condition' : 'Family History' }}
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'allergies'"
+      (click)="switchTab('allergies')">
+      Allergies
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'conditions'"
+      (click)="switchTab('conditions')">
+      Chronic Conditions
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'family'"
+      (click)="switchTab('family')">
+      Family History
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        [placeholder]="'Search ' + (activeTab === 'allergies' ? 'allergies' : activeTab === 'conditions' ? 'conditions' : 'family history') + '...'"
+        [(ngModel)]="searchTerm"
+        (input)="activeTab === 'allergies' ? applyAllergyFilters() : activeTab === 'conditions' ? applyConditionFilters() : applyFamilyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select 
+        [(ngModel)]="patientFilter" 
+        (change)="activeTab === 'allergies' ? applyAllergyFilters() : activeTab === 'conditions' ? applyConditionFilters() : applyFamilyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportData()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
+    </div>
+    <div class="results-count">
+      @if (activeTab === 'allergies') {
+        {{ filteredAllergies.length }} record(s) found
+      } @else if (activeTab === 'conditions') {
+        {{ filteredConditions.length }} record(s) found
+      } @else {
+        {{ filteredFamilyHistories.length }} record(s) found
+      }
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="8" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Allergies Tab -->
+  @if (!isLoading && activeTab === 'allergies') {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Allergen</th>
+            <th>Type</th>
+            <th>Severity</th>
+            <th>Reaction</th>
+            <th>Onset Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (allergy of paginatedAllergies; track allergy.id) {
+            <tr>
+              <td class="name-cell">
+                <strong>{{ allergy.patientName || 'Patient #' + allergy.patientId }}</strong>
+              </td>
+              <td>{{ allergy.allergenName }}</td>
+              <td><span class="badge">{{ allergy.allergyType }}</span></td>
+              <td>
+                <span class="severity-badge" [class.severe]="allergy.severity === 'Severe' || allergy.severity === 'Life-threatening'">
+                  {{ allergy.severity }}
+                </span>
+              </td>
+              <td>{{ allergy.reaction || '-' }}</td>
+              <td>{{ allergy.onsetDate ? (allergy.onsetDate | date:'short') : '-' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="allergy.isActive">
+                  {{ allergy.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditAllergyModal(allergy)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteAllergy(allergy.id)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">No allergies found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Conditions Tab -->
+  @if (!isLoading && activeTab === 'conditions') {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Condition</th>
+            <th>Category</th>
+            <th>Diagnosis Date</th>
+            <th>Status</th>
+            <th>Active</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (condition of paginatedConditions; track condition.id) {
+            <tr>
+              <td class="name-cell">
+                <strong>{{ condition.patientName || 'Patient #' + condition.patientId }}</strong>
+              </td>
+              <td>{{ condition.conditionName }}</td>
+              <td><span class="badge">{{ condition.category || '-' }}</span></td>
+              <td>{{ condition.diagnosisDate ? (condition.diagnosisDate | date:'short') : '-' }}</td>
+              <td>{{ condition.status || '-' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="condition.isActive">
+                  {{ condition.isActive ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td>{{ condition.notes ? (condition.notes | slice:0:50) + '...' : '-' }}</td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditConditionModal(condition)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteCondition(condition.id)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">No chronic conditions found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Family History Tab -->
+  @if (!isLoading && activeTab === 'family') {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Relationship</th>
+            <th>Condition</th>
+            <th>Category</th>
+            <th>Age of Onset</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (history of paginatedFamilyHistories; track history.id) {
+            <tr>
+              <td class="name-cell">
+                <strong>{{ history.patientName || 'Patient #' + history.patientId }}</strong>
+              </td>
+              <td>{{ history.relationship }}</td>
+              <td>{{ history.conditionName }}</td>
+              <td><span class="badge">{{ history.category || '-' }}</span></td>
+              <td>{{ history.ageOfOnset || '-' }}</td>
+              <td>{{ history.status || '-' }}</td>
+              <td>{{ history.notes ? (history.notes | slice:0:50) + '...' : '-' }}</td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="openEditFamilyModal(history)" title="Edit">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteFamily(history.id)" title="Delete">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">No family medical history found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (!isLoading && ((activeTab === 'allergies' && filteredAllergies.length > 0) || 
+       (activeTab === 'conditions' && filteredConditions.length > 0) || 
+       (activeTab === 'family' && filteredFamilyHistories.length > 0))) {
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+    </div>
+  }
+
+  <!-- Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEdit ? 'Edit' : 'Add' }} {{ activeTab === 'allergies' ? 'Allergy' : activeTab === 'conditions' ? 'Chronic Condition' : 'Family Medical History' }}</h3>
+          <button class="btn-close" (click)="closeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Allergy Form -->
+          @if (activeTab === 'allergies') {
+            <form [formGroup]="allergyForm" (ngSubmit)="saveAllergy()">
+              <div class="form-group">
+                <label>Patient *</label>
+                <select formControlName="patientId">
+                  <option value="">Select Patient</option>
+                  @for (patient of patients; track patient.id) {
+                    <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Allergen Name *</label>
+                  <input type="text" formControlName="allergenName" placeholder="e.g., Peanuts, Penicillin">
+                </div>
+                <div class="form-group">
+                  <label>Allergy Type *</label>
+                  <select formControlName="allergyType">
+                    <option value="">Select Type</option>
+                    @for (type of allergyTypes; track type) {
+                      <option [value]="type">{{ type }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Severity *</label>
+                  <select formControlName="severity">
+                    <option value="">Select Severity</option>
+                    @for (severity of severities; track severity) {
+                      <option [value]="severity">{{ severity }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Onset Date</label>
+                  <input type="datetime-local" formControlName="onsetDate">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Reaction</label>
+                <textarea formControlName="reaction" rows="2" placeholder="Describe the reaction..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                <textarea formControlName="notes" rows="3" placeholder="Additional notes..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="isActive">
+                  Active
+                </label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" [disabled]="allergyForm.invalid">Save</button>
+              </div>
+            </form>
+          }
+
+          <!-- Condition Form -->
+          @if (activeTab === 'conditions') {
+            <form [formGroup]="conditionForm" (ngSubmit)="saveCondition()">
+              <div class="form-group">
+                <label>Patient *</label>
+                <select formControlName="patientId">
+                  <option value="">Select Patient</option>
+                  @for (patient of patients; track patient.id) {
+                    <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Condition Name *</label>
+                  <input type="text" formControlName="conditionName" placeholder="e.g., Type 2 Diabetes">
+                </div>
+                <div class="form-group">
+                  <label>Category</label>
+                  <select formControlName="category">
+                    <option value="">Select Category</option>
+                    @for (cat of conditionCategories; track cat) {
+                      <option [value]="cat">{{ cat }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Diagnosis Date</label>
+                  <input type="datetime-local" formControlName="diagnosisDate">
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select formControlName="status">
+                    <option value="">Select Status</option>
+                    @for (status of conditionStatuses; track status) {
+                      <option [value]="status">{{ status }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Diagnosed By Doctor</label>
+                <select formControlName="diagnosedByDoctorId">
+                  <option [value]="null">Select Doctor</option>
+                  @for (doctor of doctors; track doctor.id) {
+                    <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Treatment</label>
+                <textarea formControlName="treatment" rows="3" placeholder="Treatment plan..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                <textarea formControlName="notes" rows="3" placeholder="Additional notes..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="isActive">
+                  Active
+                </label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" [disabled]="conditionForm.invalid">Save</button>
+              </div>
+            </form>
+          }
+
+          <!-- Family History Form -->
+          @if (activeTab === 'family') {
+            <form [formGroup]="familyForm" (ngSubmit)="saveFamily()">
+              <div class="form-group">
+                <label>Patient *</label>
+                <select formControlName="patientId">
+                  <option value="">Select Patient</option>
+                  @for (patient of patients; track patient.id) {
+                    <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Relationship *</label>
+                  <select formControlName="relationship">
+                    <option value="">Select Relationship</option>
+                    @for (rel of relationships; track rel) {
+                      <option [value]="rel">{{ rel }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Condition Name *</label>
+                  <input type="text" formControlName="conditionName" placeholder="e.g., Heart Disease">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Category</label>
+                  <select formControlName="category">
+                    <option value="">Select Category</option>
+                    @for (cat of conditionCategories; track cat) {
+                      <option [value]="cat">{{ cat }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Age of Onset</label>
+                  <input type="text" formControlName="ageOfOnset" placeholder="e.g., 45 years">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <input type="text" formControlName="status" placeholder="e.g., Alive, Deceased">
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                <textarea formControlName="notes" rows="3" placeholder="Additional notes..."></textarea>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" [disabled]="familyForm.invalid">Save</button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
