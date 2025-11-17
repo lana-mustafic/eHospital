@@ -245,6 +245,23 @@
                   }
                 </div>
               </div>
+              
+              <!-- Schedule Validation Message -->
+              @if (scheduleValidationMessage) {
+                <div class="schedule-validation" [class.error]="!isTimeSlotAvailable || scheduleValidationMessage.includes('not available') || scheduleValidationMessage.includes('already booked') || scheduleValidationMessage.includes('must be')" [class.success]="isTimeSlotAvailable && scheduleValidationMessage === 'Time slot is available'">
+                  @if (availabilityCheckInProgress) {
+                    <span class="material-icons">hourglass_empty</span>
+                    <span>Checking availability...</span>
+                  } @else {
+                    @if (isTimeSlotAvailable && scheduleValidationMessage === 'Time slot is available') {
+                      <span class="material-icons">check_circle</span>
+                    } @else {
+                      <span class="material-icons">error</span>
+                    }
+                    <span>{{ scheduleValidationMessage }}</span>
+                  }
+                </div>
+              }
             </div>
           </div>
 
@@ -270,7 +287,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
-            <button type="submit" class="btn-primary" [disabled]="appointmentForm.invalid">
+            <button type="submit" class="btn-primary" [disabled]="!canSubmitAppointment()">
               Schedule Appointment
             </button>
           </div>

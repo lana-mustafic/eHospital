@@ -10,6 +10,7 @@ import { Patient } from '../patients/models/patient.model';
 import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
+import { DoctorScheduleService, DoctorSchedule } from '../doctor-schedules/services/doctor-schedule.service';
 
 @Component({
   selector: 'app-appointments',
@@ -37,6 +38,12 @@ export class AppointmentsComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 10;
   totalPages = 1;
+  
+  // Schedule validation
+  doctorSchedules: DoctorSchedule[] = [];
+  scheduleValidationMessage = '';
+  availabilityCheckInProgress = false;
+  isTimeSlotAvailable = false;
 
   constructor(
     private appointmentService: AppointmentService,
@@ -44,7 +51,8 @@ export class AppointmentsComponent implements OnInit {
     private doctorService: DoctorService,
     private fb: FormBuilder,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private doctorScheduleService: DoctorScheduleService
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -59,6 +67,128 @@ export class AppointmentsComponent implements OnInit {
       status: ['Scheduled', [Validators.required]],
       notes: ['']
     });
+    
+    // Watch for doctor, date, and time changes to validate schedule
+    this.appointmentForm.get('doctorId')?.valueChanges.subscribe(() => {
+      this.loadDoctorSchedules();
+      this.validateSchedule();
+    });
+    
+    this.appointmentForm.get('appointmentDate')?.valueChanges.subscribe(() => {
+      this.validateSchedule();
+    });
+    
+    this.appointmentForm.get('startTime')?.valueChanges.subscribe(() => {
+      this.validateSchedule();
+    });
+    
+    this.appointmentForm.get('endTime')?.valueChanges.subscribe(() => {
+      this.validateSchedule();
+    });
+  }
+  
+  loadDoctorSchedules() {
+    const doctorId = this.appointmentForm.get('doctorId')?.value;
+    if (!doctorId) {
+      this.doctorSchedules = [];
+      return;
+    }
+    
+    this.doctorScheduleService.getByDoctor(Number(doctorId)).subscribe({
+      next: (schedules) => {
+        this.doctorSchedules = schedules.filter(s => s.isAvailable);
+        this.validateSchedule();
+      },
+      error: () => {
+        this.doctorSchedules = [];
+        this.scheduleValidationMessage = '';
+      }
+    });
+  }
+  
+  validateSchedule() {
+    this.scheduleValidationMessage = '';
+    this.isTimeSlotAvailable = false;
+    this.availabilityCheckInProgress = false;
+    
+    const doctorId = this.appointmentForm.get('doctorId')?.value;
+    const date = this.appointmentForm.get('appointmentDate')?.value;
+    const startTime = this.appointmentForm.get('startTime')?.value;
+    const endTime = this.appointmentForm.get('endTime')?.value;
+    
+    if (!doctorId || !date || !startTime || !endTime) {
+      return;
+    }
+    
+    // Check if doctor has schedule for the selected day
+    const selectedDate = new Date(date);
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    const daySchedule = this.doctorSchedules.find(s => s.dayOfWeek === dayOfWeek);
+    
+    if (!daySchedule) {
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      this.scheduleValidationMessage = `Doctor is not available on ${dayNames[dayOfWeek]}`;
+      return;
+    }
+    
+    // Check if time is within doctor's schedule
+    const scheduleStart = this.timeToMinutes(daySchedule.startTime);
+    const scheduleEnd = this.timeToMinutes(daySchedule.endTime);
+    const appointmentStart = this.timeToMinutes(startTime);
+    const appointmentEnd = this.timeToMinutes(endTime);
+    
+    if (appointmentStart < scheduleStart || appointmentEnd > scheduleEnd) {
+      this.scheduleValidationMessage = `Time must be between ${daySchedule.startTime.substring(0, 5)} and ${daySchedule.endTime.substring(0, 5)}`;
+      return;
+    }
+    
+    if (appointmentStart >= appointmentEnd) {
+      this.scheduleValidationMessage = 'End time must be after start time';
+      return;
+    }
+    
+    // Check availability with backend
+    this.availabilityCheckInProgress = true;
+    const normalizedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
+    const normalizedEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
+    
+    this.appointmentService.isAvailable(
+      Number(doctorId),
+      date,
+      normalizedStartTime,
+      normalizedEndTime
+    ).subscribe({
+      next: (isAvailable: boolean) => {
+        this.availabilityCheckInProgress = false;
+        this.isTimeSlotAvailable = isAvailable;
+        if (!isAvailable) {
+          this.scheduleValidationMessage = 'This time slot is already booked';
+        } else {
+          this.scheduleValidationMessage = 'Time slot is available';
+        }
+      },
+      error: () => {
+        this.availabilityCheckInProgress = false;
+        this.scheduleValidationMessage = 'Unable to verify availability';
+      }
+    });
+  }
+  
+  private timeToMinutes(time: string): number {
+    const parts = time.split(':');
+    const hours = parseInt(parts[0]) || 0;
+    const minutes = parseInt(parts[1]) || 0;
+    return hours * 60 + minutes;
+  }
+  
+  canSubmitAppointment(): boolean {
+    return this.appointmentForm.valid && 
+           this.isTimeSlotAvailable && 
+           !this.availabilityCheckInProgress &&
+           !this.scheduleValidationMessage.includes('not available') &&
+           !this.scheduleValidationMessage.includes('already booked') &&
+           !this.scheduleValidationMessage.includes('must be');
   }
 
   ngOnInit() {
@@ -253,6 +383,10 @@ export class AppointmentsComponent implements OnInit {
     this.selectedAppointment = null;
     this.appointmentForm.reset();
     this.statusForm.reset({ status: 'Scheduled', notes: '' });
+    this.doctorSchedules = [];
+    this.scheduleValidationMessage = '';
+    this.isTimeSlotAvailable = false;
+    this.availabilityCheckInProgress = false;
     this.showModal = true;
     this.showStatusModal = false;
   }
@@ -277,6 +411,11 @@ export class AppointmentsComponent implements OnInit {
   saveAppointment() {
     if (this.appointmentForm.invalid) {
       this.markFormGroupTouched(this.appointmentForm);
+      return;
+    }
+    
+    if (!this.canSubmitAppointment()) {
+      this.toastService.warning('Please fix schedule validation errors before submitting');
       return;
     }
 
