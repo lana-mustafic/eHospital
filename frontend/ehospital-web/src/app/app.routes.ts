@@ -102,6 +102,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/discharge-summaries/discharge-summaries').then(m => m.DischargeSummariesComponent)
       },
       {
+        path: 'notifications',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Patient'] },
+        loadComponent: () => import('./features/notifications/notifications').then(m => m.NotificationsComponent)
+      },
+      {
         path: 'invoices',
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Doctor', 'Receptionist'] },

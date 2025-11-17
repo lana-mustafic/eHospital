@@ -41,6 +41,8 @@ namespace Infrastructure.Data
         public DbSet<ChronicCondition> ChronicConditions { get; set; }
         public DbSet<FamilyMedicalHistory> FamilyMedicalHistories { get; set; }
         public DbSet<DischargeSummary> DischargeSummaries { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

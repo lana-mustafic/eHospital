@@ -9,5 +9,6 @@ namespace EHosp.Application.Interfaces
         Task<IEnumerable<Appointment>> GetAppointmentsByDateAsync(DateTime date);
         Task<bool> IsTimeSlotAvailableAsync(int doctorId, DateTime date, TimeSpan startTime, TimeSpan endTime);
         Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync(DateTime fromDate, DateTime toDate);
+        Task<Appointment?> GetAppointmentWithDetailsAsync(int id);
     }
 }

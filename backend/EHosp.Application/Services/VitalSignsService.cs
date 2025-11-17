@@ -10,6 +10,7 @@ public class VitalSignsService : IVitalSignsService
     private readonly IVitalSignsRepository _vitalSignsRepository;
     private readonly IPatientRepository _patientRepository;
     private readonly IMedicalRecordRepository _medicalRecordRepository;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<VitalSignsService> _logger;
     private readonly IAuditService _auditService;
 
@@ -17,12 +18,14 @@ public class VitalSignsService : IVitalSignsService
         IVitalSignsRepository vitalSignsRepository,
         IPatientRepository patientRepository,
         IMedicalRecordRepository medicalRecordRepository,
+        INotificationService notificationService,
         ILogger<VitalSignsService> logger,
         IAuditService auditService)
     {
         _vitalSignsRepository = vitalSignsRepository;
         _patientRepository = patientRepository;
         _medicalRecordRepository = medicalRecordRepository;
+        _notificationService = notificationService;
         _logger = logger;
         _auditService = auditService;
     }
@@ -90,6 +93,10 @@ public class VitalSignsService : IVitalSignsService
 
         var createdVitalSigns = await _vitalSignsRepository.AddAsync(vitalSigns);
         await _auditService.WriteAsync("system", "Doctor", "Create", "VitalSigns", createdVitalSigns.Id.ToString(), $"PatientId={createdVitalSigns.PatientId}");
+        
+        // Check for critical vital signs and send alerts
+        await CheckCriticalVitalSignsAsync(createdVitalSigns);
+        
         var vitalSignsWithDetails = await _vitalSignsRepository.GetVitalSignsWithDetailsAsync(createdVitalSigns.Id);
         return MapToDto(vitalSignsWithDetails!);
     }
@@ -141,6 +148,102 @@ public class VitalSignsService : IVitalSignsService
 
         await _vitalSignsRepository.DeleteAsync(vitalSigns);
         await _auditService.WriteAsync("system", "Doctor", "Delete", "VitalSigns", vitalSigns.Id.ToString(), "Deleted");
+    }
+
+    private async Task CheckCriticalVitalSignsAsync(VitalSigns vitalSigns)
+    {
+        var patient = await _patientRepository.GetPatientWithDetailsAsync(vitalSigns.PatientId);
+        if (patient == null) return;
+
+        var alerts = new List<string>();
+        var isCritical = false;
+
+        // Check blood pressure (systolic > 180 or < 90, diastolic > 120 or < 60)
+        if (vitalSigns.BloodPressureSystolic.HasValue)
+        {
+            if (vitalSigns.BloodPressureSystolic > 180 || vitalSigns.BloodPressureSystolic < 90)
+            {
+                alerts.Add($"Critical Blood Pressure: {vitalSigns.BloodPressureSystolic}/{vitalSigns.BloodPressureDiastolic} mmHg");
+                isCritical = true;
+            }
+        }
+
+        // Check temperature (> 38.5°C or < 35°C)
+        if (vitalSigns.Temperature.HasValue)
+        {
+            if (vitalSigns.Temperature > 38.5m || vitalSigns.Temperature < 35m)
+            {
+                alerts.Add($"Critical Temperature: {vitalSigns.Temperature}°C");
+                isCritical = true;
+            }
+        }
+
+        // Check heart rate (> 120 or < 50 bpm)
+        if (vitalSigns.HeartRate.HasValue)
+        {
+            if (vitalSigns.HeartRate > 120 || vitalSigns.HeartRate < 50)
+            {
+                alerts.Add($"Critical Heart Rate: {vitalSigns.HeartRate} bpm");
+                isCritical = true;
+            }
+        }
+
+        // Check oxygen saturation (< 90%)
+        if (vitalSigns.OxygenSaturation.HasValue)
+        {
+            if (vitalSigns.OxygenSaturation < 90)
+            {
+                alerts.Add($"Critical Oxygen Saturation: {vitalSigns.OxygenSaturation}%");
+                isCritical = true;
+            }
+        }
+
+        // Check blood glucose (> 250 or < 70 mg/dL)
+        if (vitalSigns.BloodGlucose.HasValue)
+        {
+            if (vitalSigns.BloodGlucose > 250 || vitalSigns.BloodGlucose < 70)
+            {
+                alerts.Add($"Critical Blood Glucose: {vitalSigns.BloodGlucose} mg/dL");
+                isCritical = true;
+            }
+        }
+
+        // Send alerts if critical values found
+        if (alerts.Any() && isCritical)
+        {
+            var patientName = $"{patient.User?.FirstName} {patient.User?.LastName}";
+            var message = $"Patient {patientName} has critical vital signs:\n" + string.Join("\n", alerts);
+            
+            // Notify patient's doctor if available
+            if (vitalSigns.MedicalRecordId.HasValue)
+            {
+                var medicalRecord = await _medicalRecordRepository.GetMedicalRecordWithDetailsAsync(vitalSigns.MedicalRecordId.Value);
+                if (medicalRecord != null && medicalRecord.Doctor != null)
+                {
+                    await _notificationService.SendCriticalAlertAsync(
+                        medicalRecord.Doctor.UserId,
+                        "Critical Vital Signs Alert",
+                        message,
+                        "VitalSigns",
+                        "VitalSigns",
+                        vitalSigns.Id
+                    );
+                }
+            }
+
+            // Also notify patient
+            if (patient.UserId > 0)
+            {
+                await _notificationService.SendCriticalAlertAsync(
+                    patient.UserId,
+                    "Critical Vital Signs Alert",
+                    $"Your recent vital signs require immediate attention. Please contact your healthcare provider.",
+                    "VitalSigns",
+                    "VitalSigns",
+                    vitalSigns.Id
+                );
+            }
+        }
     }
 
     private static VitalSignsDto MapToDto(VitalSigns vitalSigns) => new()

@@ -43,15 +43,22 @@ namespace EHosp.Infrastructure.Repositories
                                           (a.StartTime >= startTime && a.EndTime <= endTime)));
 
         public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync(DateTime fromDate, DateTime toDate)
-            => await _dbSet.Include(a => a.Patient)
-                          .ThenInclude(p => p.User)
-                          .Include(a => a.Doctor)
-                          .ThenInclude(d => d.User)
-                          .Where(a => a.AppointmentDate >= fromDate &&
-                                     a.AppointmentDate <= toDate &&
-                                     a.Status == "Scheduled")
-                          .OrderBy(a => a.AppointmentDate)
-                          .ThenBy(a => a.StartTime)
-                          .ToListAsync();
+        => await _dbSet.Include(a => a.Patient)
+                      .ThenInclude(p => p.User)
+                      .Include(a => a.Doctor)
+                      .ThenInclude(d => d.User)
+                      .Where(a => a.AppointmentDate >= fromDate &&
+                                 a.AppointmentDate <= toDate &&
+                                 a.Status == "Scheduled")
+                      .OrderBy(a => a.AppointmentDate)
+                      .ThenBy(a => a.StartTime)
+                      .ToListAsync();
+
+        public async Task<Appointment?> GetAppointmentWithDetailsAsync(int id)
+        => await _dbSet.Include(a => a.Patient)
+                      .ThenInclude(p => p.User)
+                      .Include(a => a.Doctor)
+                      .ThenInclude(d => d.User)
+                      .FirstOrDefaultAsync(a => a.Id == id);
     }
 }

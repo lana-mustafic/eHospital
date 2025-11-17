@@ -13,6 +13,7 @@ public class LabTestService : ILabTestService
     private readonly IPatientRepository _patientRepository;
     private readonly IDoctorRepository _doctorRepository;
     private readonly IMedicalRecordRepository _medicalRecordRepository;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<LabTestService> _logger;
     private readonly IAuditService _auditService;
     private readonly IHostEnvironment _environment;
@@ -23,6 +24,7 @@ public class LabTestService : ILabTestService
         IPatientRepository patientRepository,
         IDoctorRepository doctorRepository,
         IMedicalRecordRepository medicalRecordRepository,
+        INotificationService notificationService,
         ILogger<LabTestService> logger,
         IAuditService auditService,
         IHostEnvironment environment)
@@ -31,6 +33,7 @@ public class LabTestService : ILabTestService
         _patientRepository = patientRepository;
         _doctorRepository = doctorRepository;
         _medicalRecordRepository = medicalRecordRepository;
+        _notificationService = notificationService;
         _logger = logger;
         _auditService = auditService;
         _environment = environment;
@@ -154,6 +157,12 @@ public class LabTestService : ILabTestService
 
         await _labTestRepository.UpdateAsync(labTest);
         await _auditService.WriteAsync("system", "Doctor", "Update", "LabTest", labTest.Id.ToString(), "Updated fields");
+        
+        // Check for abnormal results and send alerts
+        if (!string.IsNullOrEmpty(updateLabTestDto.Results) && updateLabTestDto.Status == "Completed")
+        {
+            await CheckAbnormalLabResultsAsync(labTest);
+        }
     }
 
     public async Task DeleteLabTestAsync(int id)
@@ -274,6 +283,58 @@ public class LabTestService : ILabTestService
 
         var fileBytes = await File.ReadAllBytesAsync(fullPath);
         return (fileBytes, labTest.FileName ?? Path.GetFileName(labTest.FilePath), labTest.FileContentType ?? "application/octet-stream");
+    }
+
+    private async Task CheckAbnormalLabResultsAsync(LabTest labTest)
+    {
+        // Check if results contain keywords indicating abnormal/critical values
+        var results = labTest.Results?.ToLower() ?? "";
+        var isAbnormal = results.Contains("abnormal") || 
+                        results.Contains("critical") || 
+                        results.Contains("high") || 
+                        results.Contains("low") ||
+                        results.Contains("elevated") ||
+                        results.Contains("decreased");
+
+        if (isAbnormal)
+        {
+            var labTestWithDetails = await _labTestRepository.GetLabTestWithDetailsAsync(labTest.Id);
+            if (labTestWithDetails == null) return;
+
+            var patient = labTestWithDetails.Patient;
+            var doctor = labTestWithDetails.Doctor;
+            var patientName = $"{patient?.User?.FirstName} {patient?.User?.LastName}";
+
+            var message = $"Lab test results for {patientName} show abnormal values.\nTest: {labTest.TestName}\nResults: {labTest.Results}";
+
+            // Notify ordering doctor
+            if (doctor != null)
+            {
+                await _notificationService.SendCriticalAlertAsync(
+                    doctor.UserId,
+                    "Abnormal Lab Test Results",
+                    message,
+                    "LabResult",
+                    "LabTest",
+                    labTest.Id
+                );
+            }
+
+            // Notify patient
+            if (patient != null && patient.UserId > 0)
+            {
+                await _notificationService.SendNotificationAsync(
+                    patient.UserId,
+                    "Lab Test Results Available",
+                    $"Your lab test results for {labTest.TestName} are now available. Please review with your healthcare provider.",
+                    "Info",
+                    "LabResult",
+                    "Normal",
+                    "LabTest",
+                    labTest.Id
+                );
+            }
+        }
     }
 
     private static LabTestDto MapToDto(LabTest labTest) => new()

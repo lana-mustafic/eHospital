@@ -33,4 +33,6 @@ public class User
     public virtual Role Role { get; set; } = null!;
     public virtual Doctor? Doctor { get; set; }
     public virtual Patient? Patient { get; set; }
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public virtual NotificationPreference? NotificationPreference { get; set; }
 }

@@ -110,6 +110,12 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IFamilyMedicalHistoryService, FamilyMedicalHistoryService>();
         builder.Services.AddScoped<IDischargeSummaryRepository, DischargeSummaryRepository>();
         builder.Services.AddScoped<IDischargeSummaryService, DischargeSummaryService>();
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+        builder.Services.AddScoped<INotificationPreferenceRepository, NotificationPreferenceRepository>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<ISmsService, SmsService>();
+        builder.Services.AddScoped<IAppointmentReminderService, AppointmentReminderService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

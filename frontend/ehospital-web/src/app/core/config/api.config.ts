@@ -20,7 +20,9 @@ export const API_CONFIG = {
     invoices: '/invoices',
     doctorSchedules: '/doctorschedules',
     reports: '/reports',
-    audit: '/audit'
+    audit: '/audit',
+    notifications: '/notifications',
+    notificationPreferences: '/notificationpreferences'
   }
 };
 

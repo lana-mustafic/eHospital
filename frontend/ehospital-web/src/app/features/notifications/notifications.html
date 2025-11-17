@@ -1,0 +1,256 @@
+<div class="notifications-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Notifications</h2>
+      <p>View and manage your notifications and alerts</p>
+    </div>
+    <div class="header-actions">
+      @if (unreadCount > 0) {
+        <button class="btn-secondary" (click)="markAllAsRead()">
+          <span class="material-icons">done_all</span>
+          Mark All Read
+        </button>
+      }
+      <button class="btn-primary" (click)="openPreferencesModal()">
+        <span class="material-icons">settings</span>
+        Preferences
+      </button>
+    </div>
+  </div>
+
+  <!-- Unread Count Badge -->
+  @if (unreadCount > 0) {
+    <div class="unread-badge">
+      <span class="material-icons">notifications_active</span>
+      <strong>{{ unreadCount }} unread notification(s)</strong>
+    </div>
+  }
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search notifications..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="categoryFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Categories</option>
+        @for (category of categories; track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
+      <select [(ngModel)]="typeFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Types</option>
+        @for (type of types; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="showOnlyUnread" (change)="applyFilters()">
+        Show only unread
+      </label>
+    </div>
+    <div class="results-count">
+      {{ filteredNotifications.length }} notification(s) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="6" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Notifications List -->
+  @if (!isLoading) {
+    <div class="notifications-list">
+      @for (notification of paginatedNotifications; track notification.id) {
+        <div class="notification-item" [class.unread]="!notification.isRead" [class.critical]="notification.priority === 'Critical'">
+          <div class="notification-icon">
+            @if (notification.type === 'Critical' || notification.type === 'Error') {
+              <span class="material-icons error-icon">error</span>
+            } @else if (notification.type === 'Warning') {
+              <span class="material-icons warning-icon">warning</span>
+            } @else if (notification.type === 'Success') {
+              <span class="material-icons success-icon">check_circle</span>
+            } @else {
+              <span class="material-icons info-icon">info</span>
+            }
+          </div>
+          <div class="notification-content" (click)="markAsRead(notification)">
+            <div class="notification-header">
+              <h4>{{ notification.title }}</h4>
+              <span class="notification-time">{{ notification.createdAt | date:'short' }}</span>
+            </div>
+            <p class="notification-message">{{ notification.message }}</p>
+            <div class="notification-meta">
+              <span class="badge category-badge">{{ notification.category }}</span>
+              <span class="badge priority-badge" [ngClass]="getPriorityClass(notification.priority)">
+                {{ notification.priority }}
+              </span>
+              @if (notification.sentViaEmail) {
+                <span class="badge channel-badge" title="Sent via Email">
+                  <span class="material-icons">email</span>
+                </span>
+              }
+              @if (notification.sentViaSms) {
+                <span class="badge channel-badge" title="Sent via SMS">
+                  <span class="material-icons">sms</span>
+                </span>
+              }
+            </div>
+          </div>
+          <div class="notification-actions">
+            @if (!notification.isRead) {
+              <button class="btn-icon" (click)="markAsRead(notification)" title="Mark as read">
+                <span class="material-icons">mark_email_read</span>
+              </button>
+            }
+            <button class="btn-icon btn-danger" (click)="deleteNotification(notification.id)" title="Delete">
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <span class="material-icons">notifications_off</span>
+          <p>No notifications found</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (!isLoading && filteredNotifications.length > 0) {
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+    </div>
+  }
+
+  <!-- Preferences Modal -->
+  @if (showPreferencesModal) {
+    <div class="modal-overlay" (click)="closePreferencesModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Notification Preferences</h3>
+          <button class="btn-close" (click)="closePreferencesModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
+            <!-- Email Preferences -->
+            <div class="form-section">
+              <h4>Email Notifications</h4>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="emailEnabled">
+                  Enable email notifications
+                </label>
+              </div>
+              <div class="preference-options" [class.disabled]="!preferencesForm.value.emailEnabled">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="emailAppointmentReminders">
+                  Appointment reminders
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="emailLabResults">
+                  Lab test results
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="emailCriticalAlerts">
+                  Critical alerts
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="emailSystemNotifications">
+                  System notifications
+                </label>
+              </div>
+            </div>
+
+            <!-- SMS Preferences -->
+            <div class="form-section">
+              <h4>SMS Notifications</h4>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="smsEnabled">
+                  Enable SMS notifications
+                </label>
+              </div>
+              <div class="preference-options" [class.disabled]="!preferencesForm.value.smsEnabled">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="smsAppointmentReminders">
+                  Appointment reminders
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="smsLabResults">
+                  Lab test results
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="smsCriticalAlerts">
+                  Critical alerts
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="smsSystemNotifications">
+                  System notifications
+                </label>
+              </div>
+            </div>
+
+            <!-- In-App Preferences -->
+            <div class="form-section">
+              <h4>In-App Notifications</h4>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="inAppEnabled">
+                  Enable in-app notifications
+                </label>
+              </div>
+              <div class="preference-options" [class.disabled]="!preferencesForm.value.inAppEnabled">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="inAppAppointmentReminders">
+                  Appointment reminders
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="inAppLabResults">
+                  Lab test results
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="inAppCriticalAlerts">
+                  Critical alerts
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="inAppSystemNotifications">
+                  System notifications
+                </label>
+              </div>
+            </div>
+
+            <!-- Reminder Settings -->
+            <div class="form-section">
+              <h4>Reminder Settings</h4>
+              <div class="form-group">
+                <label>Appointment Reminder (hours before)</label>
+                <input type="number" formControlName="appointmentReminderHoursBefore" min="1" max="168">
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" (click)="closePreferencesModal()">Cancel</button>
+              <button type="submit" class="btn-primary">Save Preferences</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
