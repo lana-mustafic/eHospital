@@ -116,6 +116,16 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<ISmsService, SmsService>();
         builder.Services.AddScoped<IAppointmentReminderService, AppointmentReminderService>();
+        builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
+        builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+        builder.Services.AddScoped<IBedRepository, BedRepository>();
+        builder.Services.AddScoped<IAdmissionRepository, AdmissionRepository>();
+        builder.Services.AddScoped<IRoomTransferRepository, RoomTransferRepository>();
+        builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
+        builder.Services.AddScoped<IRoomService, RoomService>();
+        builder.Services.AddScoped<IBedService, BedService>();
+        builder.Services.AddScoped<IAdmissionService, AdmissionService>();
+        builder.Services.AddScoped<IRoomTransferService, RoomTransferService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

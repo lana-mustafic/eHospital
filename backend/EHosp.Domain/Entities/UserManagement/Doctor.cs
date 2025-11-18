@@ -24,4 +24,7 @@ public class Doctor
     public virtual ICollection<ChronicCondition> DiagnosedChronicConditions { get; set; } = new List<ChronicCondition>();
     public virtual ICollection<DischargeSummary> DischargeSummariesAsDischargingDoctor { get; set; } = new List<DischargeSummary>();
     public virtual ICollection<DischargeSummary> DischargeSummariesAsFollowUpDoctor { get; set; } = new List<DischargeSummary>();
+    public virtual ICollection<Admission> AdmissionsAsAdmittingDoctor { get; set; } = new List<Admission>();
+    public virtual ICollection<Admission> AdmissionsAsDischargingDoctor { get; set; } = new List<Admission>();
+    public virtual ICollection<RoomTransfer> RoomTransfers { get; set; } = new List<RoomTransfer>();
 }

@@ -1,0 +1,457 @@
+<div class="rooms-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Room & Bed Management</h2>
+      <p>Manage rooms, beds, admissions, and transfers</p>
+    </div>
+    <button class="btn-primary" *ngIf="activeTab !== 'availability' && activeTab !== 'transfers'" 
+            (click)="activeTab === 'roomTypes' ? openRoomTypeModal() : activeTab === 'rooms' ? openRoomModal() : activeTab === 'beds' ? openBedModal() : openAdmissionModal()">
+      <span class="material-icons">add</span>
+      Add {{ activeTab === 'roomTypes' ? 'Room Type' : activeTab === 'rooms' ? 'Room' : activeTab === 'beds' ? 'Bed' : 'Admission' }}
+    </button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button" [class.active]="activeTab === 'availability'" (click)="activeTab = 'availability'">Availability</button>
+    <button class="tab-button" [class.active]="activeTab === 'roomTypes'" (click)="activeTab = 'roomTypes'">Room Types</button>
+    <button class="tab-button" [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">Rooms</button>
+    <button class="tab-button" [class.active]="activeTab === 'beds'" (click)="activeTab = 'beds'">Beds</button>
+    <button class="tab-button" [class.active]="activeTab === 'admissions'" (click)="activeTab = 'admissions'">Admissions</button>
+    <button class="tab-button" [class.active]="activeTab === 'transfers'" (click)="activeTab = 'transfers'">Transfers</button>
+  </div>
+
+  <!-- Availability Tab -->
+  <div *ngIf="activeTab === 'availability'" class="tab-content">
+    <div class="availability-grid">
+      <div *ngFor="let room of availability" class="room-card">
+        <div class="room-header">
+          <h3>{{ room.roomNumber }}</h3>
+          <span class="badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</span>
+        </div>
+        <div class="room-info">
+          <p><strong>Type:</strong> {{ room.roomTypeName }}</p>
+          <p><strong>Floor:</strong> {{ room.floor }}</p>
+          <p><strong>Beds:</strong> {{ room.occupiedBeds }}/{{ room.totalBeds }} occupied</p>
+        </div>
+        <div class="beds-list">
+          <div *ngFor="let bed of room.availableBedsList" class="bed-item">
+            <span>{{ bed.bedNumber }}</span>
+            <span class="badge status-available">{{ bed.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Room Types Tab -->
+  <div *ngIf="activeTab === 'roomTypes'" class="tab-content">
+    <div class="search-section">
+      <input type="text" placeholder="Search room types..." [(ngModel)]="searchTerm" 
+             (input)="filterRoomTypes()" />
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Rate/Day</th>
+          <th>Max Occupancy</th>
+          <th>Total Rooms</th>
+          <th>Available</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rt of filteredRoomTypes">
+          <td>{{ rt.name }}</td>
+          <td>{{ rt.description }}</td>
+          <td>${{ rt.baseRatePerDay }}</td>
+          <td>{{ rt.maxOccupancy }}</td>
+          <td>{{ rt.totalRooms }}</td>
+          <td>{{ rt.availableRooms }}</td>
+          <td><span class="badge" [ngClass]="rt.isActive ? 'status-available' : 'status-maintenance'">{{ rt.isActive ? 'Active' : 'Inactive' }}</span></td>
+          <td>
+            <button class="btn-icon" (click)="openRoomTypeModal(rt)"><span class="material-icons">edit</span></button>
+            <button class="btn-icon" (click)="deleteRoomType(rt.id)"><span class="material-icons">delete</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Rooms Tab -->
+  <div *ngIf="activeTab === 'rooms'" class="tab-content">
+    <div class="search-section">
+      <input type="text" placeholder="Search rooms..." [(ngModel)]="searchTerm" />
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="">All Statuses</option>
+        <option value="Available">Available</option>
+        <option value="Occupied">Occupied</option>
+        <option value="Partially Occupied">Partially Occupied</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+      <select [(ngModel)]="roomTypeFilter" (change)="applyFilters()">
+        <option [value]="null">All Types</option>
+        <option *ngFor="let rt of roomTypes" [value]="rt.id">{{ rt.name }}</option>
+      </select>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Room Number</th>
+          <th>Type</th>
+          <th>Floor</th>
+          <th>Building</th>
+          <th>Beds</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let room of filteredRooms">
+          <td>{{ room.roomNumber }}</td>
+          <td>{{ room.roomTypeName }}</td>
+          <td>{{ room.floor }}</td>
+          <td>{{ room.building || 'N/A' }}</td>
+          <td>{{ room.occupiedBeds }}/{{ room.totalBeds }}</td>
+          <td><span class="badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</span></td>
+          <td>
+            <button class="btn-icon" (click)="openRoomModal(room)"><span class="material-icons">edit</span></button>
+            <button class="btn-icon" (click)="deleteRoom(room.id)"><span class="material-icons">delete</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Beds Tab -->
+  <div *ngIf="activeTab === 'beds'" class="tab-content">
+    <div class="search-section">
+      <input type="text" placeholder="Search beds..." [(ngModel)]="searchTerm" (input)="filterBeds()" />
+      <select [(ngModel)]="statusFilter" (change)="filterBeds()">
+        <option value="">All Statuses</option>
+        <option value="Available">Available</option>
+        <option value="Occupied">Occupied</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Bed Number</th>
+          <th>Room</th>
+          <th>Type</th>
+          <th>Floor</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let bed of filteredBeds">
+          <td>{{ bed.bedNumber }}</td>
+          <td>{{ bed.roomNumber }}</td>
+          <td>{{ bed.roomTypeName }}</td>
+          <td>{{ bed.floor }}</td>
+          <td><span class="badge" [ngClass]="getStatusClass(bed.status)">{{ bed.status }}</span></td>
+          <td>
+            <button class="btn-icon" (click)="openBedModal(bed)"><span class="material-icons">edit</span></button>
+            <button class="btn-icon" (click)="deleteBed(bed.id)"><span class="material-icons">delete</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Admissions Tab -->
+  <div *ngIf="activeTab === 'admissions'" class="tab-content">
+    <div class="search-section">
+      <input type="text" placeholder="Search admissions..." [(ngModel)]="searchTerm" (input)="filterAdmissions()" />
+      <select [(ngModel)]="statusFilter" (change)="filterAdmissions()">
+        <option value="">All Statuses</option>
+        <option value="Admitted">Admitted</option>
+        <option value="Discharged">Discharged</option>
+        <option value="Transferred">Transferred</option>
+      </select>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Room</th>
+          <th>Bed</th>
+          <th>Admission Date</th>
+          <th>Discharge Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let admission of filteredAdmissions">
+          <td>{{ admission.patientName || getPatientName(admission.patientId) }}</td>
+          <td>{{ admission.roomNumber }}</td>
+          <td>{{ admission.bedNumber }}</td>
+          <td>{{ admission.admissionDate | date:'short' }}</td>
+          <td>{{ admission.dischargeDate ? (admission.dischargeDate | date:'short') : 'N/A' }}</td>
+          <td><span class="badge" [ngClass]="getStatusClass(admission.status)">{{ admission.status }}</span></td>
+          <td>
+            <button *ngIf="admission.status === 'Admitted'" class="btn-icon" (click)="openTransferModal(admission)"><span class="material-icons">swap_horiz</span></button>
+            <button *ngIf="admission.status === 'Admitted'" class="btn-icon" (click)="openDischargeModal(admission)"><span class="material-icons">exit_to_app</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Transfers Tab -->
+  <div *ngIf="activeTab === 'transfers'" class="tab-content">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Transfer Date</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let transfer of filteredTransfers">
+          <td>{{ transfer.patientName }}</td>
+          <td>{{ transfer.fromRoomNumber }} - Bed {{ transfer.fromBedNumber }}</td>
+          <td>{{ transfer.toRoomNumber }} - Bed {{ transfer.toBedNumber }}</td>
+          <td>{{ transfer.transferDate | date:'short' }}</td>
+          <td>{{ transfer.reason }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modals -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <!-- Room Type Modal -->
+      <div *ngIf="modalType === 'roomType'">
+        <h3>{{ isEditMode ? 'Edit' : 'Add' }} Room Type</h3>
+        <form [formGroup]="roomTypeForm" (ngSubmit)="saveRoomType()">
+          <div class="form-group">
+            <label>Name *</label>
+            <input type="text" formControlName="name" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea formControlName="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Base Rate/Day *</label>
+            <input type="number" formControlName="baseRatePerDay" />
+          </div>
+          <div class="form-group">
+            <label>Max Occupancy *</label>
+            <input type="number" formControlName="maxOccupancy" />
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" formControlName="isActive" /> Active</label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Room Modal -->
+      <div *ngIf="modalType === 'room'">
+        <h3>{{ isEditMode ? 'Edit' : 'Add' }} Room</h3>
+        <form [formGroup]="roomForm" (ngSubmit)="saveRoom()">
+          <div class="form-group">
+            <label>Room Number *</label>
+            <input type="text" formControlName="roomNumber" />
+          </div>
+          <div class="form-group">
+            <label>Floor *</label>
+            <input type="number" formControlName="floor" />
+          </div>
+          <div class="form-group">
+            <label>Building</label>
+            <input type="text" formControlName="building" />
+          </div>
+          <div class="form-group">
+            <label>Room Type *</label>
+            <select formControlName="roomTypeId">
+              <option value="">Select...</option>
+              <option *ngFor="let rt of roomTypes" [value]="rt.id">{{ rt.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select formControlName="departmentId">
+              <option [value]="null">None</option>
+              <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select formControlName="status">
+              <option value="Available">Available</option>
+              <option value="Occupied">Occupied</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bed Modal -->
+      <div *ngIf="modalType === 'bed'">
+        <h3>{{ isEditMode ? 'Edit' : 'Add' }} Bed</h3>
+        <form [formGroup]="bedForm" (ngSubmit)="saveBed()">
+          <div class="form-group">
+            <label>Bed Number *</label>
+            <input type="text" formControlName="bedNumber" />
+          </div>
+          <div class="form-group">
+            <label>Room *</label>
+            <select formControlName="roomId">
+              <option value="">Select...</option>
+              <option *ngFor="let room of rooms" [value]="room.id">{{ room.roomNumber }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select formControlName="status">
+              <option value="Available">Available</option>
+              <option value="Occupied">Occupied</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Admission Modal -->
+      <div *ngIf="modalType === 'admission'">
+        <h3>{{ isEditMode ? 'Edit' : 'Add' }} Admission</h3>
+        <form [formGroup]="admissionForm" (ngSubmit)="saveAdmission()">
+          <div class="form-group">
+            <label>Patient *</label>
+            <select formControlName="patientId">
+              <option value="">Select...</option>
+              <option *ngFor="let patient of patients" [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Room *</label>
+            <select formControlName="roomId" (change)="onRoomChange(admissionForm.value.roomId)">
+              <option value="">Select...</option>
+              <option *ngFor="let room of getAvailableRooms()" [value]="room.id">{{ room.roomNumber }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Bed *</label>
+            <select formControlName="bedId">
+              <option value="">Select...</option>
+              <option *ngFor="let bed of getAvailableBedsForRoom(admissionForm.value.roomId || 0)" [value]="bed.id">{{ bed.bedNumber }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Admission Date *</label>
+            <input type="date" formControlName="admissionDate" />
+          </div>
+          <div class="form-group">
+            <label>Reason for Admission *</label>
+            <textarea formControlName="reasonForAdmission"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Diagnosis</label>
+            <input type="text" formControlName="diagnosis" />
+          </div>
+          <div class="form-group">
+            <label>Admitting Doctor</label>
+            <select formControlName="admittingDoctorId">
+              <option [value]="null">None</option>
+              <option *ngFor="let doctor of doctors" [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Discharge Modal -->
+      <div *ngIf="modalType === 'discharge'">
+        <h3>Discharge Patient</h3>
+        <form [formGroup]="dischargeForm" (ngSubmit)="dischargePatient()">
+          <div class="form-group">
+            <label>Discharge Date *</label>
+            <input type="date" formControlName="dischargeDate" />
+          </div>
+          <div class="form-group">
+            <label>Discharging Doctor *</label>
+            <select formControlName="dischargingDoctorId">
+              <option value="">Select...</option>
+              <option *ngFor="let doctor of doctors" [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Discharge Notes</label>
+            <textarea formControlName="dischargeNotes"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Discharge</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Transfer Modal -->
+      <div *ngIf="modalType === 'transfer'">
+        <h3>Transfer Patient</h3>
+        <form [formGroup]="transferForm" (ngSubmit)="saveTransfer()">
+          <div class="form-group">
+            <label>To Room *</label>
+            <select formControlName="toRoomId" (change)="onRoomChange(transferForm.value.toRoomId)">
+              <option value="">Select...</option>
+              <option *ngFor="let room of getAvailableRooms()" [value]="room.id">{{ room.roomNumber }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>To Bed *</label>
+            <select formControlName="toBedId">
+              <option value="">Select...</option>
+              <option *ngFor="let bed of getAvailableBedsForRoom(transferForm.value.toRoomId || 0)" [value]="bed.id">{{ bed.bedNumber }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Transfer Date *</label>
+            <input type="date" formControlName="transferDate" />
+          </div>
+          <div class="form-group">
+            <label>Reason *</label>
+            <textarea formControlName="reason"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Transferred By Doctor</label>
+            <select formControlName="transferredByDoctorId">
+              <option [value]="null">None</option>
+              <option *ngFor="let doctor of doctors" [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }}</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Transfer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

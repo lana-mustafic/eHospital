@@ -9,4 +9,5 @@ public class Department
 
     // Navigation properties
     public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
+    public ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

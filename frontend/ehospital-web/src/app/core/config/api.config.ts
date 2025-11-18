@@ -22,7 +22,12 @@ export const API_CONFIG = {
     reports: '/reports',
     audit: '/audit',
     notifications: '/notifications',
-    notificationPreferences: '/notificationpreferences'
+    notificationPreferences: '/notificationpreferences',
+    roomTypes: '/roomtypes',
+    rooms: '/rooms',
+    beds: '/beds',
+    admissions: '/admissions',
+    roomTransfers: '/roomtransfers'
   }
 };
 

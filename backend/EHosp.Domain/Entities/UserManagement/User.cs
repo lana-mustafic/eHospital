@@ -35,4 +35,6 @@ public class User
     public virtual Patient? Patient { get; set; }
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual NotificationPreference? NotificationPreference { get; set; }
+    public virtual ICollection<Admission> CreatedAdmissions { get; set; } = new List<Admission>();
+    public virtual ICollection<RoomTransfer> CreatedRoomTransfers { get; set; } = new List<RoomTransfer>();
 }

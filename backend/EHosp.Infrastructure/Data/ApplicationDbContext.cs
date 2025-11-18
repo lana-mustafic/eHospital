@@ -43,6 +43,11 @@ namespace Infrastructure.Data
         public DbSet<DischargeSummary> DischargeSummaries { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+        public DbSet<RoomType> RoomTypes { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<Bed> Beds { get; set; }
+        public DbSet<Admission> Admissions { get; set; }
+        public DbSet<RoomTransfer> RoomTransfers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

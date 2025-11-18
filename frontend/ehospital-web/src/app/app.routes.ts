@@ -137,6 +137,12 @@ export const routes: Routes = [
         data: { roles: ['Admin'] },
         loadComponent: () => import('./features/audit/audit').then(m => m.AuditComponent)
       },
+      {
+        path: 'rooms',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/rooms/rooms').then(m => m.RoomsComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
