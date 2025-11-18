@@ -27,7 +27,11 @@ export const API_CONFIG = {
     rooms: '/rooms',
     beds: '/beds',
     admissions: '/admissions',
-    roomTransfers: '/roomtransfers'
+    roomTransfers: '/roomtransfers',
+    suppliers: '/suppliers',
+    inventoryItems: '/inventoryitems',
+    purchaseOrders: '/purchaseorders',
+    stockMovements: '/stockmovements'
   }
 };
 

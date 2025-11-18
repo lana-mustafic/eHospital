@@ -17,4 +17,5 @@ public class Prescription
     public MedicalRecord MedicalRecord { get; set; } = null!;
     public Medication Medication { get; set; } = null!;
     public Doctor Doctor { get; set; } = null!;
+    public ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
 }

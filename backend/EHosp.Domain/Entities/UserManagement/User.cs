@@ -37,4 +37,8 @@ public class User
     public virtual NotificationPreference? NotificationPreference { get; set; }
     public virtual ICollection<Admission> CreatedAdmissions { get; set; } = new List<Admission>();
     public virtual ICollection<RoomTransfer> CreatedRoomTransfers { get; set; } = new List<RoomTransfer>();
+    public virtual ICollection<PurchaseOrder> CreatedPurchaseOrders { get; set; } = new List<PurchaseOrder>();
+    public virtual ICollection<PurchaseOrder> ApprovedPurchaseOrders { get; set; } = new List<PurchaseOrder>();
+    public virtual ICollection<PurchaseOrder> ReceivedPurchaseOrders { get; set; } = new List<PurchaseOrder>();
+    public virtual ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
 }

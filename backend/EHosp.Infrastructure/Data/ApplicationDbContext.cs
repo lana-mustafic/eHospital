@@ -48,6 +48,11 @@ namespace Infrastructure.Data
         public DbSet<Bed> Beds { get; set; }
         public DbSet<Admission> Admissions { get; set; }
         public DbSet<RoomTransfer> RoomTransfers { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+        public DbSet<StockMovement> StockMovements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

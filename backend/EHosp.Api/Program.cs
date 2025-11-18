@@ -126,6 +126,14 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IBedService, BedService>();
         builder.Services.AddScoped<IAdmissionService, AdmissionService>();
         builder.Services.AddScoped<IRoomTransferService, RoomTransferService>();
+        builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+        builder.Services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
+        builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+        builder.Services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+        builder.Services.AddScoped<ISupplierService, SupplierService>();
+        builder.Services.AddScoped<IInventoryItemService, InventoryItemService>();
+        builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+        builder.Services.AddScoped<IStockMovementService, StockMovementService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

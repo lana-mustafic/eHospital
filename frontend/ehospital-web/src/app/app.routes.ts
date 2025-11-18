@@ -143,6 +143,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/rooms/rooms').then(m => m.RoomsComponent)
       },
+      {
+        path: 'pharmacy',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        loadComponent: () => import('./features/pharmacy/pharmacy').then(m => m.PharmacyComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

@@ -12,4 +12,5 @@ public class Medication
 
     // Navigation properties
     public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
+    public ICollection<InventoryItem> InventoryItems { get; set; } = new List<InventoryItem>();
 }
