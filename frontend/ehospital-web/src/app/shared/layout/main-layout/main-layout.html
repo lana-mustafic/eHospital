@@ -2,23 +2,38 @@
   <!-- Sidebar -->
   <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
     <div class="sidebar-header">
-      <h2 class="logo" *ngIf="isSidebarOpen">eHospital</h2>
+      <h2 class="logo" *ngIf="isSidebarOpen">🧭 eHospital</h2>
       <button class="toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
         <span class="material-icons">{{ isSidebarOpen ? 'menu_open' : 'menu' }}</span>
       </button>
     </div>
     
     <nav class="sidebar-nav">
-      <a 
-        *ngFor="let item of visibleMenuItems" 
-        [routerLink]="item.path" 
-        routerLinkActive="active"
-        class="nav-item"
-        [title]="!isSidebarOpen ? item.label : ''"
-      >
-        <span class="material-icons">{{ item.icon }}</span>
-        <span class="nav-label" *ngIf="isSidebarOpen">{{ item.label }}</span>
-      </a>
+      <div *ngFor="let section of visibleMenuSections" class="menu-section">
+        <button 
+          class="section-header" 
+          (click)="toggleSection(section)"
+          [title]="!isSidebarOpen ? section.title : ''"
+        >
+          <span class="material-icons section-icon">{{ section.icon }}</span>
+          <span class="section-title" *ngIf="isSidebarOpen">{{ section.title }}</span>
+          <span class="material-icons expand-icon" *ngIf="isSidebarOpen" [class.expanded]="section.expanded">
+            {{ section.expanded ? 'expand_less' : 'expand_more' }}
+          </span>
+        </button>
+        <div class="section-items" *ngIf="section.expanded && isSidebarOpen">
+          <a 
+            *ngFor="let item of section.items" 
+            [routerLink]="item.path" 
+            routerLinkActive="active"
+            class="nav-item"
+            [title]="!isSidebarOpen ? item.label : ''"
+          >
+            <span class="material-icons">{{ item.icon }}</span>
+            <span class="nav-label" *ngIf="isSidebarOpen">{{ item.label }}</span>
+          </a>
+        </div>
+      </div>
     </nav>
   </aside>
 
