@@ -32,12 +32,18 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Get return url from route parameters or default to '/'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Get return url from route parameters or default to '/' (which will trigger roleRedirectGuard)
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
 
     // Redirect if already authenticated
     if (this.authService.isAuthenticated()) {
-      this.router.navigate([this.returnUrl]);
+      const user = this.authService.getCurrentUser();
+      const role = user?.role?.toLowerCase();
+      if (role === 'doctor' || role === 'patient') {
+        this.router.navigate(['/my/home']);
+      } else {
+        this.router.navigate([this.returnUrl || '/']);
+      }
     }
   }
 
@@ -55,14 +61,25 @@ export class LoginComponent implements OnInit {
     this.authService.login({ email, password }).subscribe({
       next: (user) => {
         this.toastService.success('Login successful');
-        // If role is Patient, route to patient portal unless an explicit returnUrl was set
-        if (!this.returnUrl || this.returnUrl === '/dashboard') {
-          if (user && user.role && user.role.toLowerCase() === 'patient') {
-            this.router.navigate(['/my/home']);
-            return;
-          }
+        // Get the current user from the service to ensure role is loaded
+        const currentUser = this.authService.getCurrentUser();
+        console.log('Login - Current user after login:', currentUser);
+        const role = currentUser?.role?.toLowerCase() || user?.role?.toLowerCase();
+        console.log('Login - User role:', role);
+        
+        if (role === 'doctor' || role === 'patient') {
+          // Doctors and patients go to their portal
+          console.log('Login - Redirecting to /my/home');
+          this.router.navigate(['/my/home'], { replaceUrl: true });
+        } else if (['admin', 'nurse', 'receptionist'].includes(role || '')) {
+          // Staff go to dashboard
+          console.log('Login - Redirecting to /dashboard');
+          this.router.navigate([this.returnUrl || '/dashboard'], { replaceUrl: true });
+        } else {
+          // Default: let roleRedirectGuard handle it
+          console.log('Login - Redirecting to / (will trigger roleRedirectGuard)');
+          this.router.navigate(['/'], { replaceUrl: true });
         }
-        this.router.navigate([this.returnUrl || '/dashboard']);
       },
       error: (error) => {
         console.error('Login error:', error);

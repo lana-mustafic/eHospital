@@ -2,12 +2,13 @@
 using EHosp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EHosp.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] 
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -20,7 +21,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")] // Admin only
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -28,7 +29,7 @@ namespace EHosp.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")] // Admin only - user management
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
@@ -39,55 +40,58 @@ namespace EHosp.Api.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")] // Admin only
-        public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
+        [HttpGet("me/role")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetMyRole()
         {
-            try
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
             {
-                var user = await _userService.CreateUserAsync(createUserDto);
-                return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+                return Unauthorized(new { message = "Invalid user context" });
             }
-            catch (Exception ex)
+
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
             {
-                _logger.LogError(ex, "Error creating user");
-                return BadRequest(new { message = "Error creating user", error = ex.Message });
+                return NotFound(new { message = "User not found" });
             }
+
+            return Ok(new { 
+                userId = user.Id,
+                email = user.Email,
+                roleName = user.RoleName,
+                roleId = user.Id // This will need to be added to UserDto if needed
+            });
         }
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")] // Admin only
-        public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
+        [HttpPut("{id}/role")]
+        [Authorize(Roles = "Admin")] // Admin only - for fixing user roles
+        public async Task<IActionResult> UpdateUserRole(int id, [FromBody] int roleId)
         {
             try
             {
-                await _userService.UpdateUserAsync(id, updateUserDto);
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user");
-                return BadRequest(new { message = "Error updating user", error = ex.Message });
-            }
-        }
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // Admin only
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            try
-            {
-                await _userService.DeleteUserAsync(id);
-                return NoContent();
+                var updateDto = new UpdateUserDto
+                {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    IsActive = user.IsActive,
+                    RoleId = roleId
+                };
+
+                await _userService.UpdateUserAsync(id, updateDto);
+                return Ok(new { message = "User role updated successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting user");
-                return BadRequest(new { message = "Error deleting user", error = ex.Message });
+                _logger.LogError(ex, "Error updating user role");
+                return BadRequest(new { message = "Error updating user role", error = ex.Message });
             }
         }
     }

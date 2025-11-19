@@ -91,7 +91,11 @@
             <span class="material-icons">notifications</span>
             <span class="badge" *ngIf="false">3</span>
           </button>
-          <button class="header-btn" [routerLink]="['/dashboard']" title="Dashboard">
+          <button 
+            class="header-btn" 
+            [routerLink]="getDashboardRoute()" 
+            title="Dashboard"
+            *ngIf="canAccessDashboard()">
             <span class="material-icons">dashboard</span>
           </button>
         </div>

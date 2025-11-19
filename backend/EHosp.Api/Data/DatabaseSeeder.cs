@@ -86,6 +86,49 @@ public static class DatabaseSeeder
         {
             if (doctor.User.Email != DefaultAdminEmail)
             {
+                // Delete related appointments first to avoid foreign key constraint violations
+                var relatedAppointments = await context.Appointments
+                    .Where(a => a.DoctorId == doctor.Id)
+                    .ToListAsync();
+                context.Appointments.RemoveRange(relatedAppointments);
+
+                // Delete related prescriptions
+                var relatedPrescriptions = await context.Prescriptions
+                    .Where(p => p.DoctorId == doctor.Id)
+                    .ToListAsync();
+                context.Prescriptions.RemoveRange(relatedPrescriptions);
+
+                // Delete related medical records
+                var relatedMedicalRecords = await context.MedicalRecords
+                    .Where(mr => mr.DoctorId == doctor.Id)
+                    .ToListAsync();
+                context.MedicalRecords.RemoveRange(relatedMedicalRecords);
+
+                // Delete related lab tests
+                var relatedLabTests = await context.LabTests
+                    .Where(lt => lt.DoctorId == doctor.Id)
+                    .ToListAsync();
+                context.LabTests.RemoveRange(relatedLabTests);
+
+                // Delete related discharge summaries
+                var relatedDischargeSummaries = await context.DischargeSummaries
+                    .Where(ds => ds.DischargingDoctorId == doctor.Id || ds.FollowUpDoctorId == doctor.Id)
+                    .ToListAsync();
+                context.DischargeSummaries.RemoveRange(relatedDischargeSummaries);
+
+                // Delete related ED visits
+                var relatedEDVisits = await context.EDVisits
+                    .Where(ed => ed.AssignedDoctorId == doctor.Id || ed.TreatedByDoctorId == doctor.Id)
+                    .ToListAsync();
+                context.EDVisits.RemoveRange(relatedEDVisits);
+
+                // Delete related queues
+                var relatedQueues = await context.Queues
+                    .Where(q => q.DoctorId == doctor.Id)
+                    .ToListAsync();
+                context.Queues.RemoveRange(relatedQueues);
+
+                // Now delete the doctor and user
                 context.Doctors.Remove(doctor);
                 context.Users.Remove(doctor.User);
             }

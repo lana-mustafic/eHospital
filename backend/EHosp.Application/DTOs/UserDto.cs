@@ -53,5 +53,6 @@ namespace EHosp.Application.DTOs
         public string PhoneNumber { get; set; } = string.Empty;
 
         public bool IsActive { get; set; }
+        public int? RoleId { get; set; }
     }
 }

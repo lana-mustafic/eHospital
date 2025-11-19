@@ -48,6 +48,27 @@ namespace EHosp.Api.Controllers
             return Ok(appointments);
         }
 
+        [HttpGet("doctor/me")]
+        [Authorize(Roles = "Doctor")]
+        public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetMyDoctorAppointments([FromServices] IDoctorRepository doctorRepository, [FromQuery] DateTime? date = null)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user context" });
+            }
+
+            var doctor = await doctorRepository.GetByUserIdAsync(userId);
+            if (doctor == null)
+            {
+                return NotFound(new { message = "Doctor profile not found" });
+            }
+
+            var appointmentDate = date ?? DateTime.Today;
+            var appointments = await _appointmentService.GetAppointmentsByDoctorAsync(doctor.Id, appointmentDate);
+            return Ok(appointments);
+        }
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Doctor,Nurse,Receptionist,Patient")] // Staff and patient can view
         public async Task<ActionResult<AppointmentDto>> GetAppointment(int id)

@@ -40,17 +40,17 @@ public class PurchaseOrderConfiguration : IEntityTypeConfiguration<PurchaseOrder
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(po => po.CreatedBy)
-            .WithMany()
+            .WithMany(u => u.CreatedPurchaseOrders)
             .HasForeignKey(po => po.CreatedByUserId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(po => po.ApprovedBy)
-            .WithMany()
+            .WithMany(u => u.ApprovedPurchaseOrders)
             .HasForeignKey(po => po.ApprovedByUserId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(po => po.ReceivedBy)
-            .WithMany()
+            .WithMany(u => u.ReceivedPurchaseOrders)
             .HasForeignKey(po => po.ReceivedByUserId)
             .OnDelete(DeleteBehavior.NoAction);
     }

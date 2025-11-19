@@ -11,8 +11,30 @@
       <button class="btn-retry" (click)="loadDashboardData()">Retry</button>
     </div>
   } @else {
+    <!-- Welcome Header -->
+    <div class="dashboard-header">
+      <div class="welcome-section">
+        <h1 class="dashboard-title">
+          @if (isDoctor) {
+            Welcome, Dr. {{ currentUserName }}
+          } @else if (isNurse) {
+            Welcome, {{ currentUserName }}
+          } @else {
+            Dashboard
+          }
+        </h1>
+        <p class="dashboard-subtitle">{{ getCurrentDate() }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" [routerLink]="['/appointments']">
+          <span class="material-icons">add</span>
+          New Appointment
+        </button>
+      </div>
+    </div>
+
     <!-- Critical Alerts Banner -->
-    @if (criticalAlerts.length > 0) {
+    @if (criticalAlerts.length > 0 && isAdmin) {
       <div class="alerts-banner">
         <div class="alert-header">
           <span class="material-icons">warning</span>
@@ -29,403 +51,414 @@
       </div>
     }
 
-    <!-- Key Performance Indicators -->
-    <div class="kpi-grid">
-      <div class="kpi-card primary">
-        <div class="kpi-icon">
-          <span class="material-icons">local_hospital</span>
-        </div>
-        <div class="kpi-content">
-          <h3 class="kpi-value">{{ totalPatients }}</h3>
-          <p class="kpi-label">Total Patients</p>
-          <div class="kpi-sub">
-            <span>{{ activePatients }} Active</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="kpi-card success">
-        <div class="kpi-icon">
-          <span class="material-icons">hotel</span>
-        </div>
-        <div class="kpi-content">
-          <h3 class="kpi-value">{{ bedOccupancyRate }}%</h3>
-          <p class="kpi-label">Bed Occupancy</p>
-          <div class="kpi-sub">
-            <span>{{ occupiedBeds }}/{{ totalBeds }} Beds</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="kpi-card info">
-        <div class="kpi-icon">
-          <span class="material-icons">event</span>
-        </div>
-        <div class="kpi-content">
-          <h3 class="kpi-value">{{ todayAppointments }}</h3>
-          <p class="kpi-label">Today's Appointments</p>
-          <div class="kpi-sub">
-            <span>{{ pendingAppointments }} Pending</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="kpi-card revenue">
-        <div class="kpi-icon">
-          <span class="material-icons">attach_money</span>
-        </div>
-        <div class="kpi-content">
-          <h3 class="kpi-value">{{ formatCurrency(todayRevenue) }}</h3>
-          <p class="kpi-label">Today's Revenue</p>
-          <div class="kpi-sub">
-            <span>{{ formatCurrency(monthlyRevenue) }} This Month</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Secondary Metrics -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="material-icons">people</span>
-          <h4>Patient Flow</h4>
-        </div>
-        <div class="metric-body">
-          <div class="metric-row">
-            <span class="metric-label">In-Patients:</span>
-            <span class="metric-value">{{ inPatients }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Out-Patients:</span>
-            <span class="metric-value">{{ outPatients }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Active Patients:</span>
-            <span class="metric-value">{{ activePatients }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="material-icons">medical_services</span>
-          <h4>Staff Status</h4>
-        </div>
-        <div class="metric-body">
-          <div class="metric-row">
-            <span class="metric-label">Doctors On Duty:</span>
-            <span class="metric-value">{{ doctorsOnDuty }}/{{ totalDoctors }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Total Doctors:</span>
-            <span class="metric-value">{{ totalDoctors }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Nurses:</span>
-            <span class="metric-value">{{ totalNurses }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="material-icons">hotel</span>
-          <h4>Room & Bed Status</h4>
-        </div>
-        <div class="metric-body">
-          <div class="metric-row">
-            <span class="metric-label">Available Beds:</span>
-            <span class="metric-value highlight">{{ availableBeds }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Occupied Beds:</span>
-            <span class="metric-value">{{ occupiedBeds }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Total Rooms:</span>
-            <span class="metric-value">{{ totalRooms }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="material-icons">account_balance_wallet</span>
-          <h4>Financial Overview</h4>
-        </div>
-        <div class="metric-body">
-          <div class="metric-row">
-            <span class="metric-label">Monthly Revenue:</span>
-            <span class="metric-value success">{{ formatCurrency(monthlyRevenue) }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Outstanding Bills:</span>
-            <span class="metric-value warning">{{ formatCurrency(outstandingBills) }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Pending Invoices:</span>
-            <span class="metric-value">{{ pendingInvoices }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Additional Stats -->
-    <div class="stats-grid-secondary">
-      <div class="stat-card-small">
-        <div class="stat-icon-small today">
-          <span class="material-icons">today</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ todayAppointments }}</h4>
-          <p class="stat-label-small">Today's Appointments</p>
-        </div>
-      </div>
-
-      <div class="stat-card-small">
-        <div class="stat-icon-small upcoming">
-          <span class="material-icons">schedule</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ upcomingAppointments }}</h4>
-          <p class="stat-label-small">Upcoming (7 days)</p>
-        </div>
-      </div>
-
-      <div class="stat-card-small">
-        <div class="stat-icon-small completed">
-          <span class="material-icons">check_circle</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ completedThisMonth }}</h4>
-          <p class="stat-label-small">Completed This Month</p>
-        </div>
-      </div>
-
-      <div class="stat-card-small">
-        <div class="stat-icon-small records">
-          <span class="material-icons">folder_shared</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ totalMedicalRecords }}</h4>
-          <p class="stat-label-small">Medical Records</p>
-        </div>
-      </div>
-
-      <div class="stat-card-small">
-        <div class="stat-icon-small diagnoses">
-          <span class="material-icons">healing</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ totalDiagnoses }}</h4>
-          <p class="stat-label-small">Diagnoses</p>
-        </div>
-      </div>
-
-      <div class="stat-card-small">
-        <div class="stat-icon-small prescriptions">
-          <span class="material-icons">receipt_long</span>
-        </div>
-        <div class="stat-content-small">
-          <h4 class="stat-value-small">{{ totalPrescriptions }}</h4>
-          <p class="stat-label-small">Prescriptions</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Appointment Status Breakdown -->
-    <div class="status-breakdown">
-      <div class="content-card">
-        <h2>Appointment Status</h2>
-        <div class="status-content">
-          <div class="status-chart">
-            <app-status-pie-chart
-              [scheduled]="scheduledCount"
-              [completed]="completedCount"
-              [cancelled]="cancelledCount"
-              [noShow]="noShowCount"
-            ></app-status-pie-chart>
-          </div>
-          <div class="status-grid">
-            <div class="status-item scheduled">
-              <div class="status-icon">
-                <span class="material-icons">event</span>
-              </div>
-              <div class="status-info">
-                <div class="status-value">{{ scheduledCount }}</div>
-                <div class="status-label">Scheduled</div>
-              </div>
+    <!-- Doctor Dashboard View -->
+    @if (isDoctor) {
+      <div class="doctor-dashboard">
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-icon patients">
+              <span class="material-icons">people</span>
             </div>
-            <div class="status-item completed">
-              <div class="status-icon">
-                <span class="material-icons">check_circle</span>
-              </div>
-              <div class="status-info">
-                <div class="status-value">{{ completedCount }}</div>
-                <div class="status-label">Completed</div>
-              </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ myPatientsCount }}</div>
+              <div class="stat-label">My Patients</div>
             </div>
-            <div class="status-item cancelled">
-              <div class="status-icon">
-                <span class="material-icons">cancel</span>
-              </div>
-              <div class="status-info">
-                <div class="status-value">{{ cancelledCount }}</div>
-                <div class="status-label">Cancelled</div>
-              </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon appointments">
+              <span class="material-icons">event</span>
             </div>
-            <div class="status-item noshow">
-              <div class="status-icon">
-                <span class="material-icons">event_busy</span>
-              </div>
-              <div class="status-info">
-                <div class="status-value">{{ noShowCount }}</div>
-                <div class="status-label">No Show</div>
-              </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ myAppointmentsToday.length }}</div>
+              <div class="stat-label">Today's Appointments</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon upcoming">
+              <span class="material-icons">schedule</span>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ myUpcomingAppointments.length }}</div>
+              <div class="stat-label">Upcoming</div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Charts Section -->
-    <div class="charts-section">
-      <div class="content-card">
-        <h2>Appointment Trends (Last 7 Days)</h2>
-        <app-line-chart
-          [data]="appointmentTrendData"
-          [width]="600"
-          [height]="250"
-          lineColor="#667eea"
-        ></app-line-chart>
-      </div>
-
-      <div class="content-card">
-        <h2>Monthly Appointments (Last 6 Months)</h2>
-        <app-bar-chart
-          [data]="monthlyAppointmentData"
-          [width]="600"
-          [height]="250"
-          defaultColor="#667eea"
-        ></app-bar-chart>
-      </div>
-    </div>
-
-    <!-- Dashboard Content -->
-    <div class="dashboard-content">
-      <!-- Today's Schedule -->
-      <div class="content-card">
-        <div class="card-header">
-          <h2>Today's Schedule</h2>
-          <a [routerLink]="['/appointments']" class="view-all-link">
-            View All
-            <span class="material-icons">arrow_forward</span>
-          </a>
-        </div>
-
-        @if (todaySchedule.length === 0) {
-          <div class="empty-state">
-            <span class="material-icons">event_busy</span>
-            <p>No appointments scheduled for today</p>
-          </div>
-        } @else {
-          <div class="schedule-list">
-            @for (appointment of todaySchedule; track $index) {
-              <div class="schedule-item">
-                <div class="schedule-time">
-                  <span class="time">{{ formatTime(appointment.startTime) }}</span>
-                  <span class="time-end">{{ formatTime(appointment.endTime) }}</span>
+        <!-- Main Content Grid -->
+        <div class="main-content-grid">
+          <!-- Upcoming Appointments Card -->
+          <div class="content-card large-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">notifications</span>
+                <h2>Upcoming Appointments</h2>
+              </div>
+              <a [routerLink]="['/appointments']" class="view-all-link">
+                View All
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              @if (myUpcomingAppointments.length === 0) {
+                <div class="empty-state">
+                  <span class="material-icons">event_available</span>
+                  <p>No upcoming appointments</p>
                 </div>
-                <div class="schedule-details">
-                  <div class="schedule-main">
-                    <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
-                    <span class="separator">•</span>
-                    <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
-                  </div>
-                  @if (appointment.reason) {
-                    <div class="schedule-reason">{{ appointment.reason }}</div>
+              } @else {
+                <div class="appointments-list">
+                  @for (appointment of myUpcomingAppointments.slice(0, 8); track $index) {
+                    <div class="appointment-card" [routerLink]="['/appointments', appointment.id]">
+                      <div class="appointment-time">
+                        <div class="time-main">{{ formatTime(appointment.startTime) }}</div>
+                        <div class="time-date">{{ formatDate(appointment.appointmentDate) }}</div>
+                      </div>
+                      <div class="appointment-info">
+                        <div class="patient-name">{{ appointment.patientName || 'Unknown Patient' }}</div>
+                        <div class="appointment-reason">{{ appointment.reason || 'No reason provided' }}</div>
+                      </div>
+                      <div class="appointment-status">
+                        <span class="status-badge status-scheduled">{{ appointment.status }}</span>
+                      </div>
+                    </div>
                   }
                 </div>
-                <div class="schedule-status">
-                  <span class="status-badge status-scheduled">Scheduled</span>
-                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Today's Schedule -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">today</span>
+                <h2>Today's Schedule</h2>
               </div>
-            }
-          </div>
-        }
-      </div>
-
-      <!-- Recent Appointments -->
-      <div class="content-card">
-        <div class="card-header">
-          <h2>Recent Appointments</h2>
-          <a [routerLink]="['/appointments']" class="view-all-link">
-            View All
-            <span class="material-icons">arrow_forward</span>
-          </a>
-        </div>
-
-        @if (recentAppointments.length === 0) {
-          <div class="empty-state">
-            <span class="material-icons">event_busy</span>
-            <p>No appointments found</p>
-          </div>
-        } @else {
-          <div class="appointments-list">
-            @for (appointment of recentAppointments; track $index) {
-              <div class="appointment-item">
-                <div class="appointment-date">
-                  <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.startTime) }}</div>
+            </div>
+            <div class="card-body">
+              @if (myAppointmentsToday.length === 0) {
+                <div class="empty-state-small">
+                  <span class="material-icons">event_busy</span>
+                  <p>No appointments today</p>
                 </div>
-                <div class="appointment-details">
-                  <div class="appointment-main">
-                    <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
-                    <span class="separator">•</span>
-                    <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
-                  </div>
-                  @if (appointment.reason) {
-                    <div class="appointment-reason">{{ appointment.reason }}</div>
+              } @else {
+                <div class="schedule-list-compact">
+                  @for (appointment of myAppointmentsToday; track $index) {
+                    <div class="schedule-item-compact" [routerLink]="['/appointments', appointment.id]">
+                      <div class="schedule-time-compact">
+                        <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                      </div>
+                      <div class="schedule-details-compact">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="reason">{{ appointment.reason || 'No reason' }}</span>
+                      </div>
+                    </div>
                   }
                 </div>
-                <div class="appointment-status">
-                  <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
-                    {{ appointment.status }}
-                  </span>
-                </div>
-              </div>
-            }
+              }
+            </div>
           </div>
-        }
-      </div>
 
-      <!-- Appointment Reminders -->
-      <div class="content-card">
-        <app-appointment-reminders [daysAhead]="7" [maxItems]="5"></app-appointment-reminders>
+          <!-- Quick Actions -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">flash_on</span>
+                <h2>Quick Actions</h2>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="quick-actions-grid">
+                <a [routerLink]="['/patients']" class="quick-action-btn">
+                  <span class="material-icons">person_search</span>
+                  <span>Search Patient</span>
+                </a>
+                <a [routerLink]="['/medical-records']" class="quick-action-btn">
+                  <span class="material-icons">folder_shared</span>
+                  <span>Medical Records</span>
+                </a>
+                <a [routerLink]="['/prescriptions']" class="quick-action-btn">
+                  <span class="material-icons">receipt_long</span>
+                  <span>Prescriptions</span>
+                </a>
+                <a [routerLink]="['/queues']" class="quick-action-btn">
+                  <span class="material-icons">queue</span>
+                  <span>Queue Management</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    }
 
-      <!-- Quick Actions -->
-      <div class="content-card">
-        <h2>Quick Actions</h2>
-        <div class="quick-actions">
-          <a [routerLink]="['/patients']" class="action-button">
-            <span class="material-icons">person_add</span>
-            <span>Add Patient</span>
-          </a>
-          <a [routerLink]="['/doctors']" class="action-button">
-            <span class="material-icons">person_add</span>
-            <span>Add Doctor</span>
-          </a>
-          <a [routerLink]="['/appointments']" class="action-button">
+    <!-- Admin/General Dashboard View -->
+    @if (!isDoctor) {
+      <!-- Key Performance Indicators -->
+      <div class="kpi-grid">
+        <div class="kpi-card primary">
+          <div class="kpi-icon">
+            <span class="material-icons">local_hospital</span>
+          </div>
+          <div class="kpi-content">
+            <h3 class="kpi-value">{{ totalPatients }}</h3>
+            <p class="kpi-label">Total Patients</p>
+            <div class="kpi-sub">
+              <span>{{ activePatients }} Active</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card success">
+          <div class="kpi-icon">
+            <span class="material-icons">hotel</span>
+          </div>
+          <div class="kpi-content">
+            <h3 class="kpi-value">{{ bedOccupancyRate }}%</h3>
+            <p class="kpi-label">Bed Occupancy</p>
+            <div class="kpi-sub">
+              <span>{{ occupiedBeds }}/{{ totalBeds }} Beds</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card info">
+          <div class="kpi-icon">
             <span class="material-icons">event</span>
-            <span>Schedule Appointment</span>
-          </a>
-          <a [routerLink]="['/departments']" class="action-button">
-            <span class="material-icons">business</span>
-            <span>Manage Departments</span>
-          </a>
+          </div>
+          <div class="kpi-content">
+            <h3 class="kpi-value">{{ todayAppointments }}</h3>
+            <p class="kpi-label">Today's Appointments</p>
+            <div class="kpi-sub">
+              <span>{{ pendingAppointments }} Pending</span>
+            </div>
+          </div>
+        </div>
+
+        @if (isAdmin) {
+          <div class="kpi-card revenue">
+            <div class="kpi-icon">
+              <span class="material-icons">attach_money</span>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ formatCurrency(todayRevenue) }}</h3>
+              <p class="kpi-label">Today's Revenue</p>
+              <div class="kpi-sub">
+                <span>{{ formatCurrency(monthlyRevenue) }} This Month</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="main-content-grid">
+        <!-- Today's Schedule -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-section">
+              <span class="material-icons">today</span>
+              <h2>Today's Schedule</h2>
+            </div>
+            <a [routerLink]="['/appointments']" class="view-all-link">
+              View All
+              <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+          <div class="card-body">
+            @if (todaySchedule.length === 0) {
+              <div class="empty-state">
+                <span class="material-icons">event_available</span>
+                <p>No appointments scheduled for today</p>
+              </div>
+            } @else {
+              <div class="schedule-list">
+                @for (appointment of todaySchedule; track $index) {
+                  <div class="schedule-item" [routerLink]="['/appointments', appointment.id]">
+                    <div class="schedule-time">
+                      <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                      <span class="time-end">{{ formatTime(appointment.endTime) }}</span>
+                    </div>
+                    <div class="schedule-details">
+                      <div class="schedule-main">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="separator">•</span>
+                        <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                      </div>
+                      @if (appointment.reason) {
+                        <div class="schedule-reason">{{ appointment.reason }}</div>
+                      }
+                    </div>
+                    <div class="schedule-status">
+                      <span class="status-badge status-scheduled">Scheduled</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Recent Appointments -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-section">
+              <span class="material-icons">history</span>
+              <h2>Recent Appointments</h2>
+            </div>
+            <a [routerLink]="['/appointments']" class="view-all-link">
+              View All
+              <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+          <div class="card-body">
+            @if (recentAppointments.length === 0) {
+              <div class="empty-state">
+                <span class="material-icons">event_busy</span>
+                <p>No appointments found</p>
+              </div>
+            } @else {
+              <div class="appointments-list">
+                @for (appointment of recentAppointments; track $index) {
+                  <div class="appointment-item" [routerLink]="['/appointments', appointment.id]">
+                    <div class="appointment-date">
+                      <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.startTime) }}</div>
+                    </div>
+                    <div class="appointment-details">
+                      <div class="appointment-main">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="separator">•</span>
+                        <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                      </div>
+                      @if (appointment.reason) {
+                        <div class="appointment-reason">{{ appointment.reason }}</div>
+                      }
+                    </div>
+                    <div class="appointment-status">
+                      <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                        {{ appointment.status }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
         </div>
       </div>
-    </div>
+
+      <!-- Additional Admin Sections -->
+      @if (isAdmin) {
+        <!-- Secondary Metrics -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="material-icons">people</span>
+              <h4>Patient Flow</h4>
+            </div>
+            <div class="metric-body">
+              <div class="metric-row">
+                <span class="metric-label">In-Patients:</span>
+                <span class="metric-value">{{ inPatients }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Out-Patients:</span>
+                <span class="metric-value">{{ outPatients }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Active Patients:</span>
+                <span class="metric-value">{{ activePatients }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="material-icons">medical_services</span>
+              <h4>Staff Status</h4>
+            </div>
+            <div class="metric-body">
+              <div class="metric-row">
+                <span class="metric-label">Doctors On Duty:</span>
+                <span class="metric-value">{{ doctorsOnDuty }}/{{ totalDoctors }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Total Doctors:</span>
+                <span class="metric-value">{{ totalDoctors }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Nurses:</span>
+                <span class="metric-value">{{ totalNurses }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="material-icons">hotel</span>
+              <h4>Room & Bed Status</h4>
+            </div>
+            <div class="metric-body">
+              <div class="metric-row">
+                <span class="metric-label">Available Beds:</span>
+                <span class="metric-value highlight">{{ availableBeds }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Occupied Beds:</span>
+                <span class="metric-value">{{ occupiedBeds }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Total Rooms:</span>
+                <span class="metric-value">{{ totalRooms }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="material-icons">account_balance_wallet</span>
+              <h4>Financial Overview</h4>
+            </div>
+            <div class="metric-body">
+              <div class="metric-row">
+                <span class="metric-label">Monthly Revenue:</span>
+                <span class="metric-value success">{{ formatCurrency(monthlyRevenue) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Outstanding Bills:</span>
+                <span class="metric-value warning">{{ formatCurrency(outstandingBills) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Pending Invoices:</span>
+                <span class="metric-value">{{ pendingInvoices }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+          <div class="content-card">
+            <h2>Appointment Trends (Last 7 Days)</h2>
+            <app-line-chart
+              [data]="appointmentTrendData"
+              [width]="600"
+              [height]="250"
+              lineColor="#667eea"
+            ></app-line-chart>
+          </div>
+
+          <div class="content-card">
+            <h2>Monthly Appointments (Last 6 Months)</h2>
+            <app-bar-chart
+              [data]="monthlyAppointmentData"
+              [width]="600"
+              [height]="250"
+              defaultColor="#667eea"
+            ></app-bar-chart>
+          </div>
+        </div>
+      }
+    }
   }
 </div>

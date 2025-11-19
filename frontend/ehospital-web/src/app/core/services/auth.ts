@@ -124,12 +124,14 @@ export class AuthService {
       timeout(5000),
       // Normalize API UserDto -> frontend User
       tap((dto) => {
+        console.log('AuthService - Raw user DTO from API:', dto);
         const user: User = {
           id: (dto.id ?? dto.userId ?? '').toString(),
           email: dto.email ?? '',
           name: `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim() || (dto.name ?? 'User'),
           role: dto.roleName ?? dto.role ?? 'user'
         };
+        console.log('AuthService - Normalized user:', user);
         this.setUser(user);
         this.currentUserSubject.next(user);
       }),

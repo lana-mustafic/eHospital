@@ -1,25 +1,38 @@
 <div class="my-profile">
   <div *ngIf="isLoading" class="loading">Loading...</div>
-  <div *ngIf="!isLoading && me && !isEdit" class="card">
+  
+  <!-- Doctor Profile View -->
+  <div *ngIf="!isLoading && me && !isEdit && isDoctor && doctor" class="card">
+    <h3>Dr. {{ me.firstName }} {{ me.lastName }}</h3>
+    <div class="row"><span>Email</span><strong>{{ me.email }}</strong></div>
+    <div class="row"><span>Specialization</span><strong>{{ doctor.specialization }}</strong></div>
+    <div class="row"><span>Department</span><strong>{{ doctor.departmentName }}</strong></div>
+    <div class="row"><span>License Number</span><strong>{{ doctor.licenseNumber }}</strong></div>
+    <div class="row"><span>Years of Experience</span><strong>{{ doctor.yearsOfExperience }}</strong></div>
+  </div>
+
+  <!-- Patient Profile View -->
+  <div *ngIf="!isLoading && me && !isEdit && !isDoctor && patient" class="card">
     <h3>{{ me.firstName }} {{ me.lastName }}</h3>
     <div class="row"><span>Email</span><strong>{{ me.email }}</strong></div>
-    <div class="row"><span>Phone</span><strong>{{ me.phoneNumber }}</strong></div>
-    <div class="row"><span>Date of Birth</span><strong>{{ me.dateOfBirth | date }}</strong></div>
-    <div class="row"><span>Gender</span><strong>{{ me.gender }}</strong></div>
-    <div class="row"><span>Blood Type</span><strong>{{ me.bloodType || '—' }}</strong></div>
-    <div class="row"><span>Address</span><strong>{{ me.address || '—' }}</strong></div>
-    <div class="row"><span>Emergency Contact</span><strong>{{ me.emergencyContact || '—' }}</strong></div>
+    <div class="row"><span>Phone</span><strong>{{ patient.phoneNumber }}</strong></div>
+    <div class="row"><span>Date of Birth</span><strong>{{ patient.dateOfBirth | date }}</strong></div>
+    <div class="row"><span>Gender</span><strong>{{ patient.gender }}</strong></div>
+    <div class="row"><span>Blood Type</span><strong>{{ patient.bloodType || '—' }}</strong></div>
+    <div class="row"><span>Address</span><strong>{{ patient.address || '—' }}</strong></div>
+    <div class="row"><span>Emergency Contact</span><strong>{{ patient.emergencyContact || '—' }}</strong></div>
     <button class="btn-primary" (click)="startEdit()">Edit</button>
   </div>
 
-  <!-- Patient History Timeline -->
-  @if (!isLoading && me) {
+  <!-- Patient History Timeline (only for patients) -->
+  @if (!isLoading && me && !isDoctor) {
     <div class="timeline-section">
       <app-patient-history-timeline [patientId]="me.id"></app-patient-history-timeline>
     </div>
   }
 
-  <form *ngIf="!isLoading && me && isEdit" [formGroup]="form" (ngSubmit)="save()" class="card">
+  <!-- Edit Form (only for patients) -->
+  <form *ngIf="!isLoading && me && isEdit && !isDoctor" [formGroup]="form" (ngSubmit)="save()" class="card">
     <h3>Edit Contact Info</h3>
     <div class="row">
       <span>Phone</span>

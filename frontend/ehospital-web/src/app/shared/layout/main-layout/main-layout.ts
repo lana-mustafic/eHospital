@@ -30,7 +30,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       icon: 'dashboard',
       expanded: true,
       items: [
-        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] }
+        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['Admin', 'Nurse', 'Receptionist'] }
       ]
     },
     {
@@ -54,12 +54,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       icon: 'business_center',
       expanded: true,
       items: [
-        { path: '/queues', icon: 'queue', label: 'Queue Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
-        { path: '/emergency', icon: 'emergency', label: 'Emergency Department', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
-        { path: '/rooms', icon: 'hotel', label: 'Room Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
-        { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin', 'Doctor'] },
-        { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Doctor', 'Receptionist'] }
+        { path: '/queues', icon: 'queue', label: 'Queue Management', roles: ['Admin', 'Nurse', 'Receptionist'] },
+        { path: '/emergency', icon: 'emergency', label: 'Emergency Department', roles: ['Admin', 'Nurse', 'Receptionist'] },
+        { path: '/rooms', icon: 'hotel', label: 'Room Management', roles: ['Admin', 'Nurse', 'Receptionist'] },
+        { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Nurse'] },
+        { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin'] },
+        { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Receptionist'] }
       ]
     },
     {
@@ -233,6 +233,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.showSearchSuggestions = false;
     }, 200);
+  }
+
+  canAccessDashboard(): boolean {
+    const role = this.currentUser?.role?.toLowerCase();
+    return ['admin', 'nurse', 'receptionist'].includes(role || '');
+  }
+
+  getDashboardRoute(): string[] {
+    const role = this.currentUser?.role?.toLowerCase();
+    if (role === 'doctor' || role === 'patient') {
+      return ['/my/home'];
+    }
+    return ['/dashboard'];
   }
 }
 

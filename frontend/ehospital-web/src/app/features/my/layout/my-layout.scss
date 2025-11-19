@@ -12,6 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 
   h2 {
     margin: 0;
@@ -22,11 +23,74 @@
   .my-nav {
     display: flex;
     gap: 1rem;
+    flex: 1;
+    justify-content: center;
 
     a {
       text-decoration: none;
-      color: #2563eb;
-      font-weight: 600;
+      color: #6b7280;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      transition: all 0.2s;
+
+      &:hover {
+        color: #2563eb;
+        background: #eff6ff;
+      }
+
+      &.active {
+        color: #2563eb;
+        background: #eff6ff;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-right: 0.5rem;
+
+      .user-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .user-role {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: capitalize;
+      }
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #dc2626;
+      }
+
+      .material-icons {
+        font-size: 1.125rem;
+      }
     }
   }
 }

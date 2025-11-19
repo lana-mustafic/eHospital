@@ -16,6 +16,11 @@ export class AppointmentService {
     return this.http.get<Appointment[]>(`${this.apiUrl}/patient/me`);
   }
 
+  getMineForDoctor(date?: Date): Observable<Appointment[]> {
+    const dateParam = date ? `?date=${date.toISOString().split('T')[0]}` : '';
+    return this.http.get<Appointment[]>(`${this.apiUrl}/doctor/me${dateParam}`);
+  }
+
   getAll(): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(this.apiUrl);
   }

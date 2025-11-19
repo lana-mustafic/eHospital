@@ -34,7 +34,12 @@
               <span class="reminder-time">{{ formatDateTime(appointment) }}</span>
             </div>
             <div class="reminder-details">
-              @if (showForCurrentUser) {
+              @if (showForCurrentUser && isDoctor) {
+                <strong>{{ appointment.patientName || 'Patient' }}</strong>
+                @if (appointment.reason) {
+                  <span> - {{ appointment.reason }}</span>
+                }
+              } @else if (showForCurrentUser && !isDoctor) {
                 <strong>Dr. {{ appointment.doctorName || 'Doctor' }}</strong>
                 @if (appointment.doctorSpecialization) {
                   <span> - {{ appointment.doctorSpecialization }}</span>

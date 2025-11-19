@@ -7,5 +7,6 @@ namespace EHosp.Application.Interfaces
         Task<IEnumerable<Doctor>> GetDoctorsByDepartmentAsync(int departmentId);
         Task<IEnumerable<Doctor>> GetDoctorsBySpecializationAsync(string specialization);
         Task<Doctor?> GetDoctorWithDetailsAsync(int id);
+        Task<Doctor?> GetByUserIdAsync(int userId);
     }
 }

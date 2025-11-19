@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
+import { roleRedirectGuard } from './core/guards/role-redirect-guard';
 
 export const routes: Routes = [
   {
     path: 'my',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['Patient'] },
+    data: { roles: ['Patient', 'Doctor'] },
     loadComponent: () => import('./features/my/layout/my-layout').then(m => m.MyLayoutComponent),
     children: [
       {
@@ -30,9 +31,14 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/layout/main-layout/main-layout').then(m => m.MainLayoutComponent),
     children: [
       {
+        path: '',
+        canActivate: [roleRedirectGuard],
+        loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard)
+      },
+      {
         path: 'dashboard',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard)
       },
       {
@@ -56,7 +62,7 @@ export const routes: Routes = [
       {
         path: 'medications',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor'] },
+        data: { roles: ['Admin'] },
         loadComponent: () => import('./features/medications/medications').then(m => m.Medications)
       },
       {
@@ -110,7 +116,7 @@ export const routes: Routes = [
       {
         path: 'invoices',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Receptionist'] },
+        data: { roles: ['Admin', 'Receptionist'] },
         loadComponent: () => import('./features/invoices/invoices').then(m => m.InvoicesComponent)
       },
       {
@@ -140,28 +146,27 @@ export const routes: Routes = [
       {
         path: 'rooms',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/rooms/rooms').then(m => m.RoomsComponent)
       },
       {
         path: 'pharmacy',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        data: { roles: ['Admin', 'Nurse'] },
         loadComponent: () => import('./features/pharmacy/pharmacy').then(m => m.PharmacyComponent)
       },
       {
         path: 'queues',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/queues/queues').then(m => m.QueuesComponent)
       },
       {
         path: 'emergency',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/emergency/emergency').then(m => m.EmergencyComponent)
       },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
   {
@@ -172,5 +177,8 @@ export const routes: Routes = [
     path: 'not-authorized',
     loadComponent: () => import('./features/auth/not-authorized/not-authorized').then(m => m.NotAuthorizedComponent)
   },
-  { path: '**', redirectTo: 'dashboard' }
+  { 
+    path: '**', 
+    redirectTo: '' // This will trigger roleRedirectGuard to handle the redirect based on role
+  }
 ];

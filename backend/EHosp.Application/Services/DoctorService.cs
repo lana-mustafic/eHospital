@@ -43,6 +43,12 @@ namespace EHosp.Application.Services
             return doctors.Select(MapToDto);
         }
 
+        public async Task<DoctorDto?> GetCurrentDoctorAsync(int userId)
+        {
+            var doctor = await _doctorRepository.GetByUserIdAsync(userId);
+            return doctor != null ? MapToDto(doctor) : null;
+        }
+
         public async Task<DoctorDto> CreateDoctorAsync(CreateDoctorDto createDoctorDto)
         {
             // Check if user already exists

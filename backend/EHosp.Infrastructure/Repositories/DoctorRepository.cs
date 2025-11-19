@@ -27,5 +27,10 @@ namespace EHosp.Infrastructure.Repositories
                           .Include(d => d.Department)
                           .Include(d => d.Schedules)
                           .FirstOrDefaultAsync(d => d.Id == id);
+
+        public async Task<Doctor?> GetByUserIdAsync(int userId)
+            => await _dbSet.Include(d => d.User)
+                          .Include(d => d.Department)
+                          .FirstOrDefaultAsync(d => d.UserId == userId);
     }
 }

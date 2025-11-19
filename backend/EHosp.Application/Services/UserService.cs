@@ -56,6 +56,12 @@ namespace EHosp.Application.Services
             user.LastName = updateUserDto.LastName;
             user.PhoneNumber = updateUserDto.PhoneNumber;
             user.IsActive = updateUserDto.IsActive;
+            
+            // Update role if provided
+            if (updateUserDto.RoleId.HasValue)
+            {
+                user.RoleId = updateUserDto.RoleId.Value;
+            }
 
             await _userRepository.UpdateAsync(user);
         }

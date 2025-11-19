@@ -32,7 +32,7 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(sm => sm.Prescription)
-            .WithMany()
+            .WithMany(p => p.StockMovements)
             .HasForeignKey(sm => sm.PrescriptionId)
             .OnDelete(DeleteBehavior.SetNull);
     }

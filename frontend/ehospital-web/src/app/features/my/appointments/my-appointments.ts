@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppointmentService } from '../../appointments/services/appointment.service';
 import { Appointment } from '../../appointments/models/appointment.model';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-my-appointments',
@@ -21,15 +22,39 @@ export class MyAppointmentsComponent implements OnInit {
   rescheduleEnd = '';
   rescheduleDoctorId: number | null = null;
   slots: { start: string; end: string; available: boolean }[] = [];
+  isDoctor = false;
+  selectedDate: Date = new Date();
 
-  constructor(private appointmentService: AppointmentService) {}
+  constructor(
+    private appointmentService: AppointmentService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.isDoctor = this.authService.hasRole('Doctor');
+    this.loadAppointments();
+  }
+
+  loadAppointments() {
     this.isLoading = true;
-    this.appointmentService.getMine().subscribe({
-      next: (list) => { this.appointments = list; this.isLoading = false; },
-      error: () => { this.isLoading = false; }
-    });
+    if (this.isDoctor) {
+      this.appointmentService.getMineForDoctor(this.selectedDate).subscribe({
+        next: (list) => { this.appointments = list; this.isLoading = false; },
+        error: () => { this.isLoading = false; }
+      });
+    } else {
+      this.appointmentService.getMine().subscribe({
+        next: (list) => { this.appointments = list; this.isLoading = false; },
+        error: () => { this.isLoading = false; }
+      });
+    }
+  }
+
+  onDateFilterChange(date: string) {
+    if (date) {
+      this.selectedDate = new Date(date);
+      this.loadAppointments();
+    }
   }
 
   cancel(a: Appointment) {

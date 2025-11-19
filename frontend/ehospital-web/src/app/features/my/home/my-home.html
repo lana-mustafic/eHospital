@@ -2,9 +2,13 @@
   <div *ngIf="isLoading" class="loading">Loading...</div>
 
   <section *ngIf="me" class="card">
-    <h3>Welcome, {{ me.firstName }} {{ me.lastName }}</h3>
+    <h3>Welcome{{ isDoctor ? ', Dr.' : '' }} {{ me.firstName }} {{ me.lastName }}</h3>
     <p>Email: {{ me.email }}</p>
-    <p>Phone: {{ me.phoneNumber }}</p>
+    <p *ngIf="patient">Phone: {{ patient.phoneNumber }}</p>
+    <p *ngIf="doctor"><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+    <p *ngIf="doctor"><strong>Department:</strong> {{ doctor.departmentName }}</p>
+    <p *ngIf="doctor && doctor.licenseNumber"><strong>License Number:</strong> {{ doctor.licenseNumber }}</p>
+    <p *ngIf="doctor && doctor.yearsOfExperience"><strong>Years of Experience:</strong> {{ doctor.yearsOfExperience }}</p>
   </section>
 
   <section class="card">

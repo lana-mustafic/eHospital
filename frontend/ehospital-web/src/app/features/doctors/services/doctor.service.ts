@@ -23,5 +23,9 @@ export class DoctorService {
   create(payload: CreateDoctorRequest): Observable<Doctor> {
     return this.http.post<Doctor>(this.apiUrl, payload);
   }
+
+  getMe(): Observable<Doctor> {
+    return this.http.get<Doctor>(`${this.apiUrl}/me`);
+  }
 }
 

@@ -28,7 +28,7 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.Department)
-            .WithMany()
+            .WithMany(d => d.Rooms)
             .HasForeignKey(r => r.DepartmentId)
             .OnDelete(DeleteBehavior.NoAction);
     }

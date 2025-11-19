@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AppointmentRemindersComponent } from '../../shared/components/appointment-reminders/appointment-reminders.component';
-import { StatusPieChartComponent } from '../../shared/components/charts/status-pie-chart/status-pie-chart.component';
 import { LineChartComponent } from '../../shared/components/charts/line-chart/line-chart.component';
 import { BarChartComponent } from '../../shared/components/charts/bar-chart/bar-chart.component';
 import { PatientService } from '../patients/services/patient.service';
@@ -15,6 +13,7 @@ import { PrescriptionService } from '../prescriptions/services/prescription.serv
 import { RoomService } from '../rooms/services/room.service';
 import { InvoiceService } from '../invoices/services/invoice.service';
 import { Appointment } from '../appointments/models/appointment.model';
+import { AuthService } from '../../core/services/auth';
 import { forkJoin, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 
@@ -24,8 +23,6 @@ import { catchError, timeout } from 'rxjs/operators';
   imports: [
     CommonModule,
     RouterLink,
-    AppointmentRemindersComponent,
-    StatusPieChartComponent,
     LineChartComponent,
     BarChartComponent
   ],
@@ -85,6 +82,19 @@ export class Dashboard implements OnInit {
   appointmentTrendData: Array<{ label: string; value: number }> = [];
   monthlyAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
   
+  // User role
+  currentUserRole: string = '';
+  currentUserName: string = '';
+  isDoctor: boolean = false;
+  isAdmin: boolean = false;
+  isNurse: boolean = false;
+  isReceptionist: boolean = false;
+  
+  // Doctor-specific metrics
+  myAppointmentsToday: Appointment[] = [];
+  myUpcomingAppointments: Appointment[] = [];
+  myPatientsCount: number = 0;
+  
   isLoading = false;
   error: string | null = null;
 
@@ -97,10 +107,20 @@ export class Dashboard implements OnInit {
     private diagnosisService: DiagnosisService,
     private prescriptionService: PrescriptionService,
     private roomService: RoomService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.currentUserRole = currentUser.role || '';
+      this.currentUserName = currentUser.name || '';
+      this.isDoctor = this.currentUserRole.toLowerCase() === 'doctor';
+      this.isAdmin = this.currentUserRole.toLowerCase() === 'admin';
+      this.isNurse = this.currentUserRole.toLowerCase() === 'nurse';
+      this.isReceptionist = this.currentUserRole.toLowerCase() === 'receptionist';
+    }
     this.loadDashboardData();
   }
 
@@ -224,6 +244,31 @@ export class Dashboard implements OnInit {
           })
           .slice(0, 5);
 
+        // Doctor-specific data
+        if (this.isDoctor) {
+          const currentUser = this.authService.getCurrentUser();
+          // Find doctor entity that matches current user by email
+          const myDoctor = doctors.find(doc => {
+            return doc && doc.email && currentUser?.email && doc.email.toLowerCase() === currentUser.email.toLowerCase();
+          });
+          
+          if (myDoctor) {
+            const myDoctorId = myDoctor.id;
+            // Filter appointments for current doctor
+            const myAppointments = appointments.filter(apt => apt && apt.doctorId === myDoctorId);
+            this.myAppointmentsToday = myAppointments.filter(apt => apt.appointmentDate === todayStr && apt.status === 'Scheduled');
+            this.myUpcomingAppointments = myAppointments.filter(apt => {
+              if (!apt || !apt.appointmentDate) return false;
+              const aptDate = new Date(apt.appointmentDate);
+              const todayDate = new Date();
+              return aptDate >= todayDate && apt.status === 'Scheduled';
+            }).slice(0, 10);
+            // Count unique patients
+            const uniquePatientIds = new Set(myAppointments.map(apt => apt.patientId));
+            this.myPatientsCount = uniquePatientIds.size;
+          }
+        }
+
         // Bed & Room metrics
         this.totalRooms = rooms.length;
         this.occupiedRooms = rooms.filter((room: any) => room.status === 'Occupied' || room.status === 'Maintenance').length;
@@ -271,6 +316,16 @@ export class Dashboard implements OnInit {
         this.error = 'Some dashboard data could not be loaded. Please refresh the page.';
         this.isLoading = false;
       }
+    });
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '—';
+    const dateObj = new Date(dateString);
+    return dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   }
 
@@ -411,5 +466,14 @@ export class Dashboard implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
+  }
+
+  getCurrentDate(): string {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   }
 }
