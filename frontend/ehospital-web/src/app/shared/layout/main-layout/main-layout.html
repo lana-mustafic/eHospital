@@ -2,7 +2,12 @@
   <!-- Sidebar -->
   <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
     <div class="sidebar-header">
-      <h2 class="logo" *ngIf="isSidebarOpen">🧭 eHospital</h2>
+      <div class="logo-container" *ngIf="isSidebarOpen">
+        <div class="logo-icon">
+          <span class="material-icons">local_hospital</span>
+        </div>
+        <h2 class="logo">eHospital</h2>
+      </div>
       <button class="toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
         <span class="material-icons">{{ isSidebarOpen ? 'menu_open' : 'menu' }}</span>
       </button>
@@ -48,11 +53,46 @@
           <span>{{ getCurrentTime() }}</span>
         </div>
       </div>
+      <div class="header-center">
+        <div class="global-search">
+          <span class="material-icons">search</span>
+          <input
+            type="text"
+            placeholder="Quick search: patients, appointments, records..."
+            [(ngModel)]="globalSearchTerm"
+            (keyup.enter)="performGlobalSearch()"
+            (focus)="showSearchSuggestions = true"
+            (blur)="hideSearchSuggestions()"
+          />
+          <button class="search-btn" (click)="performGlobalSearch()" title="Search">
+            <span class="material-icons">search</span>
+          </button>
+          @if (showSearchSuggestions && globalSearchTerm) {
+            <div class="search-suggestions">
+              <div class="suggestion-item" (click)="searchPatients()">
+                <span class="material-icons">people</span>
+                <span>Search Patients</span>
+              </div>
+              <div class="suggestion-item" (click)="searchAppointments()">
+                <span class="material-icons">event</span>
+                <span>Search Appointments</span>
+              </div>
+              <div class="suggestion-item" (click)="searchRecords()">
+                <span class="material-icons">folder_shared</span>
+                <span>Search Medical Records</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
       <div class="header-right">
         <div class="header-actions">
           <button class="header-btn" [routerLink]="['/notifications']" title="Notifications">
             <span class="material-icons">notifications</span>
             <span class="badge" *ngIf="false">3</span>
+          </button>
+          <button class="header-btn" [routerLink]="['/dashboard']" title="Dashboard">
+            <span class="material-icons">dashboard</span>
           </button>
         </div>
         <div class="user-menu">

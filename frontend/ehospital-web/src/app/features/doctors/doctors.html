@@ -2,13 +2,20 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Doctors</h2>
-      <p>Manage doctor profiles and medical staff information</p>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Administration</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Physician Management</span>
+      </div>
+      <h2>Physician Management</h2>
+      <p>Manage physician profiles, credentials, and medical staff information</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Add Doctor
-    </button>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">person_add</span>
+        Add Physician
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->

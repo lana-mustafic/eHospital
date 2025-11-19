@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { filter, map, Subscription } from 'rxjs';
 import { AuthService, User } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss']
 })
@@ -16,64 +17,67 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   currentPageTitle = 'Dashboard';
   currentUser: User | null = null;
   visibleMenuSections: any[] = [];
+  globalSearchTerm = '';
+  showSearchSuggestions = false;
   private routerSubscription?: Subscription;
   private userSubscription?: Subscription;
   private allMenuItemsCache: any[] = [];
+  private searchTimeout?: any;
 
   menuSections = [
     {
-      title: 'Main',
-      icon: 'home',
+      title: 'Overview',
+      icon: 'dashboard',
       expanded: true,
       items: [
         { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] }
       ]
     },
     {
-      title: 'Patient Management',
-      icon: 'people',
+      title: 'Clinical',
+      icon: 'medical_services',
       expanded: true,
       items: [
-        { path: '/patients', icon: 'people', label: 'Patients', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/records', icon: 'folder_shared', label: 'Records', roles: ['Admin', 'Doctor'] },
+        { path: '/patients', icon: 'people', label: 'Patient Registry', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/appointments', icon: 'event', label: 'Appointments', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        { path: '/records', icon: 'folder_shared', label: 'Medical Records', roles: ['Admin', 'Doctor'] },
         { path: '/vital-signs', icon: 'monitor_heart', label: 'Vital Signs', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/lab-tests', icon: 'science', label: 'Lab Tests', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/medical-history', icon: 'history', label: 'Medical History', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/lab-tests', icon: 'science', label: 'Laboratory', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/medical-history', icon: 'history', label: 'Patient History', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/diagnoses', icon: 'assignment', label: 'Diagnoses', roles: ['Admin', 'Doctor'] },
+        { path: '/prescriptions', icon: 'receipt_long', label: 'Prescriptions', roles: ['Admin', 'Doctor'] },
         { path: '/discharge-summaries', icon: 'description', label: 'Discharge Summaries', roles: ['Admin', 'Doctor'] }
       ]
     },
     {
-      title: 'Staff',
-      icon: 'groups',
+      title: 'Operations',
+      icon: 'business_center',
       expanded: true,
       items: [
-        { path: '/doctors', icon: 'medical_services', label: 'Doctors', roles: ['Admin'] },
-        { path: '/schedules', icon: 'schedule', label: 'Schedules', roles: ['Admin', 'Doctor'] }
+        { path: '/rooms', icon: 'hotel', label: 'Room Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin', 'Doctor'] },
+        { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Doctor', 'Receptionist'] }
       ]
     },
     {
       title: 'Administration',
-      icon: 'settings',
-      expanded: true,
+      icon: 'admin_panel_settings',
+      expanded: false,
       items: [
+        { path: '/doctors', icon: 'medical_services', label: 'Physician Management', roles: ['Admin'] },
+        { path: '/schedules', icon: 'schedule', label: 'Staff Schedules', roles: ['Admin', 'Doctor'] },
         { path: '/departments', icon: 'business', label: 'Departments', roles: ['Admin'] },
-        { path: '/medications', icon: 'medication', label: 'Medications', roles: ['Admin', 'Doctor'] },
-        { path: '/appointments', icon: 'event', label: 'Appointments', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
-        { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/rooms', icon: 'hotel', label: 'Rooms & Beds', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
-        { path: '/invoices', icon: 'receipt', label: 'Billing & Invoices', roles: ['Admin', 'Doctor', 'Receptionist'] },
-        { path: '/diagnoses', icon: 'assignment', label: 'Diagnoses', roles: ['Admin', 'Doctor'] },
-        { path: '/prescriptions', icon: 'receipt_long', label: 'Prescriptions', roles: ['Admin', 'Doctor'] },
-        { path: '/reports', icon: 'assessment', label: 'Reports', roles: ['Admin'] }
+        { path: '/reports', icon: 'assessment', label: 'Reports & Analytics', roles: ['Admin'] },
+        { path: '/audit', icon: 'history', label: 'Audit Trail', roles: ['Admin'] }
       ]
     },
     {
       title: 'System',
-      icon: 'settings_applications',
+      icon: 'settings',
       expanded: false,
       items: [
-        { path: '/notifications', icon: 'notifications', label: 'Notifications', roles: ['Admin', 'Doctor', 'Nurse', 'Patient'] },
-        { path: '/audit', icon: 'history', label: 'Audit Log', roles: ['Admin'] }
+        { path: '/notifications', icon: 'notifications', label: 'Notifications', roles: ['Admin', 'Doctor', 'Nurse', 'Patient'] }
       ]
     }
   ];
@@ -177,6 +181,56 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  performGlobalSearch(): void {
+    if (!this.globalSearchTerm.trim()) return;
+    
+    // Navigate to patients page with search term
+    this.router.navigate(['/patients'], {
+      queryParams: { search: this.globalSearchTerm }
+    });
+    this.showSearchSuggestions = false;
+  }
+
+  searchPatients(): void {
+    if (this.globalSearchTerm.trim()) {
+      this.router.navigate(['/patients'], {
+        queryParams: { search: this.globalSearchTerm }
+      });
+    } else {
+      this.router.navigate(['/patients']);
+    }
+    this.showSearchSuggestions = false;
+  }
+
+  searchAppointments(): void {
+    if (this.globalSearchTerm.trim()) {
+      this.router.navigate(['/appointments'], {
+        queryParams: { search: this.globalSearchTerm }
+      });
+    } else {
+      this.router.navigate(['/appointments']);
+    }
+    this.showSearchSuggestions = false;
+  }
+
+  searchRecords(): void {
+    if (this.globalSearchTerm.trim()) {
+      this.router.navigate(['/records'], {
+        queryParams: { search: this.globalSearchTerm }
+      });
+    } else {
+      this.router.navigate(['/records']);
+    }
+    this.showSearchSuggestions = false;
+  }
+
+  hideSearchSuggestions(): void {
+    // Delay hiding to allow click events
+    setTimeout(() => {
+      this.showSearchSuggestions = false;
+    }, 200);
   }
 }
 

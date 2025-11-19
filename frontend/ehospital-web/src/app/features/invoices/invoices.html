@@ -2,13 +2,20 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Billing & Invoices</h2>
-      <p>Manage invoices, payments, and billing records</p>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Operations</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Billing & Finance</span>
+      </div>
+      <h2>Billing & Finance</h2>
+      <p>Manage patient invoices, payment processing, and financial records</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Create Invoice
-    </button>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">receipt</span>
+        Create Invoice
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->

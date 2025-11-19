@@ -2,13 +2,24 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Appointments</h2>
-      <p>Manage patient appointments and scheduling</p>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Appointments</span>
+      </div>
+      <h2>Appointment Scheduling</h2>
+      <p>Schedule, manage, and track patient appointments and consultations</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Schedule Appointment
-    </button>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export
+      </button>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">event</span>
+        Schedule Appointment
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->
@@ -57,12 +68,12 @@
       <table class="appointments-table">
         <thead>
         <tr>
-          <th>Date & Time</th>
-          <th>Patient</th>
-          <th>Doctor</th>
+          <th>Appointment Date & Time</th>
+          <th>Patient Name</th>
+          <th>Provider</th>
           <th>Status</th>
-          <th>Reason</th>
-          <th>Notes</th>
+          <th>Chief Complaint</th>
+          <th>Clinical Notes</th>
           <th>Actions</th>
         </tr>
         </thead>

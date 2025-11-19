@@ -1,8 +1,13 @@
 <div class="rooms-container">
   <div class="page-header">
     <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Operations</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Room Management</span>
+      </div>
       <h2>Room & Bed Management</h2>
-      <p>Manage rooms, beds, admissions, and transfers</p>
+      <p>Manage patient rooms, bed assignments, admissions, and room transfers</p>
     </div>
     <button class="btn-primary" *ngIf="activeTab !== 'availability' && activeTab !== 'transfers'" 
             (click)="activeTab === 'roomTypes' ? openRoomTypeModal() : activeTab === 'rooms' ? openRoomModal() : activeTab === 'beds' ? openBedModal() : openAdmissionModal()">

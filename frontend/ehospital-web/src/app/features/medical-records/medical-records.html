@@ -1,10 +1,23 @@
 <div class="records">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Medical Records</span>
+      </div>
+      <h2>Medical Records</h2>
+      <p>Manage electronic health records, clinical documentation, and patient medical history</p>
+    </div>
+  </div>
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="form">
     <div class="row">
       <input type="number" placeholder="Patient ID" formControlName="patientId" />
       <input type="text" placeholder="Diagnosis" formControlName="diagnosis" />
-      <input type="text" placeholder="Notes" formControlName="notes" />
-      <button type="submit" class="btn-primary">{{ isEdit ? 'Update' : 'Create' }}</button>
+      <input type="text" placeholder="Clinical Notes" formControlName="notes" />
+      <button type="submit" class="btn-primary">{{ isEdit ? 'Update Record' : 'Create Record' }}</button>
       <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="isEdit">Cancel</button>
     </div>
   </form>

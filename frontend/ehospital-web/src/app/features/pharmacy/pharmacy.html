@@ -1,8 +1,13 @@
 <div class="pharmacy-container">
   <div class="page-header">
     <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Operations</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Pharmacy</span>
+      </div>
       <h2>Pharmacy & Inventory Management</h2>
-      <p>Manage inventory, suppliers, purchase orders, and stock movements</p>
+      <p>Manage medication inventory, suppliers, purchase orders, and stock movements</p>
     </div>
     <button class="btn-primary" *ngIf="activeTab !== 'dashboard' && activeTab !== 'stockMovements'" 
             (click)="activeTab === 'suppliers' ? openSupplierModal() : activeTab === 'inventory' ? openInventoryItemModal() : openPurchaseOrderModal()">

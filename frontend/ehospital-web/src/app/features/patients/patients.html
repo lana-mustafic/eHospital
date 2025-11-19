@@ -2,13 +2,24 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Patients</h2>
-      <p>Manage patient records and medical information</p>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Patient Registry</span>
+      </div>
+      <h2>Patient Registry</h2>
+      <p>Manage patient demographics, medical records, and clinical information</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Add Patient
-    </button>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export
+      </button>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">person_add</span>
+        Register Patient
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->
@@ -45,12 +56,12 @@
     <table class="patients-table">
       <thead>
         <tr>
-          <th>Name</th>
+          <th>Patient Name</th>
+          <th>MRN</th>
           <th>Gender</th>
           <th>Age</th>
           <th>Date of Birth</th>
-          <th>Email</th>
-          <th>Phone</th>
+          <th>Contact</th>
           <th>Blood Type</th>
           <th>Emergency Contact</th>
           <th>Actions</th>
@@ -59,26 +70,40 @@
       <tbody>
         <tr *ngFor="let patient of paginatedPatients">
           <td class="name-cell">
-            <strong>{{ patient.firstName }} {{ patient.lastName }}</strong>
+            <div class="patient-name">
+              <strong>{{ patient.firstName }} {{ patient.lastName }}</strong>
+              <span class="patient-id" *ngIf="patient.id">ID: {{ patient.id }}</span>
+            </div>
           </td>
-          <td>{{ patient.gender }}</td>
+          <td>
+            <span class="mrn-badge">{{ patient.id || '—' }}</span>
+          </td>
+          <td>
+            <span class="gender-badge" [class.male]="patient.gender === 'Male'" [class.female]="patient.gender === 'Female'">
+              {{ patient.gender }}
+            </span>
+          </td>
           <td>{{ getAge(patient.dateOfBirth) }} years</td>
           <td>{{ formatDate(patient.dateOfBirth) }}</td>
-          <td>{{ patient.email }}</td>
-          <td>{{ patient.phoneNumber }}</td>
           <td>
-            <span *ngIf="patient.bloodType" class="blood-type">{{ patient.bloodType }}</span>
-            <span *ngIf="!patient.bloodType">—</span>
+            <div class="contact-info">
+              <div class="email">{{ patient.email }}</div>
+              <div class="phone">{{ patient.phoneNumber }}</div>
+            </div>
+          </td>
+          <td>
+            <span *ngIf="patient.bloodType" class="blood-type-badge">{{ patient.bloodType }}</span>
+            <span *ngIf="!patient.bloodType" class="text-muted">—</span>
           </td>
           <td>{{ patient.emergencyContact || '—' }}</td>
           <td class="actions-cell">
-            <button class="btn-icon" (click)="openHistoryModal(patient)" title="View History">
+            <button class="btn-icon" (click)="openHistoryModal(patient)" title="View Medical History">
               <span class="material-icons">history</span>
             </button>
-            <button class="btn-icon" (click)="openEditModal(patient)" title="Edit">
+            <button class="btn-icon" (click)="openEditModal(patient)" title="Edit Patient">
               <span class="material-icons">edit</span>
             </button>
-            <button class="btn-icon btn-danger" (click)="deletePatient(patient)" title="Delete">
+            <button class="btn-icon btn-danger" (click)="deletePatient(patient)" title="Delete Patient">
               <span class="material-icons">delete</span>
             </button>
           </td>
