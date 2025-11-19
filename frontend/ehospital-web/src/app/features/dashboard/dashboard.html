@@ -11,45 +11,162 @@
       <button class="btn-retry" (click)="loadDashboardData()">Retry</button>
     </div>
   } @else {
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon patients">
-          <span class="material-icons">people</span>
+    <!-- Critical Alerts Banner -->
+    @if (criticalAlerts.length > 0) {
+      <div class="alerts-banner">
+        <div class="alert-header">
+          <span class="material-icons">warning</span>
+          <h3>Critical Alerts</h3>
         </div>
-        <div class="stat-content">
-          <h3 class="stat-value">{{ totalPatients }}</h3>
-          <p class="stat-label">Total Patients</p>
+        <div class="alert-items">
+          @for (alert of criticalAlerts; track $index) {
+            <div class="alert-item">
+              <span class="material-icons alert-icon">error</span>
+              <span>{{ alert }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Key Performance Indicators -->
+    <div class="kpi-grid">
+      <div class="kpi-card primary">
+        <div class="kpi-icon">
+          <span class="material-icons">local_hospital</span>
+        </div>
+        <div class="kpi-content">
+          <h3 class="kpi-value">{{ totalPatients }}</h3>
+          <p class="kpi-label">Total Patients</p>
+          <div class="kpi-sub">
+            <span>{{ activePatients }} Active</span>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon doctors">
-          <span class="material-icons">medical_services</span>
+      <div class="kpi-card success">
+        <div class="kpi-icon">
+          <span class="material-icons">hotel</span>
         </div>
-        <div class="stat-content">
-          <h3 class="stat-value">{{ totalDoctors }}</h3>
-          <p class="stat-label">Doctors</p>
+        <div class="kpi-content">
+          <h3 class="kpi-value">{{ bedOccupancyRate }}%</h3>
+          <p class="kpi-label">Bed Occupancy</p>
+          <div class="kpi-sub">
+            <span>{{ occupiedBeds }}/{{ totalBeds }} Beds</span>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon appointments">
+      <div class="kpi-card info">
+        <div class="kpi-icon">
           <span class="material-icons">event</span>
         </div>
-        <div class="stat-content">
-          <h3 class="stat-value">{{ totalAppointments }}</h3>
-          <p class="stat-label">Total Appointments</p>
+        <div class="kpi-content">
+          <h3 class="kpi-value">{{ todayAppointments }}</h3>
+          <p class="kpi-label">Today's Appointments</p>
+          <div class="kpi-sub">
+            <span>{{ pendingAppointments }} Pending</span>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon departments">
-          <span class="material-icons">business</span>
+      <div class="kpi-card revenue">
+        <div class="kpi-icon">
+          <span class="material-icons">attach_money</span>
         </div>
-        <div class="stat-content">
-          <h3 class="stat-value">{{ totalDepartments }}</h3>
-          <p class="stat-label">Departments</p>
+        <div class="kpi-content">
+          <h3 class="kpi-value">{{ formatCurrency(todayRevenue) }}</h3>
+          <p class="kpi-label">Today's Revenue</p>
+          <div class="kpi-sub">
+            <span>{{ formatCurrency(monthlyRevenue) }} This Month</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="material-icons">people</span>
+          <h4>Patient Flow</h4>
+        </div>
+        <div class="metric-body">
+          <div class="metric-row">
+            <span class="metric-label">In-Patients:</span>
+            <span class="metric-value">{{ inPatients }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Out-Patients:</span>
+            <span class="metric-value">{{ outPatients }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Active Patients:</span>
+            <span class="metric-value">{{ activePatients }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="material-icons">medical_services</span>
+          <h4>Staff Status</h4>
+        </div>
+        <div class="metric-body">
+          <div class="metric-row">
+            <span class="metric-label">Doctors On Duty:</span>
+            <span class="metric-value">{{ doctorsOnDuty }}/{{ totalDoctors }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Doctors:</span>
+            <span class="metric-value">{{ totalDoctors }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Nurses:</span>
+            <span class="metric-value">{{ totalNurses }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="material-icons">hotel</span>
+          <h4>Room & Bed Status</h4>
+        </div>
+        <div class="metric-body">
+          <div class="metric-row">
+            <span class="metric-label">Available Beds:</span>
+            <span class="metric-value highlight">{{ availableBeds }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Occupied Beds:</span>
+            <span class="metric-value">{{ occupiedBeds }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Rooms:</span>
+            <span class="metric-value">{{ totalRooms }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="material-icons">account_balance_wallet</span>
+          <h4>Financial Overview</h4>
+        </div>
+        <div class="metric-body">
+          <div class="metric-row">
+            <span class="metric-label">Monthly Revenue:</span>
+            <span class="metric-value success">{{ formatCurrency(monthlyRevenue) }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Outstanding Bills:</span>
+            <span class="metric-value warning">{{ formatCurrency(outstandingBills) }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Pending Invoices:</span>
+            <span class="metric-value">{{ pendingInvoices }}</span>
+          </div>
         </div>
       </div>
     </div>

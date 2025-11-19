@@ -43,8 +43,18 @@
     <header class="header">
       <div class="header-left">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
+        <div class="header-time">
+          <span class="material-icons">schedule</span>
+          <span>{{ getCurrentTime() }}</span>
+        </div>
       </div>
       <div class="header-right">
+        <div class="header-actions">
+          <button class="header-btn" [routerLink]="['/notifications']" title="Notifications">
+            <span class="material-icons">notifications</span>
+            <span class="badge" *ngIf="false">3</span>
+          </button>
+        </div>
         <div class="user-menu">
           <div class="user-info">
             <span class="user-name">{{ currentUser?.name || 'User' }}</span>

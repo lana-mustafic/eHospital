@@ -12,6 +12,8 @@ import { DepartmentService } from '../departments/services/department.service';
 import { MedicalRecordService } from '../medical-records/services/medical-record.service';
 import { DiagnosisService } from '../diagnoses/services/diagnosis.service';
 import { PrescriptionService } from '../prescriptions/services/prescription.service';
+import { RoomService } from '../rooms/services/room.service';
+import { InvoiceService } from '../invoices/services/invoice.service';
 import { Appointment } from '../appointments/models/appointment.model';
 import { forkJoin, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
@@ -31,12 +33,22 @@ import { catchError, timeout } from 'rxjs/operators';
   styleUrls: ['./dashboard.scss']
 })
 export class Dashboard implements OnInit {
+  // Patient metrics
   totalPatients = 0;
+  activePatients = 0;
+  inPatients = 0;
+  outPatients = 0;
+  
+  // Staff metrics
   totalDoctors = 0;
+  doctorsOnDuty = 0;
+  totalNurses = 0;
+  
+  // Appointment metrics
   totalAppointments = 0;
-  totalDepartments = 0;
   todayAppointments = 0;
   upcomingAppointments = 0;
+  pendingAppointments = 0;
   recentAppointments: Appointment[] = [];
   todaySchedule: Appointment[] = [];
   
@@ -46,11 +58,28 @@ export class Dashboard implements OnInit {
   cancelledCount = 0;
   noShowCount = 0;
   
-  // Additional stats
+  // Bed & Room metrics
+  totalBeds = 0;
+  occupiedBeds = 0;
+  availableBeds = 0;
+  bedOccupancyRate = 0;
+  totalRooms = 0;
+  occupiedRooms = 0;
+  
+  // Financial metrics
+  todayRevenue = 0;
+  monthlyRevenue = 0;
+  outstandingBills = 0;
+  pendingInvoices = 0;
+  
+  // Clinical metrics
   totalMedicalRecords = 0;
   totalDiagnoses = 0;
   totalPrescriptions = 0;
   completedThisMonth = 0;
+  
+  // Alerts
+  criticalAlerts: string[] = [];
   
   // Chart data
   appointmentTrendData: Array<{ label: string; value: number }> = [];
@@ -66,7 +95,9 @@ export class Dashboard implements OnInit {
     private departmentService: DepartmentService,
     private medicalRecordService: MedicalRecordService,
     private diagnosisService: DiagnosisService,
-    private prescriptionService: PrescriptionService
+    private prescriptionService: PrescriptionService,
+    private roomService: RoomService,
+    private invoiceService: InvoiceService
   ) {}
 
   ngOnInit() {
@@ -105,6 +136,14 @@ export class Dashboard implements OnInit {
       prescriptions: this.prescriptionService.getAll().pipe(
         timeout(10000),
         catchError(() => of([]))
+      ),
+      rooms: this.roomService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      invoices: this.invoiceService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
       )
     }).subscribe({
       next: (data) => {
@@ -116,19 +155,28 @@ export class Dashboard implements OnInit {
         const medicalRecords = Array.isArray(data.medicalRecords) ? data.medicalRecords : [];
         const diagnoses = Array.isArray(data.diagnoses) ? data.diagnoses : [];
         const prescriptions = Array.isArray(data.prescriptions) ? data.prescriptions : [];
+        const rooms = Array.isArray(data.rooms) ? data.rooms : [];
+        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
 
+        // Patient metrics
         this.totalPatients = patients.length;
+        this.activePatients = patients.length; // Can be enhanced with active status check
+        this.inPatients = 0; // Would need patient status field
+        this.outPatients = this.totalPatients - this.inPatients;
+
+        // Staff metrics
         this.totalDoctors = doctors.length;
+        this.doctorsOnDuty = doctors.length; // Can be enhanced with schedule check
+        this.totalNurses = 0; // Would need nurse entity
+
+        // Appointment metrics
         this.totalAppointments = appointments.length;
-        this.totalDepartments = departments.length;
-        this.totalMedicalRecords = medicalRecords.length;
-        this.totalDiagnoses = diagnoses.length;
-        this.totalPrescriptions = prescriptions.length;
+        this.pendingAppointments = appointments.filter(apt => apt && apt.status === 'Scheduled').length;
 
         // Calculate today's appointments
-        const today = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
         const todayAppts = appointments.filter(
-          apt => apt && apt.appointmentDate === today
+          apt => apt && apt.appointmentDate === todayStr
         );
         this.todayAppointments = todayAppts.length;
 
@@ -175,6 +223,40 @@ export class Dashboard implements OnInit {
             return dateB.getTime() - dateA.getTime();
           })
           .slice(0, 5);
+
+        // Bed & Room metrics
+        this.totalRooms = rooms.length;
+        this.occupiedRooms = rooms.filter((room: any) => room.status === 'Occupied' || room.status === 'Maintenance').length;
+        this.totalBeds = rooms.reduce((sum: number, room: any) => sum + (room.totalBeds || 0), 0);
+        this.occupiedBeds = rooms.reduce((sum: number, room: any) => sum + (room.occupiedBeds || 0), 0);
+        this.availableBeds = rooms.reduce((sum: number, room: any) => sum + (room.availableBeds || 0), 0);
+        this.bedOccupancyRate = this.totalBeds > 0 
+          ? Math.round((this.occupiedBeds / this.totalBeds) * 100) 
+          : 0;
+
+        // Financial metrics
+        const todayDateStr = new Date().toISOString().split('T')[0];
+        const todayInvoices = invoices.filter((inv: any) => inv.invoiceDate === todayDateStr);
+        this.todayRevenue = todayInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
+        
+        const currentDate = new Date();
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthlyInvoices = invoices.filter((inv: any) => {
+          const invDate = new Date(inv.invoiceDate);
+          return invDate >= monthStart;
+        });
+        this.monthlyRevenue = monthlyInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
+        
+        this.outstandingBills = invoices.reduce((sum: number, inv: any) => sum + (inv.balanceAmount || 0), 0);
+        this.pendingInvoices = invoices.filter((inv: any) => inv.status === 'Pending' || inv.status === 'Unpaid').length;
+
+        // Clinical metrics
+        this.totalMedicalRecords = medicalRecords.length;
+        this.totalDiagnoses = diagnoses.length;
+        this.totalPrescriptions = prescriptions.length;
+
+        // Generate critical alerts
+        this.generateAlerts();
 
         // Calculate chart data
         this.calculateAppointmentTrends(appointments);
@@ -296,5 +378,38 @@ export class Dashboard implements OnInit {
     }
     
     this.monthlyAppointmentData = monthlyData;
+  }
+
+  private generateAlerts(): void {
+    this.criticalAlerts = [];
+    
+    if (this.bedOccupancyRate >= 90) {
+      this.criticalAlerts.push(`High bed occupancy: ${this.bedOccupancyRate}% - Consider discharge planning`);
+    }
+    
+    if (this.availableBeds <= 5 && this.totalBeds > 0) {
+      this.criticalAlerts.push(`Critical: Only ${this.availableBeds} beds available`);
+    }
+    
+    if (this.pendingAppointments > 20) {
+      this.criticalAlerts.push(`High appointment backlog: ${this.pendingAppointments} pending appointments`);
+    }
+    
+    if (this.outstandingBills > 100000) {
+      this.criticalAlerts.push(`High outstanding balance: $${this.outstandingBills.toLocaleString()}`);
+    }
+    
+    if (this.todayAppointments === 0) {
+      this.criticalAlerts.push('No appointments scheduled for today');
+    }
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   }
 }
