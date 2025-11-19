@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -94,17 +94,38 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    // Start with empty menu until user is loaded
+    this.visibleMenuSections = [];
+    
     // Get current user
     this.currentUser = this.authService.getCurrentUser();
-    this.updateVisibleMenuSections();
     
+    // Always fetch user to ensure we have the latest role
+    this.authService.fetchCurrentUser().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.updateVisibleMenuSections();
+      },
+      error: (err) => {
+        console.error('MainLayout - Error fetching user:', err);
+        // Fallback to stored user if fetch fails
+        if (this.currentUser) {
+          this.updateVisibleMenuSections();
+        }
+      }
+    });
+    
+    // Also subscribe to user changes
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-      this.updateVisibleMenuSections();
+      if (user) {
+        this.currentUser = user;
+        this.updateVisibleMenuSections();
+      }
     });
 
     // Update page title based on current route
@@ -141,16 +162,39 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   private updateVisibleMenuSections() {
     const userRole = this.currentUser?.role || '';
+    
+    if (!userRole) {
+      // If no role, show empty menu (user not loaded yet)
+      this.visibleMenuSections = [];
+      return;
+    }
+    
     // Preserve expanded state from existing visibleMenuSections
     const expandedStates = new Map(
       this.visibleMenuSections.map(s => [s.title, s.expanded])
     );
     
+    const normalizedUserRole = userRole.toLowerCase().trim();
+    console.log('MainLayout - Filtering menu for role:', normalizedUserRole, 'User:', this.currentUser);
+    
     this.visibleMenuSections = this.menuSections.map(section => {
-      const filteredItems = section.items.filter(item =>
-        !item.roles || item.roles.some(role => role.toLowerCase() === userRole.toLowerCase())
-      );
+      // Filter items based on user role - strict matching
+      const filteredItems = section.items.filter(item => {
+        // If no roles specified, deny access (safety)
+        if (!item.roles || item.roles.length === 0) {
+          return false;
+        }
+        
+        // Check if user's role matches any of the allowed roles (case-insensitive)
+        const hasAccess = item.roles.some(role => {
+          const normalizedRole = role.toLowerCase().trim();
+          return normalizedRole === normalizedUserRole;
+        });
+        
+        return hasAccess;
+      });
       
+      // Only include sections that have at least one visible item
       if (filteredItems.length === 0) {
         return null;
       }
@@ -161,6 +205,28 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         items: filteredItems
       };
     }).filter(section => section !== null) as any[];
+    
+    // Force change detection to update the view
+    this.cdr.detectChanges();
+    
+    const visibleSections = this.visibleMenuSections.map(s => ({ 
+      title: s.title, 
+      items: s.items.map((i: any) => i.label) 
+    }));
+    console.log('MainLayout - Final visible sections for', normalizedUserRole + ':', visibleSections);
+    console.log('MainLayout - Total sections:', visibleSections.length);
+    visibleSections.forEach(section => {
+      console.log(`  - ${section.title}: ${section.items.length} items - ${section.items.join(', ')}`);
+    });
+    
+    // Also log what should NOT be visible (for debugging)
+    const allAdminItems = this.menuSections
+      .flatMap(s => s.items)
+      .filter(item => item.roles && !item.roles.some((r: string) => r.toLowerCase() === normalizedUserRole))
+      .map(item => item.label);
+    if (allAdminItems.length > 0) {
+      console.log('MainLayout - Items that should NOT be visible for', normalizedUserRole + ':', allAdminItems);
+    }
   }
 
   toggleSection(section: any) {

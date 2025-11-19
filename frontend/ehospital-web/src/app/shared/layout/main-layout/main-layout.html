@@ -14,6 +14,9 @@
     </div>
     
     <nav class="sidebar-nav">
+      <div *ngIf="visibleMenuSections.length === 0 && currentUser" class="menu-loading">
+        <p>Loading menu...</p>
+      </div>
       <div *ngFor="let section of visibleMenuSections; trackBy: trackBySectionTitle" class="menu-section">
         <button 
           class="section-header" 

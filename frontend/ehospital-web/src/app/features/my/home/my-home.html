@@ -81,7 +81,7 @@
           </div>
         </div>
         <div class="appointment-status">
-          <span class="status-badge" [class]="'status-' + (nextAppointment.status?.toLowerCase() || 'scheduled')">
+          <span class="status-badge" [class]="'status-' + ((nextAppointment.status || 'scheduled').toLowerCase())">
             {{ nextAppointment.status }}
           </span>
         </div>
@@ -93,13 +93,13 @@
       <h4>Today's Schedule ({{ todayAppointments.length }})</h4>
       <div class="schedule-list">
         <div *ngFor="let apt of todayAppointments" class="schedule-item">
-          <div class="schedule-time">{{ apt.startTime?.substring(0, 5) }} - {{ apt.endTime?.substring(0, 5) }}</div>
+          <div class="schedule-time">{{ (apt.startTime || '').substring(0, 5) }} - {{ (apt.endTime || '').substring(0, 5) }}</div>
           <div class="schedule-details">
             <div class="schedule-patient">{{ apt.patientName || 'Patient' }}</div>
             <div class="schedule-reason" *ngIf="apt.reason">{{ apt.reason }}</div>
           </div>
           <div class="schedule-status">
-            <span class="status-badge" [class]="'status-' + (apt.status?.toLowerCase() || 'scheduled')">
+            <span class="status-badge" [class]="'status-' + ((apt.status || 'scheduled').toLowerCase())">
               {{ apt.status }}
             </span>
           </div>

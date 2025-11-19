@@ -13,6 +13,7 @@ import { PrescriptionService } from '../prescriptions/services/prescription.serv
 import { RoomService } from '../rooms/services/room.service';
 import { InvoiceService } from '../invoices/services/invoice.service';
 import { Appointment } from '../appointments/models/appointment.model';
+import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
 import { forkJoin, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
@@ -128,46 +129,81 @@ export class Dashboard implements OnInit {
     this.isLoading = true;
     this.error = null;
 
-    forkJoin({
+    // Build forkJoin object based on user role
+    const requests: any = {
       patients: this.patientService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      doctors: this.doctorService.getAll().pipe(
         timeout(10000),
         catchError(() => of([]))
       ),
       appointments: this.appointmentService.getAll().pipe(
         timeout(10000),
         catchError(() => of([]))
-      ),
-      departments: this.departmentService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      medicalRecords: this.medicalRecordService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      diagnoses: this.diagnosisService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      prescriptions: this.prescriptionService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      rooms: this.roomService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
-      invoices: this.invoiceService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
       )
-    }).subscribe({
-      next: (data) => {
-        // Ensure all data arrays are defined
+    };
+
+    // Admin can see everything
+    if (this.isAdmin) {
+      requests.doctors = this.doctorService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.departments = this.departmentService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.medicalRecords = this.medicalRecordService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.diagnoses = this.diagnosisService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.prescriptions = this.prescriptionService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.invoices = this.invoiceService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+    }
+
+    // Doctor can see medical records, diagnoses, prescriptions
+    if (this.isDoctor || this.isAdmin) {
+      requests.medicalRecords = this.medicalRecordService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.diagnoses = this.diagnosisService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+      requests.prescriptions = this.prescriptionService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+    }
+
+    // Nurse and Receptionist can see rooms
+    if (this.isNurse || this.isReceptionist || this.isAdmin) {
+      requests.rooms = this.roomService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+    }
+
+    // Receptionist can see invoices
+    if (this.isReceptionist || this.isAdmin) {
+      requests.invoices = this.invoiceService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+    }
+
+    forkJoin(requests).subscribe({
+      next: (data: any) => {
+        // Ensure all data arrays are defined (only for data that was requested)
         const patients = Array.isArray(data.patients) ? data.patients : [];
         const doctors = Array.isArray(data.doctors) ? data.doctors : [];
         const appointments = Array.isArray(data.appointments) ? data.appointments : [];
@@ -184,26 +220,28 @@ export class Dashboard implements OnInit {
         this.inPatients = 0; // Would need patient status field
         this.outPatients = this.totalPatients - this.inPatients;
 
-        // Staff metrics
-        this.totalDoctors = doctors.length;
-        this.doctorsOnDuty = doctors.length; // Can be enhanced with schedule check
+        // Staff metrics (only for Admin)
+        if (this.isAdmin && doctors.length > 0) {
+          this.totalDoctors = doctors.length;
+          this.doctorsOnDuty = doctors.length; // Can be enhanced with schedule check
+        }
         this.totalNurses = 0; // Would need nurse entity
 
         // Appointment metrics
         this.totalAppointments = appointments.length;
-        this.pendingAppointments = appointments.filter(apt => apt && apt.status === 'Scheduled').length;
+        this.pendingAppointments = appointments.filter((apt: Appointment) => apt && apt.status === 'Scheduled').length;
 
         // Calculate today's appointments
         const todayStr = new Date().toISOString().split('T')[0];
         const todayAppts = appointments.filter(
-          apt => apt && apt.appointmentDate === todayStr
+          (apt: Appointment) => apt && apt.appointmentDate === todayStr
         );
         this.todayAppointments = todayAppts.length;
 
         // Today's schedule (sorted by time) - filter out invalid appointments
         this.todaySchedule = todayAppts
-          .filter(apt => apt && apt.status === 'Scheduled' && apt.startTime)
-          .sort((a, b) => {
+          .filter((apt: Appointment) => apt && apt.status === 'Scheduled' && apt.startTime)
+          .sort((a: Appointment, b: Appointment) => {
             const timeA = this.normalizeTime(a.startTime || '');
             const timeB = this.normalizeTime(b.startTime || '');
             return timeA.localeCompare(timeB);
@@ -212,7 +250,7 @@ export class Dashboard implements OnInit {
         // Calculate upcoming appointments (next 7 days)
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
-        this.upcomingAppointments = appointments.filter(apt => {
+        this.upcomingAppointments = appointments.filter((apt: Appointment) => {
           if (!apt || !apt.appointmentDate) return false;
           const aptDate = new Date(apt.appointmentDate);
           const todayDate = new Date();
@@ -220,15 +258,15 @@ export class Dashboard implements OnInit {
         }).length;
 
         // Status breakdown
-        this.scheduledCount = appointments.filter(apt => apt && apt.status === 'Scheduled').length;
-        this.completedCount = appointments.filter(apt => apt && apt.status === 'Completed').length;
-        this.cancelledCount = appointments.filter(apt => apt && apt.status === 'Cancelled').length;
-        this.noShowCount = appointments.filter(apt => apt && apt.status === 'No Show').length;
+        this.scheduledCount = appointments.filter((apt: Appointment) => apt && apt.status === 'Scheduled').length;
+        this.completedCount = appointments.filter((apt: Appointment) => apt && apt.status === 'Completed').length;
+        this.cancelledCount = appointments.filter((apt: Appointment) => apt && apt.status === 'Cancelled').length;
+        this.noShowCount = appointments.filter((apt: Appointment) => apt && apt.status === 'No Show').length;
 
         // Completed this month
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.completedThisMonth = appointments.filter(apt => {
+        this.completedThisMonth = appointments.filter((apt: Appointment) => {
           if (!apt || !apt.appointmentDate) return false;
           const aptDate = new Date(apt.appointmentDate);
           return apt.status === 'Completed' && aptDate >= firstDayOfMonth;
@@ -236,8 +274,8 @@ export class Dashboard implements OnInit {
 
         // Get recent appointments (last 5, sorted by date) - filter out invalid appointments
         this.recentAppointments = appointments
-          .filter(apt => apt && apt.appointmentDate && apt.startTime)
-          .sort((a, b) => {
+          .filter((apt: Appointment) => apt && apt.appointmentDate && apt.startTime)
+          .sort((a: Appointment, b: Appointment) => {
             const dateA = new Date(`${a.appointmentDate}T${this.normalizeTime(a.startTime || '')}`);
             const dateB = new Date(`${b.appointmentDate}T${this.normalizeTime(b.startTime || '')}`);
             return dateB.getTime() - dateA.getTime();
@@ -247,58 +285,68 @@ export class Dashboard implements OnInit {
         // Doctor-specific data
         if (this.isDoctor) {
           const currentUser = this.authService.getCurrentUser();
-          // Find doctor entity that matches current user by email
-          const myDoctor = doctors.find(doc => {
+          // Find doctor entity that matches current user by email (only if doctors were loaded)
+          const myDoctor = doctors.length > 0 ? doctors.find((doc: Doctor) => {
             return doc && doc.email && currentUser?.email && doc.email.toLowerCase() === currentUser.email.toLowerCase();
-          });
+          }) : null;
           
           if (myDoctor) {
             const myDoctorId = myDoctor.id;
             // Filter appointments for current doctor
-            const myAppointments = appointments.filter(apt => apt && apt.doctorId === myDoctorId);
-            this.myAppointmentsToday = myAppointments.filter(apt => apt.appointmentDate === todayStr && apt.status === 'Scheduled');
-            this.myUpcomingAppointments = myAppointments.filter(apt => {
+            const myAppointments = appointments.filter((apt: Appointment) => apt && apt.doctorId === myDoctorId);
+            this.myAppointmentsToday = myAppointments.filter((apt: Appointment) => apt.appointmentDate === todayStr && apt.status === 'Scheduled');
+            this.myUpcomingAppointments = myAppointments.filter((apt: Appointment) => {
               if (!apt || !apt.appointmentDate) return false;
               const aptDate = new Date(apt.appointmentDate);
               const todayDate = new Date();
               return aptDate >= todayDate && apt.status === 'Scheduled';
             }).slice(0, 10);
             // Count unique patients
-            const uniquePatientIds = new Set(myAppointments.map(apt => apt.patientId));
+            const uniquePatientIds = new Set(myAppointments.map((apt: Appointment) => apt.patientId));
             this.myPatientsCount = uniquePatientIds.size;
           }
         }
 
-        // Bed & Room metrics
-        this.totalRooms = rooms.length;
-        this.occupiedRooms = rooms.filter((room: any) => room.status === 'Occupied' || room.status === 'Maintenance').length;
-        this.totalBeds = rooms.reduce((sum: number, room: any) => sum + (room.totalBeds || 0), 0);
-        this.occupiedBeds = rooms.reduce((sum: number, room: any) => sum + (room.occupiedBeds || 0), 0);
-        this.availableBeds = rooms.reduce((sum: number, room: any) => sum + (room.availableBeds || 0), 0);
-        this.bedOccupancyRate = this.totalBeds > 0 
-          ? Math.round((this.occupiedBeds / this.totalBeds) * 100) 
-          : 0;
+        // Bed & Room metrics (only if rooms were loaded)
+        if (rooms.length > 0) {
+          this.totalRooms = rooms.length;
+          this.occupiedRooms = rooms.filter((room: any) => room.status === 'Occupied' || room.status === 'Maintenance').length;
+          this.totalBeds = rooms.reduce((sum: number, room: any) => sum + (room.totalBeds || 0), 0);
+          this.occupiedBeds = rooms.reduce((sum: number, room: any) => sum + (room.occupiedBeds || 0), 0);
+          this.availableBeds = rooms.reduce((sum: number, room: any) => sum + (room.availableBeds || 0), 0);
+          this.bedOccupancyRate = this.totalBeds > 0 
+            ? Math.round((this.occupiedBeds / this.totalBeds) * 100) 
+            : 0;
+        }
 
-        // Financial metrics
-        const todayDateStr = new Date().toISOString().split('T')[0];
-        const todayInvoices = invoices.filter((inv: any) => inv.invoiceDate === todayDateStr);
-        this.todayRevenue = todayInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
-        
-        const currentDate = new Date();
-        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const monthlyInvoices = invoices.filter((inv: any) => {
-          const invDate = new Date(inv.invoiceDate);
-          return invDate >= monthStart;
-        });
-        this.monthlyRevenue = monthlyInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
-        
-        this.outstandingBills = invoices.reduce((sum: number, inv: any) => sum + (inv.balanceAmount || 0), 0);
-        this.pendingInvoices = invoices.filter((inv: any) => inv.status === 'Pending' || inv.status === 'Unpaid').length;
+        // Financial metrics (only for Admin and Receptionist)
+        if ((this.isAdmin || this.isReceptionist) && invoices.length > 0) {
+          const todayDateStr = new Date().toISOString().split('T')[0];
+          const todayInvoices = invoices.filter((inv: any) => inv.invoiceDate === todayDateStr);
+          this.todayRevenue = todayInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
+          
+          const currentDate = new Date();
+          const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+          const monthlyInvoices = invoices.filter((inv: any) => {
+            const invDate = new Date(inv.invoiceDate);
+            return invDate >= monthStart;
+          });
+          this.monthlyRevenue = monthlyInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
+          
+          this.outstandingBills = invoices.reduce((sum: number, inv: any) => sum + (inv.balanceAmount || 0), 0);
+          this.pendingInvoices = invoices.filter((inv: any) => inv.status === 'Pending' || inv.status === 'Unpaid').length;
+        }
 
-        // Clinical metrics
-        this.totalMedicalRecords = medicalRecords.length;
-        this.totalDiagnoses = diagnoses.length;
-        this.totalPrescriptions = prescriptions.length;
+        // Clinical metrics (only for Admin and Doctor)
+        if ((this.isAdmin || this.isDoctor) && medicalRecords.length > 0) {
+          this.totalMedicalRecords = medicalRecords.length;
+        }
+        if ((this.isAdmin || this.isDoctor) && diagnoses.length > 0) {
+          this.totalDiagnoses = diagnoses.length;
+        }
+        if ((this.isAdmin || this.isDoctor) && prescriptions.length > 0) {
+          this.totalPrescriptions = prescriptions.length;
+        }
 
         // Generate critical alerts
         this.generateAlerts();

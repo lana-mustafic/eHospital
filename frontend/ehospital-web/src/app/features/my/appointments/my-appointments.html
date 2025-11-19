@@ -27,7 +27,7 @@
 
   <!-- Appointments Grid -->
   <div *ngIf="!isLoading" class="appointments-grid">
-    <div *ngFor="let a of appointments" class="appointment-card" [class]="'status-' + (a.status?.toLowerCase() || 'scheduled')">
+    <div *ngFor="let a of appointments" class="appointment-card" [class]="'status-' + ((a.status || 'scheduled').toLowerCase())">
       <div class="appointment-header">
         <div class="appointment-date-time">
           <div class="date-badge">
@@ -40,7 +40,7 @@
             <span>{{ formatTime(a.startTime) }} - {{ formatTime(a.endTime) }}</span>
           </div>
         </div>
-        <div class="status-badge" [class]="'status-' + (a.status?.toLowerCase() || 'scheduled')">
+        <div class="status-badge" [class]="'status-' + ((a.status || 'scheduled').toLowerCase())">
           {{ a.status }}
         </div>
       </div>
