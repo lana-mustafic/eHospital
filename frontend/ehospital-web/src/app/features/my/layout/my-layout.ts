@@ -34,5 +34,13 @@ export class MyLayoutComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
   }
+
+  getPortalLabel(): string {
+    if (!this.currentUser) return 'Portal';
+    const role = this.currentUser.role?.toLowerCase();
+    if (role === 'doctor') return 'Doctor Portal';
+    if (role === 'patient') return 'Patient Portal';
+    return 'Portal';
+  }
 }
 

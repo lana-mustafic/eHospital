@@ -1,16 +1,114 @@
 <div class="my-home">
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading your dashboard...</p>
+  </div>
 
-  <section *ngIf="me" class="card">
-    <h3>Welcome{{ isDoctor ? ', Dr.' : '' }} {{ me.firstName }} {{ me.lastName }}</h3>
-    <p>Email: {{ me.email }}</p>
-    <p *ngIf="patient">Phone: {{ patient.phoneNumber }}</p>
-    <p *ngIf="doctor"><strong>Specialization:</strong> {{ doctor.specialization }}</p>
-    <p *ngIf="doctor"><strong>Department:</strong> {{ doctor.departmentName }}</p>
-    <p *ngIf="doctor && doctor.licenseNumber"><strong>License Number:</strong> {{ doctor.licenseNumber }}</p>
-    <p *ngIf="doctor && doctor.yearsOfExperience"><strong>Years of Experience:</strong> {{ doctor.yearsOfExperience }}</p>
+  <!-- Welcome Hero Section -->
+  <section *ngIf="me && !isLoading" class="welcome-hero">
+    <div class="welcome-content">
+      <div class="welcome-greeting">
+        <h1 class="greeting-text">
+          <span class="greeting-time">{{ getGreeting() }}</span>
+          <span class="greeting-name">{{ isDoctor ? 'Dr.' : '' }} {{ me.firstName }} {{ me.lastName }}</span>
+        </h1>
+        <p class="greeting-subtitle">{{ isDoctor ? 'Here\'s your schedule for today' : 'Welcome to your patient portal' }}</p>
+      </div>
+      <div class="welcome-avatar">
+        <div class="avatar-circle">
+          <span class="material-icons">{{ isDoctor ? 'medical_services' : 'person' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="welcome-info" *ngIf="isDoctor && doctor">
+      <div class="info-chip">
+        <span class="material-icons">medical_services</span>
+        <span>{{ doctor.specialization }}</span>
+      </div>
+      <div class="info-chip">
+        <span class="material-icons">business</span>
+        <span>{{ doctor.departmentName }}</span>
+      </div>
+      <div class="info-chip" *ngIf="doctor.yearsOfExperience">
+        <span class="material-icons">work_history</span>
+        <span>{{ doctor.yearsOfExperience }} years experience</span>
+      </div>
+    </div>
   </section>
 
+  <!-- Real-time Stats Dashboard (Doctor Only) -->
+  <div *ngIf="isDoctor && isRealTimeActive" class="real-time-stats">
+    <section class="card stats-card">
+      <div class="stats-header">
+        <h3>Today's Overview</h3>
+        <div class="real-time-indicator">
+          <span class="pulse-dot"></span>
+          <span class="update-time">Updated {{ getLastUpdateTime() }}</span>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ todayAppointmentsCount }}</div>
+          <div class="stat-label">Total Today</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value completed">{{ completedTodayCount }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value pending">{{ pendingAppointmentsCount }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value upcoming">{{ upcomingAppointmentsCount }}</div>
+          <div class="stat-label">Upcoming (7 days)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next Appointment Card -->
+    <section *ngIf="nextAppointment" class="card next-appointment-card">
+      <h4>Next Appointment</h4>
+      <div class="next-appointment-content">
+        <div class="appointment-info">
+          <div class="patient-name">
+            <strong>{{ nextAppointment.patientName || 'Patient' }}</strong>
+          </div>
+          <div class="appointment-time">{{ getNextAppointmentTime() }}</div>
+          <div class="appointment-reason" *ngIf="nextAppointment.reason">
+            Reason: {{ nextAppointment.reason }}
+          </div>
+        </div>
+        <div class="appointment-status">
+          <span class="status-badge" [class]="'status-' + (nextAppointment.status?.toLowerCase() || 'scheduled')">
+            {{ nextAppointment.status }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today's Schedule -->
+    <section *ngIf="todayAppointments.length > 0" class="card today-schedule-card">
+      <h4>Today's Schedule ({{ todayAppointments.length }})</h4>
+      <div class="schedule-list">
+        <div *ngFor="let apt of todayAppointments" class="schedule-item">
+          <div class="schedule-time">{{ apt.startTime?.substring(0, 5) }} - {{ apt.endTime?.substring(0, 5) }}</div>
+          <div class="schedule-details">
+            <div class="schedule-patient">{{ apt.patientName || 'Patient' }}</div>
+            <div class="schedule-reason" *ngIf="apt.reason">{{ apt.reason }}</div>
+          </div>
+          <div class="schedule-status">
+            <span class="status-badge" [class]="'status-' + (apt.status?.toLowerCase() || 'scheduled')">
+              {{ apt.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Appointment Reminders -->
   <section class="card">
     <app-appointment-reminders [daysAhead]="7" [maxItems]="5" [showForCurrentUser]="true"></app-appointment-reminders>
   </section>

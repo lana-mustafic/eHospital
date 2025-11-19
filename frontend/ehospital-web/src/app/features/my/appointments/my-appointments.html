@@ -1,66 +1,145 @@
 <div class="my-appointments">
-  <div *ngIf="isLoading" class="loading">Loading...</div>
-  
-  <div *ngIf="isDoctor" class="date-filter">
-    <label>Filter by Date:</label>
-    <input type="date" [value]="selectedDate.toISOString().split('T')[0]" (change)="onDateFilterChange($any($event.target).value)" />
+  <!-- Header Section -->
+  <div class="appointments-header">
+    <div class="header-content">
+      <h2>My Appointments</h2>
+      <p class="subtitle">{{ isDoctor ? 'Manage your patient appointments' : 'View and manage your appointments' }}</p>
+    </div>
+    <div *ngIf="isDoctor" class="date-filter-card">
+      <label class="filter-label">
+        <span class="material-icons">calendar_today</span>
+        Filter by Date
+      </label>
+      <input 
+        type="date" 
+        class="date-input"
+        [value]="selectedDate.toISOString().split('T')[0]" 
+        (change)="onDateFilterChange($any($event.target).value)" 
+      />
+    </div>
   </div>
 
-  <table *ngIf="!isLoading" class="table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Time</th>
-        <th *ngIf="!isDoctor">Doctor</th>
-        <th *ngIf="isDoctor">Patient</th>
-        <th>Status</th>
-        <th>Reason</th>
-        <th *ngIf="!isDoctor">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let a of appointments">
-        <td>{{ a.appointmentDate }}</td>
-        <td>{{ a.startTime }} - {{ a.endTime }}</td>
-        <td *ngIf="!isDoctor">{{ a.doctorName }}</td>
-        <td *ngIf="isDoctor">{{ a.patientName }}</td>
-        <td>{{ a.status }}</td>
-        <td>{{ a.reason || '—' }}</td>
-        <td class="actions" *ngIf="!isDoctor && a.status === 'Scheduled'">
-          <button class="btn-secondary" (click)="cancel(a)">Cancel</button>
-          <button class="btn-primary" (click)="openReschedule(a)">Reschedule</button>
-        </td>
-      </tr>
-      <tr *ngIf="appointments.length === 0">
-        <td [attr.colspan]="isDoctor ? 5 : 6" class="empty">No appointments found</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading appointments...</p>
+  </div>
 
-  <div class="modal" *ngIf="showReschedule">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>Reschedule Appointment</h3>
-      <form (ngSubmit)="submitReschedule()">
-        <div class="row">
-          <label>Date</label>
-          <input type="date" [(ngModel)]="rescheduleDate" name="date" required (change)="onDateChange()" />
+  <!-- Appointments Grid -->
+  <div *ngIf="!isLoading" class="appointments-grid">
+    <div *ngFor="let a of appointments" class="appointment-card" [class]="'status-' + (a.status?.toLowerCase() || 'scheduled')">
+      <div class="appointment-header">
+        <div class="appointment-date-time">
+          <div class="date-badge">
+            <span class="date-day">{{ getDayOfWeek(a.appointmentDate) }}</span>
+            <span class="date-number">{{ getDayNumber(a.appointmentDate) }}</span>
+            <span class="date-month">{{ getMonth(a.appointmentDate) }}</span>
+          </div>
+          <div class="time-info">
+            <span class="material-icons">schedule</span>
+            <span>{{ formatTime(a.startTime) }} - {{ formatTime(a.endTime) }}</span>
+          </div>
         </div>
-        <div class="row slots">
-          <label>Available slots</label>
-          <div class="slot-list">
-            <button type="button"
-                    class="slot"
-                    *ngFor="let s of slots"
-                    [disabled]="!s.available"
-                    [class.selected]="s.start === rescheduleStart && s.end === rescheduleEnd"
-                    (click)="selectSlot(s)">
+        <div class="status-badge" [class]="'status-' + (a.status?.toLowerCase() || 'scheduled')">
+          {{ a.status }}
+        </div>
+      </div>
+      
+      <div class="appointment-body">
+        <div class="appointment-info">
+          <div class="info-row">
+            <span class="material-icons">person</span>
+            <div class="info-content">
+              <span class="info-label">{{ isDoctor ? 'Patient' : 'Doctor' }}</span>
+              <span class="info-value">{{ isDoctor ? a.patientName : a.doctorName }}</span>
+            </div>
+          </div>
+          <div class="info-row" *ngIf="a.reason">
+            <span class="material-icons">description</span>
+            <div class="info-content">
+              <span class="info-label">Reason</span>
+              <span class="info-value">{{ a.reason }}</span>
+            </div>
+          </div>
+          <div class="info-row" *ngIf="a.doctorSpecialization && !isDoctor">
+            <span class="material-icons">medical_services</span>
+            <div class="info-content">
+              <span class="info-label">Specialization</span>
+              <span class="info-value">{{ a.doctorSpecialization }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="appointment-footer" *ngIf="!isDoctor && a.status === 'Scheduled'">
+        <button class="btn-action btn-cancel" (click)="cancel(a)">
+          <span class="material-icons">close</span>
+          Cancel
+        </button>
+        <button class="btn-action btn-reschedule" (click)="openReschedule(a)">
+          <span class="material-icons">event_available</span>
+          Reschedule
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="appointments.length === 0" class="empty-state">
+      <span class="material-icons">event_busy</span>
+      <h3>No Appointments Found</h3>
+      <p>{{ isDoctor ? 'You have no appointments scheduled for this date.' : 'You don\'t have any appointments yet.' }}</p>
+    </div>
+  </div>
+
+  <!-- Reschedule Modal -->
+  <div class="modal-overlay" *ngIf="showReschedule" (click)="closeReschedule()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Reschedule Appointment</h3>
+        <button class="modal-close" (click)="closeReschedule()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form (ngSubmit)="submitReschedule()" class="reschedule-form">
+        <div class="form-group">
+          <label>
+            <span class="material-icons">calendar_today</span>
+            Select Date
+          </label>
+          <input 
+            type="date" 
+            [(ngModel)]="rescheduleDate" 
+            name="date" 
+            required 
+            (change)="onDateChange()"
+            class="form-input"
+          />
+        </div>
+        <div class="form-group">
+          <label>
+            <span class="material-icons">schedule</span>
+            Available Time Slots
+          </label>
+          <div class="slot-grid">
+            <button 
+              type="button"
+              class="time-slot"
+              *ngFor="let s of slots"
+              [disabled]="!s.available"
+              [class.selected]="s.start === rescheduleStart && s.end === rescheduleEnd"
+              [class.unavailable]="!s.available"
+              (click)="selectSlot(s)">
               {{ s.start.slice(0,5) }} - {{ s.end.slice(0,5) }}
             </button>
           </div>
+          <p *ngIf="slots.length === 0" class="no-slots">Loading available slots...</p>
         </div>
-        <div class="actions">
-          <button type="submit" class="btn-primary">Save</button>
+        <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="closeReschedule()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="!rescheduleStart || !rescheduleEnd">
+            <span class="material-icons">check</span>
+            Confirm Reschedule
+          </button>
         </div>
       </form>
     </div>

@@ -136,5 +136,24 @@ export class MyAppointmentsComponent implements OnInit {
         .subscribe({ next: (ok) => { this.slots[idx].available = ok; } });
     });
   }
+
+  getDayOfWeek(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  }
+
+  getDayNumber(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.getDate().toString();
+  }
+
+  getMonth(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short' });
+  }
+
+  formatTime(timeStr: string): string {
+    return timeStr.substring(0, 5);
+  }
 }
 
