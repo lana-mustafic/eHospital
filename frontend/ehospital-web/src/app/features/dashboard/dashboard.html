@@ -26,10 +26,17 @@
         <p class="dashboard-subtitle">{{ getCurrentDate() }}</p>
       </div>
       <div class="header-actions">
-        <button class="btn-primary" [routerLink]="['/appointments']">
-          <span class="material-icons">add</span>
-          New Appointment
-        </button>
+        @if (isNurse) {
+          <button class="btn-primary" [routerLink]="['/queues']">
+            <span class="material-icons">queue</span>
+            View Queue
+          </button>
+        } @else {
+          <button class="btn-primary" [routerLink]="['/appointments']">
+            <span class="material-icons">add</span>
+            New Appointment
+          </button>
+        }
       </div>
     </div>
 
@@ -192,8 +199,315 @@
       </div>
     }
 
+    <!-- Nurse Dashboard View -->
+    @if (isNurse) {
+      <div class="nurse-dashboard">
+        <!-- Quick Stats for Nurses -->
+        <div class="nurse-stats-grid">
+          <div class="nurse-stat-card primary">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">people</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ todayAppointments }}</h3>
+              <p class="stat-label">Today's Patients</p>
+              <div class="stat-sub">
+                <span>{{ pendingAppointments }} Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nurse-stat-card success">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">hotel</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ availableBeds }}</h3>
+              <p class="stat-label">Available Beds</p>
+              <div class="stat-sub">
+                <span>{{ occupiedBeds }}/{{ totalBeds }} Total</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nurse-stat-card warning">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">schedule</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ todaySchedule.length }}</h3>
+              <p class="stat-label">Scheduled Today</p>
+              <div class="stat-sub">
+                <span>{{ completedCount }} Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nurse-stat-card info">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">monitor_heart</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ totalRooms }}</h3>
+              <p class="stat-label">Rooms</p>
+              <div class="stat-sub">
+                <span>{{ occupiedRooms }} Occupied</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+          <h3 class="section-title">
+            <span class="material-icons">flash_on</span>
+            Quick Actions
+          </h3>
+          <div class="quick-actions-grid">
+            <a [routerLink]="['/patients']" class="quick-action-card">
+              <div class="action-icon patients">
+                <span class="material-icons">person_search</span>
+              </div>
+              <div class="action-content">
+                <h4>Search Patient</h4>
+                <p>Find patient records</p>
+              </div>
+            </a>
+            <a [routerLink]="['/vital-signs']" class="quick-action-card">
+              <div class="action-icon vital">
+                <span class="material-icons">monitor_heart</span>
+              </div>
+              <div class="action-content">
+                <h4>Record Vital Signs</h4>
+                <p>Enter patient vitals</p>
+              </div>
+            </a>
+            <a [routerLink]="['/appointments']" class="quick-action-card">
+              <div class="action-icon appointments">
+                <span class="material-icons">event</span>
+              </div>
+              <div class="action-content">
+                <h4>View Appointments</h4>
+                <p>Manage schedule</p>
+              </div>
+            </a>
+            <a [routerLink]="['/queues']" class="quick-action-card">
+              <div class="action-icon queues">
+                <span class="material-icons">queue</span>
+              </div>
+              <div class="action-content">
+                <h4>Patient Queue</h4>
+                <p>Manage waiting list</p>
+              </div>
+            </a>
+            <a [routerLink]="['/rooms']" class="quick-action-card">
+              <div class="action-icon rooms">
+                <span class="material-icons">hotel</span>
+              </div>
+              <div class="action-content">
+                <h4>Room Management</h4>
+                <p>View room status</p>
+              </div>
+            </a>
+            <a [routerLink]="['/emergency']" class="quick-action-card">
+              <div class="action-icon emergency">
+                <span class="material-icons">emergency</span>
+              </div>
+              <div class="action-content">
+                <h4>Emergency Dept</h4>
+                <p>Emergency cases</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="nurse-content-grid">
+          <!-- Today's Schedule -->
+          <div class="nurse-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">today</span>
+                <h2>Today's Schedule</h2>
+              </div>
+              <a [routerLink]="['/appointments']" class="view-all-link">
+                View All
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              @if (todaySchedule.length === 0) {
+                <div class="empty-state">
+                  <span class="material-icons">event_available</span>
+                  <p>No appointments scheduled for today</p>
+                </div>
+              } @else {
+                <div class="schedule-list-compact">
+                  @for (appointment of todaySchedule.slice(0, 8); track $index) {
+                    <div class="schedule-item-compact" [routerLink]="['/appointments', appointment.id]">
+                      <div class="schedule-time-compact">
+                        <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                        <span class="time-end">{{ formatTime(appointment.endTime) }}</span>
+                      </div>
+                      <div class="schedule-details-compact">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="doctor-name">{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                        @if (appointment.reason) {
+                          <span class="reason">{{ appointment.reason }}</span>
+                        }
+                      </div>
+                      <div class="schedule-status-compact">
+                        <span class="status-badge status-scheduled">{{ appointment.status }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Patient Queue -->
+          <div class="nurse-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">queue</span>
+                <h2>Patient Queue</h2>
+              </div>
+              <a [routerLink]="['/queues']" class="view-all-link">
+                Manage
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="queue-summary">
+                <div class="queue-item">
+                  <div class="queue-indicator waiting"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">Waiting</span>
+                    <span class="queue-count">{{ pendingAppointments }}</span>
+                  </div>
+                </div>
+                <div class="queue-item">
+                  <div class="queue-indicator in-progress"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">In Progress</span>
+                    <span class="queue-count">{{ getInProgressCount() }}</span>
+                  </div>
+                </div>
+                <div class="queue-item">
+                  <div class="queue-indicator completed"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">Completed</span>
+                    <span class="queue-count">{{ completedCount }}</span>
+                  </div>
+                </div>
+              </div>
+              <a [routerLink]="['/queues']" class="btn-view-queue">
+                <span class="material-icons">visibility</span>
+                View Full Queue
+              </a>
+            </div>
+          </div>
+
+          <!-- Recent Appointments -->
+          <div class="nurse-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">history</span>
+                <h2>Recent Appointments</h2>
+              </div>
+              <a [routerLink]="['/appointments']" class="view-all-link">
+                View All
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              @if (recentAppointments.length === 0) {
+                <div class="empty-state-small">
+                  <span class="material-icons">event_busy</span>
+                  <p>No recent appointments</p>
+                </div>
+              } @else {
+                <div class="recent-list">
+                  @for (appointment of recentAppointments.slice(0, 5); track $index) {
+                    <div class="recent-item" [routerLink]="['/appointments', appointment.id]">
+                      <div class="recent-time">
+                        <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                        <span class="date">{{ formatDate(appointment.appointmentDate) }}</span>
+                      </div>
+                      <div class="recent-details">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="doctor">{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                      </div>
+                      <div class="recent-status">
+                        <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                          {{ appointment.status }}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Room Status -->
+          <div class="nurse-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">hotel</span>
+                <h2>Room Status</h2>
+              </div>
+              <a [routerLink]="['/rooms']" class="view-all-link">
+                Manage
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="room-status-grid">
+                <div class="room-stat">
+                  <div class="room-stat-icon available">
+                    <span class="material-icons">bed</span>
+                  </div>
+                  <div class="room-stat-content">
+                    <h4>{{ availableBeds }}</h4>
+                    <p>Available Beds</p>
+                  </div>
+                </div>
+                <div class="room-stat">
+                  <div class="room-stat-icon occupied">
+                    <span class="material-icons">bed</span>
+                  </div>
+                  <div class="room-stat-content">
+                    <h4>{{ occupiedBeds }}</h4>
+                    <p>Occupied Beds</p>
+                  </div>
+                </div>
+                <div class="room-stat">
+                  <div class="room-stat-icon total">
+                    <span class="material-icons">hotel</span>
+                  </div>
+                  <div class="room-stat-content">
+                    <h4>{{ totalRooms }}</h4>
+                    <p>Total Rooms</p>
+                  </div>
+                </div>
+              </div>
+              <div class="occupancy-rate">
+                <div class="occupancy-label">Bed Occupancy Rate</div>
+                <div class="occupancy-bar">
+                  <div class="occupancy-fill" [style.width.%]="bedOccupancyRate"></div>
+                </div>
+                <div class="occupancy-value">{{ bedOccupancyRate }}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Admin/General Dashboard View -->
-    @if (!isDoctor) {
+    @if (!isDoctor && !isNurse) {
       <!-- Key Performance Indicators -->
       <div class="kpi-grid">
         <div class="kpi-card primary">

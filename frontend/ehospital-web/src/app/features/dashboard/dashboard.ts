@@ -524,4 +524,8 @@ export class Dashboard implements OnInit {
       day: 'numeric'
     });
   }
+
+  getInProgressCount(): number {
+    return this.todaySchedule.filter((apt: Appointment) => apt.status === 'Checked-In').length;
+  }
 }
