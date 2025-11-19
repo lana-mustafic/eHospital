@@ -1,0 +1,192 @@
+<div class="queues-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Operations</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Queue Management</span>
+      </div>
+      <h2>Queue Management</h2>
+      <p>Manage patient queues, track wait times, and monitor queue status</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="toggleAutoRefresh()" [class.active]="autoRefresh">
+        <span class="material-icons">{{ autoRefresh ? 'sync' : 'sync_disabled' }}</span>
+        {{ autoRefresh ? 'Auto Refresh ON' : 'Auto Refresh OFF' }}
+      </button>
+      <button class="btn-secondary" (click)="toggleViewMode()">
+        <span class="material-icons">{{ viewMode === 'management' ? 'tv' : 'list' }}</span>
+        {{ viewMode === 'management' ? 'Display Board' : 'Management View' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Doctor</label>
+      <select [(ngModel)]="selectedDoctorId" (change)="onDoctorChange()" class="filter-select">
+        <option [ngValue]="null">All Doctors</option>
+        @for (doctor of doctors; track doctor.id) {
+          <option [ngValue]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Date</label>
+      <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="filter-input" />
+    </div>
+    <button class="btn-primary" (click)="loadQueues()">
+      <span class="material-icons">refresh</span>
+      Refresh
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading queues...</p>
+    </div>
+  } @else {
+    <!-- Display Board View -->
+    @if (viewMode === 'display') {
+      <div class="display-board">
+        <div class="board-header">
+          <h3>Queue Display Board</h3>
+          <div class="current-time">{{ getCurrentTime() }}</div>
+        </div>
+        <div class="doctors-grid">
+          @for (doctor of doctors; track doctor.id) {
+            @if (!selectedDoctorId || selectedDoctorId === doctor.id) {
+              <div class="doctor-queue-card">
+                <div class="doctor-header">
+                  <h4>{{ doctor.firstName }} {{ doctor.lastName }}</h4>
+                  <span class="specialization">{{ doctor.specialization }}</span>
+                </div>
+                <div class="current-patient">
+                  @if (getCurrentPatient(doctor.id)) {
+                    <div class="current-display">
+                      <span class="label">Now Serving</span>
+                      <span class="queue-number">{{ getCurrentPatient(doctor.id)!.queueNumber }}</span>
+                      <span class="patient-name">{{ getCurrentPatient(doctor.id)!.patientName }}</span>
+                    </div>
+                  } @else {
+                    <div class="no-patient">No patient in consultation</div>
+                  }
+                </div>
+                <div class="next-patient">
+                  @if (getNextPatient(doctor.id)) {
+                    <div class="next-display">
+                      <span class="label">Next</span>
+                      <span class="queue-number">{{ getNextPatient(doctor.id)!.queueNumber }}</span>
+                      <span class="patient-name">{{ getNextPatient(doctor.id)!.patientName }}</span>
+                    </div>
+                  }
+                </div>
+                <div class="waiting-count">
+                  <span class="material-icons">people</span>
+                  <span>{{ getWaitingCount(doctor.id) }} waiting</span>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Management View -->
+    @if (viewMode === 'management') {
+      <div class="management-view">
+        @if (filteredQueues.length === 0) {
+          <div class="empty-state">
+            <span class="material-icons">queue</span>
+            <h3>No queues found</h3>
+            <p>No patients in queue for the selected date and doctor</p>
+          </div>
+        } @else {
+          <div class="queues-grid">
+            @for (doctor of doctors; track doctor.id) {
+              @if (!selectedDoctorId || selectedDoctorId === doctor.id) {
+                @if (getQueuesByDoctor(doctor.id).length > 0) {
+                  <div class="doctor-queue-section">
+                    <div class="section-header">
+                      <div class="doctor-info">
+                        <h3>{{ doctor.firstName }} {{ doctor.lastName }}</h3>
+                        <span class="specialization">{{ doctor.specialization }}</span>
+                      </div>
+                      <div class="section-stats">
+                        <span class="stat-item">
+                          <span class="material-icons">people</span>
+                          {{ getWaitingCount(doctor.id) }} Waiting
+                        </span>
+                        <button class="btn-call-next" (click)="callNextPatient(doctor.id)" 
+                                [disabled]="getWaitingCount(doctor.id) === 0">
+                          <span class="material-icons">call</span>
+                          Call Next
+                        </button>
+                      </div>
+                    </div>
+                    <div class="queue-list">
+                      @for (queue of getQueuesByDoctor(doctor.id); track queue.id) {
+                        <div class="queue-item" [ngClass]="getStatusClass(queue.status)">
+                          <div class="queue-number-badge">
+                            {{ queue.queueNumber }}
+                          </div>
+                          <div class="queue-info">
+                            <div class="patient-name">{{ queue.patientName }}</div>
+                            <div class="queue-details">
+                              <span class="appointment-time">{{ queue.appointmentTime }}</span>
+                              <span class="separator">•</span>
+                              <span class="reason">{{ queue.appointmentReason }}</span>
+                            </div>
+                            @if (queue.status === 'Waiting') {
+                              <div class="wait-time">
+                                Est. wait: {{ formatWaitTime(queue.estimatedWaitTimeMinutes) }}
+                              </div>
+                            }
+                            @if (queue.status === 'InProgress' && queue.actualWaitTimeMinutes > 0) {
+                              <div class="wait-time">
+                                Waited: {{ formatWaitTime(queue.actualWaitTimeMinutes) }}
+                              </div>
+                            }
+                          </div>
+                          <div class="queue-actions">
+                            @if (queue.status === 'Waiting') {
+                              <button class="btn-action" (click)="updateQueueStatus(queue, 'InProgress')" title="Start Consultation">
+                                <span class="material-icons">play_arrow</span>
+                              </button>
+                              <button class="btn-action" (click)="skipQueue(queue)" title="Skip">
+                                <span class="material-icons">skip_next</span>
+                              </button>
+                            }
+                            @if (queue.status === 'InProgress') {
+                              <button class="btn-action" (click)="updateQueueStatus(queue, 'Completed')" title="Complete">
+                                <span class="material-icons">check_circle</span>
+                              </button>
+                            }
+                            @if (queue.status === 'Skipped') {
+                              <button class="btn-action" (click)="updateQueueStatus(queue, 'Waiting')" title="Restore">
+                                <span class="material-icons">restore</span>
+                              </button>
+                            }
+                          </div>
+                          <div class="queue-status">
+                            <span class="status-badge" [ngClass]="getStatusClass(queue.status)">
+                              {{ queue.status }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+

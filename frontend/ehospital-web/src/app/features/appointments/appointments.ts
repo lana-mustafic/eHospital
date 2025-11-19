@@ -13,6 +13,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { DoctorScheduleService, DoctorSchedule } from '../doctor-schedules/services/doctor-schedule.service';
 import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
 import { ExportService } from '../../core/services/export.service';
+import { QueueService } from '../queues/services/queue.service';
+import { CreateQueueRequest } from '../queues/models/queue.model';
 
 @Component({
   selector: 'app-appointments',
@@ -55,7 +57,8 @@ export class AppointmentsComponent implements OnInit {
     private authService: AuthService,
     private toastService: ToastService,
     private doctorScheduleService: DoctorScheduleService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private queueService: QueueService
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -592,5 +595,33 @@ export class AppointmentsComponent implements OnInit {
     
     this.exportService.exportToPDF(data, 'appointments', headers, 'Appointments Report');
     this.toastService.success('Appointments exported to PDF successfully');
+  }
+
+  addToQueue(appointment: Appointment) {
+    if (appointment.status !== 'Scheduled') {
+      this.toastService.warning('Only scheduled appointments can be added to queue');
+      return;
+    }
+
+    const queueRequest: CreateQueueRequest = {
+      appointmentId: appointment.id,
+      doctorId: appointment.doctorId,
+      patientId: appointment.patientId,
+      queueDate: appointment.appointmentDate
+    };
+
+    this.queueService.createQueue(queueRequest).subscribe({
+      next: (queue) => {
+        this.toastService.success(`Added to queue - Queue #${queue.queueNumber}`);
+      },
+      error: (error) => {
+        console.error('Error adding to queue:', error);
+        if (error.error?.message) {
+          this.toastService.error(error.error.message);
+        } else {
+          this.toastService.error('Failed to add appointment to queue');
+        }
+      }
+    });
   }
 }

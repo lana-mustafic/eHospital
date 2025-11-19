@@ -352,6 +352,15 @@
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
+
+        &.btn-queue {
+          color: #667eea;
+
+          &:hover {
+            background-color: #eff6ff;
+            color: #4f46e5;
+          }
+        }
         margin-right: 0.5rem;
 
         &:hover {

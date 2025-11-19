@@ -53,6 +53,7 @@ namespace Infrastructure.Data
         public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
         public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
+        public DbSet<Queue> Queues { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

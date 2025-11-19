@@ -149,6 +149,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Doctor', 'Nurse'] },
         loadComponent: () => import('./features/pharmacy/pharmacy').then(m => m.PharmacyComponent)
       },
+      {
+        path: 'queues',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/queues/queues').then(m => m.QueuesComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
