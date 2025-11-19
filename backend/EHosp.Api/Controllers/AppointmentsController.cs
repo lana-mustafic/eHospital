@@ -3,7 +3,6 @@ using EHosp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using EHosp.Application.Interfaces;
 
 namespace EHosp.Api.Controllers
 {
