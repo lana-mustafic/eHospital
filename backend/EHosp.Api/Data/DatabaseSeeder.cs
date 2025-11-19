@@ -80,45 +80,62 @@ public static class DatabaseSeeder
 
         if (departments.Count == 0) return;
 
-        // Seed Doctors
-        if (!await context.Doctors.AnyAsync())
+        // Delete existing doctors and their users (except admin)
+        var existingDoctors = await context.Doctors.Include(d => d.User).ToListAsync();
+        foreach (var doctor in existingDoctors)
         {
-            var doctors = new[]
+            if (doctor.User.Email != DefaultAdminEmail)
             {
-                new { FirstName = "John", LastName = "Smith", Email = "john.smith@ehospital.com", Specialization = "Cardiology", Department = departments[0], License = "MD-001", Experience = 15 },
-                new { FirstName = "Sarah", LastName = "Johnson", Email = "sarah.johnson@ehospital.com", Specialization = "Neurology", Department = departments[1], License = "MD-002", Experience = 12 },
-                new { FirstName = "Michael", LastName = "Brown", Email = "michael.brown@ehospital.com", Specialization = "Pediatrics", Department = departments[2], License = "MD-003", Experience = 10 },
-                new { FirstName = "Emily", LastName = "Davis", Email = "emily.davis@ehospital.com", Specialization = "Emergency Medicine", Department = departments[0], License = "MD-004", Experience = 8 }
-            };
-
-            foreach (var doc in doctors)
-            {
-                var user = new User
-                {
-                    Email = doc.Email,
-                    PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultPassword, 13),
-                    FirstName = doc.FirstName,
-                    LastName = doc.LastName,
-                    PhoneNumber = $"555-{Random.Shared.Next(1000, 9999)}",
-                    RoleId = doctorRoleId,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-                context.Users.Add(user);
-                await context.SaveChangesAsync();
-
-                var doctor = new Doctor
-                {
-                    UserId = user.Id,
-                    DepartmentId = doc.Department.Id,
-                    Specialization = doc.Specialization,
-                    LicenseNumber = doc.License,
-                    YearsOfExperience = doc.Experience
-                };
-                context.Doctors.Add(doctor);
+                context.Doctors.Remove(doctor);
+                context.Users.Remove(doctor.User);
             }
-            await context.SaveChangesAsync();
         }
+        await context.SaveChangesAsync();
+
+        // Seed Doctors
+        var doctors = new[]
+        {
+            new { FirstName = "John", LastName = "Smith", Email = "john.smith@ehospital.com", Specialization = "Cardiology", Department = departments[0], License = "MD-001", Experience = 15 },
+            new { FirstName = "Sarah", LastName = "Johnson", Email = "sarah.johnson@ehospital.com", Specialization = "Neurology", Department = departments[1], License = "MD-002", Experience = 12 },
+            new { FirstName = "Michael", LastName = "Brown", Email = "michael.brown@ehospital.com", Specialization = "Pediatrics", Department = departments[2], License = "MD-003", Experience = 10 },
+            new { FirstName = "Emily", LastName = "Davis", Email = "emily.davis@ehospital.com", Specialization = "Emergency Medicine", Department = departments[0], License = "MD-004", Experience = 8 },
+            new { FirstName = "David", LastName = "Wilson", Email = "david.wilson@ehospital.com", Specialization = "Internal Medicine", Department = departments[0], License = "MD-005", Experience = 20 },
+            new { FirstName = "Jessica", LastName = "Martinez", Email = "jessica.martinez@ehospital.com", Specialization = "Orthopedics", Department = departments[1], License = "MD-006", Experience = 14 },
+            new { FirstName = "Robert", LastName = "Anderson", Email = "robert.anderson@ehospital.com", Specialization = "General Surgery", Department = departments[0], License = "MD-007", Experience = 18 },
+            new { FirstName = "Amanda", LastName = "Taylor", Email = "amanda.taylor@ehospital.com", Specialization = "Dermatology", Department = departments[2], License = "MD-008", Experience = 11 }
+        };
+
+        foreach (var doc in doctors)
+        {
+            // Check if user already exists
+            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == doc.Email);
+            if (existingUser != null) continue;
+
+            var user = new User
+            {
+                Email = doc.Email,
+                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultPassword, 13),
+                FirstName = doc.FirstName,
+                LastName = doc.LastName,
+                PhoneNumber = $"555-{Random.Shared.Next(1000, 9999)}",
+                RoleId = doctorRoleId,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            var doctor = new Doctor
+            {
+                UserId = user.Id,
+                DepartmentId = doc.Department.Id,
+                Specialization = doc.Specialization,
+                LicenseNumber = doc.License,
+                YearsOfExperience = doc.Experience
+            };
+            context.Doctors.Add(doctor);
+        }
+        await context.SaveChangesAsync();
 
         // Seed Nurses
         if (!await context.Users.AnyAsync(u => u.RoleId == nurseRoleId && u.Email != DefaultAdminEmail))
