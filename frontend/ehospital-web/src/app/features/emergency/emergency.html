@@ -1,0 +1,423 @@
+<div class="emergency-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Emergency Department</span>
+      </div>
+      <h2>Emergency Department</h2>
+      <p>Manage emergency visits, perform triage, and track patient care</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="toggleAutoRefresh()" [class.active]="autoRefresh">
+        <span class="material-icons">{{ autoRefresh ? 'sync' : 'sync_disabled' }}</span>
+        {{ autoRefresh ? 'Auto Refresh ON' : 'Auto Refresh OFF' }}
+      </button>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">add</span>
+        New ED Visit
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Dashboard -->
+  <div class="statistics-grid">
+    <div class="stat-card stat-active">
+      <div class="stat-icon">
+        <span class="material-icons">local_hospital</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ statistics.activeVisits }}</div>
+        <div class="stat-label">Active Visits</div>
+      </div>
+    </div>
+    <div class="stat-card stat-critical">
+      <div class="stat-icon">
+        <span class="material-icons">warning</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ statistics.critical }}</div>
+        <div class="stat-label">Critical</div>
+      </div>
+    </div>
+    <div class="stat-card stat-urgent">
+      <div class="stat-icon">
+        <span class="material-icons">priority_high</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ statistics.urgent }}</div>
+        <div class="stat-label">Urgent</div>
+      </div>
+    </div>
+    <div class="stat-card stat-nonurgent">
+      <div class="stat-icon">
+        <span class="material-icons">info</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ statistics.nonUrgent }}</div>
+        <div class="stat-label">Non-Urgent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label for="statusFilter">Status:</label>
+      <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">All Statuses</option>
+        <option value="Triage">Triage</option>
+        <option value="Treatment">Treatment</option>
+        <option value="Discharged">Discharged</option>
+        <option value="Admitted">Admitted</option>
+        <option value="Transferred">Transferred</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="priorityFilter">Priority:</label>
+      <select id="priorityFilter" [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+        <option value="">All Priorities</option>
+        <option value="Critical">Critical</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Non-Urgent">Non-Urgent</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="dateFilter">Date:</label>
+      <input type="date" id="dateFilter" [(ngModel)]="selectedDate" (change)="onFilterChange()">
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading ED visits...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="loadVisits()">Retry</button>
+    </div>
+  } @else {
+    <!-- Active Visits List -->
+    <div class="visits-list">
+      @if (filteredVisits.length === 0) {
+        <div class="empty-state">
+          <span class="material-icons">local_hospital</span>
+          <h3>No ED visits found</h3>
+          <p>Adjust your filters or create a new ED visit.</p>
+          <button class="btn-primary" (click)="openAddModal()">
+            <span class="material-icons">add</span>
+            Create First ED Visit
+          </button>
+        </div>
+      } @else {
+        <div class="visits-grid">
+          @for (visit of filteredVisits; track visit.id) {
+            <div class="visit-card" [ngClass]="getPriorityClass(visit.triagePriority)">
+              <div class="card-header">
+                <div class="patient-info">
+                  <span class="material-icons">person</span>
+                  <div>
+                    <strong>{{ visit.patientName }}</strong>
+                    <div class="patient-details">{{ visit.patientAge }} • {{ visit.patientGender }} • {{ visit.patientBloodType }}</div>
+                  </div>
+                </div>
+                <div class="priority-badge" [ngClass]="getPriorityClass(visit.triagePriority)">
+                  {{ visit.triagePriority }}
+                </div>
+              </div>
+              
+              <div class="card-body">
+                <div class="info-row">
+                  <span class="material-icons">schedule</span>
+                  <span>Arrived: {{ formatTime(visit.arrivalTime) }}</span>
+                  @if (visit.waitTimeToTriage) {
+                    <span class="wait-time">Wait: {{ formatDuration(visit.waitTimeToTriage) }}</span>
+                  }
+                </div>
+                
+                <div class="info-row">
+                  <span class="material-icons">description</span>
+                  <span><strong>Chief Complaint:</strong> {{ visit.chiefComplaint }}</span>
+                </div>
+                
+                @if (visit.bloodPressureSystolic || visit.heartRate || visit.temperature) {
+                  <div class="vitals-section">
+                    <strong>Vital Signs:</strong>
+                    <div class="vitals-grid">
+                      @if (visit.bloodPressureSystolic) {
+                        <span>BP: {{ visit.bloodPressureSystolic }}/{{ visit.bloodPressureDiastolic }}</span>
+                      }
+                      @if (visit.heartRate) {
+                        <span>HR: {{ visit.heartRate }} bpm</span>
+                      }
+                      @if (visit.temperature) {
+                        <span>Temp: {{ visit.temperature }}°C</span>
+                      }
+                      @if (visit.oxygenSaturation) {
+                        <span>SpO2: {{ visit.oxygenSaturation }}%</span>
+                      }
+                      @if (visit.painScale !== undefined) {
+                        <span>Pain: {{ visit.painScale }}/10</span>
+                      }
+                    </div>
+                  </div>
+                }
+                
+                <div class="status-badge" [ngClass]="getStatusClass(visit.status)">
+                  {{ visit.status }}
+                </div>
+                
+                @if (visit.assignedDoctorName) {
+                  <div class="info-row">
+                    <span class="material-icons">medical_services</span>
+                    <span>Dr. {{ visit.assignedDoctorName }}</span>
+                  </div>
+                }
+              </div>
+              
+              <div class="card-actions">
+                @if (canPerformTriage(visit)) {
+                  <button class="btn-action" (click)="openTriageModal(visit)" title="Perform Triage">
+                    <span class="material-icons">assignment</span>
+                    Triage
+                  </button>
+                }
+                @if (canStartTreatment(visit)) {
+                  <button class="btn-action" (click)="openTreatmentModal(visit)" title="Update Treatment">
+                    <span class="material-icons">healing</span>
+                    Treatment
+                  </button>
+                }
+                @if (canDischarge(visit)) {
+                  <button class="btn-action" (click)="openDischargeModal(visit)" title="Discharge Patient">
+                    <span class="material-icons">exit_to_app</span>
+                    Discharge
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Add ED Visit Modal -->
+  @if (showAddModal) {
+    <div class="modal-overlay" (click)="closeAddModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>New ED Visit</h3>
+          <button class="btn-close" (click)="closeAddModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="patientSelect">Patient <span class="required">*</span></label>
+            <select id="patientSelect" [(ngModel)]="newVisit.patientId">
+              <option [ngValue]="0" disabled>Select a patient</option>
+              @for (patient of patients; track patient.id) {
+                <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="chiefComplaint">Chief Complaint <span class="required">*</span></label>
+            <textarea id="chiefComplaint" [(ngModel)]="newVisit.chiefComplaint" rows="3" placeholder="Enter chief complaint..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="triagePriority">Initial Priority</label>
+            <select id="triagePriority" [(ngModel)]="newVisit.triagePriority">
+              <option value="Non-Urgent">Non-Urgent</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="createVisit()">Create Visit</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Triage Modal -->
+  @if (showTriageModal && selectedVisit) {
+    <div class="modal-overlay" (click)="closeTriageModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Perform Triage - {{ selectedVisit.patientName }}</h3>
+          <button class="btn-close" (click)="closeTriageModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="triagePriority">Triage Priority <span class="required">*</span></label>
+              <select id="triagePriority" [(ngModel)]="triageRequest.triagePriority">
+                <option value="Critical">Critical</option>
+                <option value="Urgent">Urgent</option>
+                <option value="Non-Urgent">Non-Urgent</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="painScale">Pain Scale (0-10)</label>
+              <input type="number" id="painScale" [(ngModel)]="triageRequest.painScale" min="0" max="10">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="chiefComplaintTriage">Chief Complaint <span class="required">*</span></label>
+            <textarea id="chiefComplaintTriage" [(ngModel)]="triageRequest.chiefComplaint" rows="2"></textarea>
+          </div>
+          <div class="vitals-section">
+            <h4>Vital Signs</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bpSystolic">BP Systolic (mmHg)</label>
+                <input type="number" id="bpSystolic" [(ngModel)]="triageRequest.bloodPressureSystolic">
+              </div>
+              <div class="form-group">
+                <label for="bpDiastolic">BP Diastolic (mmHg)</label>
+                <input type="number" id="bpDiastolic" [(ngModel)]="triageRequest.bloodPressureDiastolic">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="heartRate">Heart Rate (bpm)</label>
+                <input type="number" id="heartRate" [(ngModel)]="triageRequest.heartRate">
+              </div>
+              <div class="form-group">
+                <label for="temperature">Temperature (°C)</label>
+                <input type="number" id="temperature" step="0.1" [(ngModel)]="triageRequest.temperature">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="respiratoryRate">Respiratory Rate (bpm)</label>
+                <input type="number" id="respiratoryRate" [(ngModel)]="triageRequest.respiratoryRate">
+              </div>
+              <div class="form-group">
+                <label for="oxygenSaturation">Oxygen Saturation (%)</label>
+                <input type="number" id="oxygenSaturation" [(ngModel)]="triageRequest.oxygenSaturation" max="100">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="triageNotes">Triage Notes</label>
+            <textarea id="triageNotes" [(ngModel)]="triageRequest.triageNotes" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="assignedDoctor">Assign Doctor</label>
+            <select id="assignedDoctor" [(ngModel)]="triageRequest.assignedDoctorId">
+              <option [ngValue]="undefined">No assignment</option>
+              @for (doctor of doctors; track doctor.id) {
+                <option [ngValue]="doctor.id">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeTriageModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="performTriage()">Complete Triage</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Treatment Modal -->
+  @if (showTreatmentModal && selectedVisit) {
+    <div class="modal-overlay" (click)="closeTreatmentModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Treatment - {{ selectedVisit.patientName }}</h3>
+          <button class="btn-close" (click)="closeTreatmentModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="diagnosis">Diagnosis</label>
+            <input type="text" id="diagnosis" [(ngModel)]="updateRequest.diagnosis">
+          </div>
+          <div class="form-group">
+            <label for="treatmentNotes">Treatment Notes</label>
+            <textarea id="treatmentNotes" [(ngModel)]="updateRequest.treatmentNotes" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="medicationsGiven">Medications Given</label>
+            <textarea id="medicationsGiven" [(ngModel)]="updateRequest.medicationsGiven" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="proceduresPerformed">Procedures Performed</label>
+            <textarea id="proceduresPerformed" [(ngModel)]="updateRequest.proceduresPerformed" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="assignedDoctorTreatment">Assigned Doctor</label>
+            <select id="assignedDoctorTreatment" [(ngModel)]="updateRequest.assignedDoctorId">
+              <option [ngValue]="undefined">No assignment</option>
+              @for (doctor of doctors; track doctor.id) {
+                <option [ngValue]="doctor.id">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</option>
+              }
+            </select>
+          </div>
+          @if (!selectedVisit.treatmentStartTime) {
+            <div class="form-group">
+              <button class="btn-action" (click)="startTreatment(selectedVisit, updateRequest.assignedDoctorId || 0)">
+                <span class="material-icons">play_arrow</span>
+                Start Treatment
+              </button>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeTreatmentModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="updateTreatment()">Update Treatment</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Discharge Modal -->
+  @if (showDischargeModal && selectedVisit) {
+    <div class="modal-overlay" (click)="closeDischargeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Discharge Patient - {{ selectedVisit.patientName }}</h3>
+          <button class="btn-close" (click)="closeDischargeModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="disposition">Disposition <span class="required">*</span></label>
+            <select id="disposition" [(ngModel)]="dischargeRequest.disposition">
+              <option value="Discharge">Discharge</option>
+              <option value="Admit">Admit to Hospital</option>
+              <option value="Transfer">Transfer</option>
+              <option value="Observation">Observation</option>
+              <option value="AMA">Against Medical Advice (AMA)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="dischargeNotes">Discharge Notes</label>
+            <textarea id="dischargeNotes" [(ngModel)]="dischargeRequest.notes" rows="4"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDischargeModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="dischargePatient()">Discharge Patient</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

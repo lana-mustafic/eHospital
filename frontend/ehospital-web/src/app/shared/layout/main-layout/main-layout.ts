@@ -55,6 +55,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       expanded: true,
       items: [
         { path: '/queues', icon: 'queue', label: 'Queue Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        { path: '/emergency', icon: 'emergency', label: 'Emergency Department', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
         { path: '/rooms', icon: 'hotel', label: 'Room Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
         { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Doctor', 'Nurse'] },
         { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin', 'Doctor'] },

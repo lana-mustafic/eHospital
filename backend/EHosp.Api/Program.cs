@@ -79,8 +79,9 @@ builder.Services.AddScoped<IMedicationRepository, MedicationRepository>();
 builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
 builder.Services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>();
 builder.Services.AddScoped<IDiagnosisRepository, DiagnosisRepository>();
-builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-builder.Services.AddScoped<IQueueRepository, QueueRepository>();
+        builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        builder.Services.AddScoped<IQueueRepository, QueueRepository>();
+        builder.Services.AddScoped<IEDVisitRepository, EDVisitRepository>();
 
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -93,8 +94,9 @@ builder.Services.AddScoped<IMedicationService, MedicationService>();
 builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
 builder.Services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
 builder.Services.AddScoped<IDiagnosisService, DiagnosisService>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-builder.Services.AddScoped<IQueueService, QueueService>();
+        builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+        builder.Services.AddScoped<IQueueService, QueueService>();
+        builder.Services.AddScoped<IEDVisitService, EDVisitService>();
         builder.Services.AddScoped<IVitalSignsRepository, VitalSignsRepository>();
         builder.Services.AddScoped<IVitalSignsService, VitalSignsService>();
         builder.Services.AddScoped<ILabTestRepository, LabTestRepository>();
