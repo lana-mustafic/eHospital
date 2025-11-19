@@ -214,7 +214,7 @@
           </div>
         } @else {
           <div class="schedule-list">
-            @for (appointment of todaySchedule; track appointment.id) {
+            @for (appointment of todaySchedule; track $index) {
               <div class="schedule-item">
                 <div class="schedule-time">
                   <span class="time">{{ formatTime(appointment.startTime) }}</span>
@@ -256,7 +256,7 @@
           </div>
         } @else {
           <div class="appointments-list">
-            @for (appointment of recentAppointments; track appointment.id) {
+            @for (appointment of recentAppointments; track $index) {
               <div class="appointment-item">
                 <div class="appointment-date">
                   <div class="date">{{ formatDateTime(appointment.appointmentDate, appointment.startTime) }}</div>

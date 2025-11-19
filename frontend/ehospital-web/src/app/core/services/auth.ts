@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, catchError, throwError, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, switchMap, timeout } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 export interface LoginRequest {
@@ -120,6 +120,8 @@ export class AuthService {
 
   fetchCurrentUser(): Observable<User> {
     return this.http.get<any>(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.me}`).pipe(
+      // Add 5 second timeout to prevent hanging
+      timeout(5000),
       // Normalize API UserDto -> frontend User
       tap((dto) => {
         const user: User = {
@@ -135,6 +137,15 @@ export class AuthService {
       switchMap(() => {
         const u = this.getCurrentUser();
         return u ? new Observable<User>(obs => { obs.next(u); obs.complete(); }) : throwError(() => new Error('Failed to load user'));
+      }),
+      catchError((error) => {
+        console.error('Error fetching current user:', error);
+        // If we have stored user data, use it as fallback
+        const storedUser = this.getStoredUser();
+        if (storedUser) {
+          return new Observable<User>(obs => { obs.next(storedUser); obs.complete(); });
+        }
+        return throwError(() => error);
       })
     );
   }

@@ -15,8 +15,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = true;
   currentPageTitle = 'Dashboard';
   currentUser: User | null = null;
+  visibleMenuSections: any[] = [];
   private routerSubscription?: Subscription;
   private userSubscription?: Subscription;
+  private allMenuItemsCache: any[] = [];
 
   menuSections = [
     {
@@ -76,9 +78,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
   ];
 
-  // Flattened menu items for page title lookup
+  // Flattened menu items for page title lookup (cached)
   get allMenuItems() {
-    return this.menuSections.flatMap(section => section.items);
+    if (this.allMenuItemsCache.length === 0) {
+      this.allMenuItemsCache = this.menuSections.flatMap(section => section.items);
+    }
+    return this.allMenuItemsCache;
   }
 
   constructor(
@@ -89,8 +94,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Get current user
     this.currentUser = this.authService.getCurrentUser();
+    this.updateVisibleMenuSections();
+    
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.updateVisibleMenuSections();
     });
 
     // Update page title based on current route
@@ -125,18 +133,40 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  get visibleMenuSections() {
+  private updateVisibleMenuSections() {
     const userRole = this.currentUser?.role || '';
-    return this.menuSections.map(section => ({
-      ...section,
-      items: section.items.filter(item =>
+    // Preserve expanded state from existing visibleMenuSections
+    const expandedStates = new Map(
+      this.visibleMenuSections.map(s => [s.title, s.expanded])
+    );
+    
+    this.visibleMenuSections = this.menuSections.map(section => {
+      const filteredItems = section.items.filter(item =>
         !item.roles || item.roles.some(role => role.toLowerCase() === userRole.toLowerCase())
-      )
-    })).filter(section => section.items.length > 0);
+      );
+      
+      if (filteredItems.length === 0) {
+        return null;
+      }
+      
+      return {
+        ...section,
+        expanded: expandedStates.has(section.title) ? expandedStates.get(section.title) : section.expanded,
+        items: filteredItems
+      };
+    }).filter(section => section !== null) as any[];
   }
 
   toggleSection(section: any) {
     section.expanded = !section.expanded;
+  }
+
+  trackBySectionTitle(index: number, section: any): string {
+    return section.title;
+  }
+
+  trackByItemPath(index: number, item: any): string {
+    return item.path;
   }
 }
 

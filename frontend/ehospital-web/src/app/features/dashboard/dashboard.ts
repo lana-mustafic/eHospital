@@ -14,7 +14,7 @@ import { DiagnosisService } from '../diagnoses/services/diagnosis.service';
 import { PrescriptionService } from '../prescriptions/services/prescription.service';
 import { Appointment } from '../appointments/models/appointment.model';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
@@ -78,74 +78,107 @@ export class Dashboard implements OnInit {
     this.error = null;
 
     forkJoin({
-      patients: this.patientService.getAll().pipe(catchError(() => of([]))),
-      doctors: this.doctorService.getAll().pipe(catchError(() => of([]))),
-      appointments: this.appointmentService.getAll().pipe(catchError(() => of([]))),
-      departments: this.departmentService.getAll().pipe(catchError(() => of([]))),
-      medicalRecords: this.medicalRecordService.getAll().pipe(catchError(() => of([]))),
-      diagnoses: this.diagnosisService.getAll().pipe(catchError(() => of([]))),
-      prescriptions: this.prescriptionService.getAll().pipe(catchError(() => of([])))
+      patients: this.patientService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      doctors: this.doctorService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      appointments: this.appointmentService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      departments: this.departmentService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      medicalRecords: this.medicalRecordService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      diagnoses: this.diagnosisService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      ),
+      prescriptions: this.prescriptionService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      )
     }).subscribe({
       next: (data) => {
-        this.totalPatients = data.patients.length;
-        this.totalDoctors = data.doctors.length;
-        this.totalAppointments = data.appointments.length;
-        this.totalDepartments = data.departments.length;
-        this.totalMedicalRecords = data.medicalRecords.length;
-        this.totalDiagnoses = data.diagnoses.length;
-        this.totalPrescriptions = data.prescriptions.length;
+        // Ensure all data arrays are defined
+        const patients = Array.isArray(data.patients) ? data.patients : [];
+        const doctors = Array.isArray(data.doctors) ? data.doctors : [];
+        const appointments = Array.isArray(data.appointments) ? data.appointments : [];
+        const departments = Array.isArray(data.departments) ? data.departments : [];
+        const medicalRecords = Array.isArray(data.medicalRecords) ? data.medicalRecords : [];
+        const diagnoses = Array.isArray(data.diagnoses) ? data.diagnoses : [];
+        const prescriptions = Array.isArray(data.prescriptions) ? data.prescriptions : [];
+
+        this.totalPatients = patients.length;
+        this.totalDoctors = doctors.length;
+        this.totalAppointments = appointments.length;
+        this.totalDepartments = departments.length;
+        this.totalMedicalRecords = medicalRecords.length;
+        this.totalDiagnoses = diagnoses.length;
+        this.totalPrescriptions = prescriptions.length;
 
         // Calculate today's appointments
         const today = new Date().toISOString().split('T')[0];
-        const todayAppts = data.appointments.filter(
-          apt => apt.appointmentDate === today
+        const todayAppts = appointments.filter(
+          apt => apt && apt.appointmentDate === today
         );
         this.todayAppointments = todayAppts.length;
 
-        // Today's schedule (sorted by time)
+        // Today's schedule (sorted by time) - filter out invalid appointments
         this.todaySchedule = todayAppts
-          .filter(apt => apt.status === 'Scheduled')
+          .filter(apt => apt && apt.status === 'Scheduled' && apt.startTime)
           .sort((a, b) => {
-            const timeA = this.normalizeTime(a.startTime);
-            const timeB = this.normalizeTime(b.startTime);
+            const timeA = this.normalizeTime(a.startTime || '');
+            const timeB = this.normalizeTime(b.startTime || '');
             return timeA.localeCompare(timeB);
           });
 
         // Calculate upcoming appointments (next 7 days)
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
-        this.upcomingAppointments = data.appointments.filter(apt => {
+        this.upcomingAppointments = appointments.filter(apt => {
+          if (!apt || !apt.appointmentDate) return false;
           const aptDate = new Date(apt.appointmentDate);
           const todayDate = new Date();
           return aptDate >= todayDate && aptDate <= nextWeek && apt.status === 'Scheduled';
         }).length;
 
         // Status breakdown
-        this.scheduledCount = data.appointments.filter(apt => apt.status === 'Scheduled').length;
-        this.completedCount = data.appointments.filter(apt => apt.status === 'Completed').length;
-        this.cancelledCount = data.appointments.filter(apt => apt.status === 'Cancelled').length;
-        this.noShowCount = data.appointments.filter(apt => apt.status === 'No Show').length;
+        this.scheduledCount = appointments.filter(apt => apt && apt.status === 'Scheduled').length;
+        this.completedCount = appointments.filter(apt => apt && apt.status === 'Completed').length;
+        this.cancelledCount = appointments.filter(apt => apt && apt.status === 'Cancelled').length;
+        this.noShowCount = appointments.filter(apt => apt && apt.status === 'No Show').length;
 
         // Completed this month
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.completedThisMonth = data.appointments.filter(apt => {
+        this.completedThisMonth = appointments.filter(apt => {
+          if (!apt || !apt.appointmentDate) return false;
           const aptDate = new Date(apt.appointmentDate);
           return apt.status === 'Completed' && aptDate >= firstDayOfMonth;
         }).length;
 
-        // Get recent appointments (last 5, sorted by date)
-        this.recentAppointments = data.appointments
+        // Get recent appointments (last 5, sorted by date) - filter out invalid appointments
+        this.recentAppointments = appointments
+          .filter(apt => apt && apt.appointmentDate && apt.startTime)
           .sort((a, b) => {
-            const dateA = new Date(`${a.appointmentDate}T${this.normalizeTime(a.startTime)}`);
-            const dateB = new Date(`${b.appointmentDate}T${this.normalizeTime(b.startTime)}`);
+            const dateA = new Date(`${a.appointmentDate}T${this.normalizeTime(a.startTime || '')}`);
+            const dateB = new Date(`${b.appointmentDate}T${this.normalizeTime(b.startTime || '')}`);
             return dateB.getTime() - dateA.getTime();
           })
           .slice(0, 5);
 
         // Calculate chart data
-        this.calculateAppointmentTrends(data.appointments);
-        this.calculateMonthlyAppointments(data.appointments);
+        this.calculateAppointmentTrends(appointments);
+        this.calculateMonthlyAppointments(appointments);
 
         this.isLoading = false;
       },
@@ -209,13 +242,18 @@ export class Dashboard implements OnInit {
     
     const trendData: Array<{ label: string; value: number }> = [];
     
+    if (!Array.isArray(appointments)) {
+      this.appointmentTrendData = trendData;
+      return;
+    }
+    
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      const count = appointments.filter(apt => apt.appointmentDate === dateStr).length;
+      const count = appointments.filter(apt => apt && apt.appointmentDate === dateStr).length;
       
       trendData.push({
         label: dayName,
@@ -231,6 +269,11 @@ export class Dashboard implements OnInit {
     const today = new Date();
     const monthlyData: Array<{ label: string; value: number; color?: string }> = [];
     
+    if (!Array.isArray(appointments)) {
+      this.monthlyAppointmentData = monthlyData;
+      return;
+    }
+    
     for (let i = 5; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthName = date.toLocaleDateString('en-US', { month: 'short' });
@@ -240,6 +283,7 @@ export class Dashboard implements OnInit {
       const lastDay = new Date(year, date.getMonth() + 1, 0);
       
       const count = appointments.filter(apt => {
+        if (!apt || !apt.appointmentDate) return false;
         const aptDate = new Date(apt.appointmentDate);
         return aptDate >= firstDay && aptDate <= lastDay;
       }).length;

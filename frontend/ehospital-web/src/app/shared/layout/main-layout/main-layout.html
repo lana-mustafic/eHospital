@@ -9,7 +9,7 @@
     </div>
     
     <nav class="sidebar-nav">
-      <div *ngFor="let section of visibleMenuSections" class="menu-section">
+      <div *ngFor="let section of visibleMenuSections; trackBy: trackBySectionTitle" class="menu-section">
         <button 
           class="section-header" 
           (click)="toggleSection(section)"
@@ -23,7 +23,7 @@
         </button>
         <div class="section-items" *ngIf="section.expanded && isSidebarOpen">
           <a 
-            *ngFor="let item of section.items" 
+            *ngFor="let item of section.items; trackBy: trackByItemPath" 
             [routerLink]="item.path" 
             routerLinkActive="active"
             class="nav-item"

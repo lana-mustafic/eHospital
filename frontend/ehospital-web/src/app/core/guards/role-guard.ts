@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { catchError, map, of, timeout } from 'rxjs';
 
 export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
@@ -29,7 +29,9 @@ export const roleGuard: CanActivateFn = (route, state) => {
   }
 
   // Otherwise, fetch the user profile first, then evaluate
+  // Add timeout to prevent hanging if API is unreachable
   return authService.fetchCurrentUser().pipe(
+    timeout(6000), // 6 second timeout
     map(() => {
       if (authService.hasRole(...allowedRoles)) {
         return true;
@@ -37,13 +39,22 @@ export const roleGuard: CanActivateFn = (route, state) => {
       router.navigate(['/not-authorized']);
       return false;
     }),
-    catchError(() => {
+    catchError((error) => {
+      console.error('Role guard error:', error);
+      // If we have stored user, try to use it
+      const storedUser = authService.getCurrentUser();
+      if (storedUser && storedUser.role) {
+        if (authService.hasRole(...allowedRoles)) {
+          return of(true);
+        }
+        router.navigate(['/not-authorized']);
+        return of(false);
+      }
+      // Otherwise redirect to login
       router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       return of(false);
     })
   );
-
-  // Fallback (should not reach)
 };
 
 
