@@ -62,6 +62,11 @@ public static class DatabaseSeeder
         await SeedInvoices(context, logger);
         await SeedRoomsAndBeds(context, logger);
         await SeedPharmacyData(context, logger);
+        await SeedDiagnoses(context, logger);
+        await SeedLabTests(context, logger);
+        await SeedPrescriptions(context, logger);
+        await SeedDischargeSummaries(context, logger);
+        await SeedPatientHistory(context, logger);
 
         logger?.LogInformation("Database seeding completed successfully");
     }
@@ -667,6 +672,312 @@ public static class DatabaseSeeder
                     Dosage = med.Dosage,
                     Price = med.Price,
                     StockQuantity = med.Stock
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task SeedDiagnoses(ApplicationDbContext context, ILogger? logger)
+    {
+        if (!await context.Diagnoses.AnyAsync())
+        {
+            var diagnoses = new[]
+            {
+                new { Code = "I10", Name = "Essential (primary) hypertension", Description = "High blood pressure without known cause" },
+                new { Code = "E11.9", Name = "Type 2 diabetes mellitus without complications", Description = "Type 2 diabetes" },
+                new { Code = "J06.9", Name = "Acute upper respiratory infection, unspecified", Description = "Common cold or upper respiratory infection" },
+                new { Code = "M79.3", Name = "Panniculitis, unspecified", Description = "Inflammation of subcutaneous fat tissue" },
+                new { Code = "K21.9", Name = "Gastro-esophageal reflux disease without esophagitis", Description = "GERD" },
+                new { Code = "M54.5", Name = "Low back pain", Description = "Lower back pain" },
+                new { Code = "R50.9", Name = "Fever, unspecified", Description = "Fever of unknown origin" },
+                new { Code = "R06.02", Name = "Shortness of breath", Description = "Dyspnea" },
+                new { Code = "R51", Name = "Headache", Description = "Headache" },
+                new { Code = "R10.9", Name = "Unspecified abdominal pain", Description = "Abdominal pain" }
+            };
+
+            foreach (var diag in diagnoses)
+            {
+                context.Diagnoses.Add(new Diagnosis
+                {
+                    Code = diag.Code,
+                    Name = diag.Name,
+                    Description = diag.Description
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task SeedLabTests(ApplicationDbContext context, ILogger? logger)
+    {
+        var doctors = await context.Doctors.Include(d => d.User).ToListAsync();
+        var patients = await context.Patients.Include(p => p.User).ToListAsync();
+        var medicalRecords = await context.MedicalRecords.Take(5).ToListAsync();
+        var nurses = await context.Users.Where(u => u.RoleId == 4).ToListAsync(); // Nurse role
+
+        if (doctors.Count == 0 || patients.Count == 0) return;
+
+        if (!await context.LabTests.AnyAsync())
+        {
+            var testTypes = new[] { "Blood Test", "X-Ray", "CT Scan", "MRI", "Ultrasound", "ECG", "Urine Test" };
+            var testNames = new[]
+            {
+                "Complete Blood Count (CBC)", "Blood Glucose Test", "Lipid Panel", "Chest X-Ray",
+                "CT Scan - Head", "MRI - Spine", "Abdominal Ultrasound", "ECG", "Urinalysis",
+                "Liver Function Test", "Kidney Function Test", "Thyroid Function Test"
+            };
+            var statuses = new[] { "Ordered", "In Progress", "Completed", "Cancelled" };
+
+            for (int i = 0; i < 15; i++)
+            {
+                var doctor = doctors[Random.Shared.Next(doctors.Count)];
+                var patient = patients[Random.Shared.Next(patients.Count)];
+                var testType = testTypes[Random.Shared.Next(testTypes.Length)];
+                var testName = testNames[Random.Shared.Next(testNames.Length)];
+                var status = statuses[Random.Shared.Next(statuses.Length)];
+                var orderedDate = DateTime.Today.AddDays(-Random.Shared.Next(0, 30));
+                var record = medicalRecords.Count > 0 && Random.Shared.Next(2) == 0 ? 
+                    medicalRecords[Random.Shared.Next(medicalRecords.Count)] : null;
+
+                var labTest = new LabTest
+                {
+                    PatientId = patient.Id,
+                    DoctorId = doctor.Id,
+                    MedicalRecordId = record?.Id,
+                    TestName = testName,
+                    TestType = testType,
+                    TestCode = $"LAB-{DateTime.Today:yyyyMMdd}-{i + 1:D3}",
+                    Status = status,
+                    OrderedDate = orderedDate,
+                    Notes = status == "Completed" ? "Test completed successfully. Results reviewed by physician." : null,
+                    Results = status == "Completed" ? "Results within normal range. No abnormalities detected." : null,
+                    CreatedAt = orderedDate
+                };
+
+                if (status == "Completed")
+                {
+                    labTest.CompletedDate = orderedDate.AddDays(Random.Shared.Next(1, 3));
+                    labTest.PerformedByUserId = nurses.Count > 0 ? nurses[Random.Shared.Next(nurses.Count)].Id : null;
+                }
+
+                context.LabTests.Add(labTest);
+            }
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task SeedPrescriptions(ApplicationDbContext context, ILogger? logger)
+    {
+        var doctors = await context.Doctors.Include(d => d.User).ToListAsync();
+        var medicalRecords = await context.MedicalRecords.ToListAsync();
+        var medications = await context.Medications.ToListAsync();
+
+        if (doctors.Count == 0 || medicalRecords.Count == 0 || medications.Count == 0) return;
+
+        if (!await context.Prescriptions.AnyAsync())
+        {
+            var dosages = new[] { "500mg", "250mg", "100mg", "50mg", "10mg", "5mg" };
+            var frequencies = new[] { "Once daily", "Twice daily", "Three times daily", "Every 6 hours", "Every 8 hours", "As needed" };
+            var instructions = new[]
+            {
+                "Take with food", "Take on empty stomach", "Take with plenty of water",
+                "Do not crush or chew", "Take at bedtime", "Take in the morning"
+            };
+
+            foreach (var record in medicalRecords.Take(8))
+            {
+                var medication = medications[Random.Shared.Next(medications.Count)];
+                var doctor = doctors[Random.Shared.Next(doctors.Count)];
+                var duration = Random.Shared.Next(3, 14);
+
+                context.Prescriptions.Add(new Prescription
+                {
+                    MedicalRecordId = record.Id,
+                    MedicationId = medication.Id,
+                    DoctorId = doctor.Id,
+                    Dosage = dosages[Random.Shared.Next(dosages.Length)],
+                    Frequency = frequencies[Random.Shared.Next(frequencies.Length)],
+                    Duration = duration,
+                    Instructions = instructions[Random.Shared.Next(instructions.Length)],
+                    PrescribedDate = record.VisitDate
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task SeedDischargeSummaries(ApplicationDbContext context, ILogger? logger)
+    {
+        var doctors = await context.Doctors.Include(d => d.User).ToListAsync();
+        var patients = await context.Patients.Include(p => p.User).ToListAsync();
+        var medicalRecords = await context.MedicalRecords.Take(5).ToListAsync();
+        var appointments = await context.Appointments.Where(a => a.Status == "Completed").Take(5).ToListAsync();
+
+        if (doctors.Count == 0 || patients.Count == 0) return;
+
+        if (!await context.DischargeSummaries.AnyAsync())
+        {
+            var dischargeTypes = new[] { "Routine", "Against Medical Advice", "Transfer" };
+            var conditions = new[] { "Improved", "Stable", "Critical but Stable" };
+            var statuses = new[] { "Draft", "Finalized" };
+
+            for (int i = 0; i < 6; i++)
+            {
+                var patient = patients[Random.Shared.Next(patients.Count)];
+                var doctor = doctors[Random.Shared.Next(doctors.Count)];
+                var followUpDoctor = Random.Shared.Next(3) > 0 ? doctors[Random.Shared.Next(doctors.Count)] : null;
+                var dischargeDate = DateTime.Today.AddDays(-Random.Shared.Next(0, 60));
+                var admissionDate = dischargeDate.AddDays(-Random.Shared.Next(1, 7));
+                var record = medicalRecords.Count > 0 && Random.Shared.Next(2) == 0 ? 
+                    medicalRecords[Random.Shared.Next(medicalRecords.Count)] : null;
+                var appointment = appointments.Count > 0 && Random.Shared.Next(2) == 0 ? 
+                    appointments[Random.Shared.Next(appointments.Count)] : null;
+
+                var status = statuses[Random.Shared.Next(statuses.Length)];
+
+                context.DischargeSummaries.Add(new DischargeSummary
+                {
+                    DischargeNumber = $"DS-{dischargeDate:yyyyMMdd}-{i + 1:D3}",
+                    DischargeDate = dischargeDate,
+                    AdmissionDate = admissionDate,
+                    DischargeType = dischargeTypes[Random.Shared.Next(dischargeTypes.Length)],
+                    ConditionOnDischarge = conditions[Random.Shared.Next(conditions.Length)],
+                    ChiefComplaint = "Patient admitted for treatment",
+                    HistoryOfPresentIllness = "Patient presented with symptoms requiring hospitalization and treatment.",
+                    HospitalCourse = "Patient responded well to treatment. Vital signs stable throughout stay.",
+                    ProceduresPerformed = "Standard monitoring and treatment procedures performed.",
+                    DischargeDiagnosis = "Condition improved with treatment",
+                    PostDischargeInstructions = "Continue medications as prescribed. Follow up with primary care physician.",
+                    ActivityRestrictions = "Light activity only. Avoid strenuous exercise for 1 week.",
+                    DietInstructions = "Regular diet. Increase fluid intake.",
+                    MedicationInstructions = "Continue prescribed medications. Take as directed.",
+                    WarningSigns = "Seek immediate medical attention if symptoms worsen or new symptoms develop.",
+                    FollowUpDate = dischargeDate.AddDays(Random.Shared.Next(7, 14)),
+                    FollowUpDoctorId = followUpDoctor?.Id,
+                    FollowUpInstructions = "Schedule follow-up appointment within 2 weeks.",
+                    AdditionalNotes = "Patient education provided. Discharge instructions reviewed.",
+                    Status = status,
+                    PatientId = patient.Id,
+                    DischargingDoctorId = doctor.Id,
+                    MedicalRecordId = record?.Id,
+                    AppointmentId = appointment?.Id,
+                    CreatedAt = dischargeDate,
+                    FinalizedAt = status == "Finalized" ? dischargeDate : null
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task SeedPatientHistory(ApplicationDbContext context, ILogger? logger)
+    {
+        var patients = await context.Patients.Include(p => p.User).ToListAsync();
+        var doctors = await context.Doctors.Include(d => d.User).ToListAsync();
+        var nurses = await context.Users.Where(u => u.RoleId == 4).ToListAsync(); // Nurse role
+
+        if (patients.Count == 0) return;
+
+        // Seed Patient Allergies
+        if (!await context.PatientAllergies.AnyAsync())
+        {
+            var allergens = new[]
+            {
+                new { Name = "Penicillin", Type = "Medication", Severity = "Severe", Reaction = "Rash, difficulty breathing" },
+                new { Name = "Peanuts", Type = "Food", Severity = "Life-threatening", Reaction = "Anaphylaxis" },
+                new { Name = "Latex", Type = "Environmental", Severity = "Moderate", Reaction = "Skin irritation" },
+                new { Name = "Shellfish", Type = "Food", Severity = "Moderate", Reaction = "Hives, nausea" },
+                new { Name = "Aspirin", Type = "Medication", Severity = "Mild", Reaction = "Stomach upset" },
+                new { Name = "Dust Mites", Type = "Environmental", Severity = "Mild", Reaction = "Sneezing, runny nose" }
+            };
+
+            foreach (var patient in patients.Take(4))
+            {
+                var allergen = allergens[Random.Shared.Next(allergens.Length)];
+                var onsetDate = DateTime.Today.AddYears(-Random.Shared.Next(1, 10));
+
+                context.PatientAllergies.Add(new PatientAllergy
+                {
+                    PatientId = patient.Id,
+                    AllergenName = allergen.Name,
+                    AllergyType = allergen.Type,
+                    Severity = allergen.Severity,
+                    Reaction = allergen.Reaction,
+                    OnsetDate = onsetDate,
+                    Notes = "Patient should avoid exposure to this allergen.",
+                    RecordedByUserId = nurses.Count > 0 ? nurses[Random.Shared.Next(nurses.Count)].Id : null,
+                    CreatedAt = onsetDate
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+
+        // Seed Chronic Conditions
+        if (!await context.ChronicConditions.AnyAsync())
+        {
+            var conditions = new[]
+            {
+                new { Name = "Hypertension", Category = "Cardiovascular", Status = "Controlled", Treatment = "ACE inhibitor, lifestyle modifications" },
+                new { Name = "Type 2 Diabetes", Category = "Endocrine", Status = "Controlled", Treatment = "Metformin, diet control" },
+                new { Name = "Asthma", Category = "Respiratory", Status = "Active", Treatment = "Inhaler as needed" },
+                new { Name = "Osteoarthritis", Category = "Musculoskeletal", Status = "Active", Treatment = "Pain management, physical therapy" },
+                new { Name = "Chronic Kidney Disease", Category = "Renal", Status = "Stable", Treatment = "Monitoring, medication" },
+                new { Name = "COPD", Category = "Respiratory", Status = "Controlled", Treatment = "Bronchodilators, oxygen therapy" }
+            };
+
+            foreach (var patient in patients.Take(5))
+            {
+                var condition = conditions[Random.Shared.Next(conditions.Length)];
+                var diagnosisDate = DateTime.Today.AddYears(-Random.Shared.Next(1, 15));
+                var doctor = doctors[Random.Shared.Next(doctors.Count)];
+
+                context.ChronicConditions.Add(new ChronicCondition
+                {
+                    PatientId = patient.Id,
+                    ConditionName = condition.Name,
+                    Category = condition.Category,
+                    Status = condition.Status,
+                    Treatment = condition.Treatment,
+                    DiagnosisDate = diagnosisDate,
+                    Notes = "Condition monitored regularly. Patient compliant with treatment.",
+                    DiagnosedByDoctorId = doctor.Id,
+                    RecordedByUserId = nurses.Count > 0 ? nurses[Random.Shared.Next(nurses.Count)].Id : null,
+                    CreatedAt = diagnosisDate
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+
+        // Seed Family Medical History
+        if (!await context.FamilyMedicalHistories.AnyAsync())
+        {
+            var relationships = new[] { "Father", "Mother", "Sibling", "Grandfather", "Grandmother", "Aunt", "Uncle" };
+            var familyConditions = new[]
+            {
+                new { Name = "Heart Disease", Category = "Cardiovascular", AgeOfOnset = "50s", Status = "Deceased" },
+                new { Name = "Diabetes", Category = "Endocrine", AgeOfOnset = "40s", Status = "Alive" },
+                new { Name = "Cancer", Category = "Oncology", AgeOfOnset = "60s", Status = "Deceased" },
+                new { Name = "Hypertension", Category = "Cardiovascular", AgeOfOnset = "50s", Status = "Alive" },
+                new { Name = "Stroke", Category = "Neurological", AgeOfOnset = "70s", Status = "Deceased" },
+                new { Name = "Alzheimer's Disease", Category = "Neurological", AgeOfOnset = "70s", Status = "Alive" }
+            };
+
+            foreach (var patient in patients.Take(5))
+            {
+                var condition = familyConditions[Random.Shared.Next(familyConditions.Length)];
+                var relationship = relationships[Random.Shared.Next(relationships.Length)];
+
+                context.FamilyMedicalHistories.Add(new FamilyMedicalHistory
+                {
+                    PatientId = patient.Id,
+                    Relationship = relationship,
+                    ConditionName = condition.Name,
+                    Category = condition.Category,
+                    AgeOfOnset = condition.AgeOfOnset,
+                    Status = condition.Status,
+                    Notes = $"Family history of {condition.Name} in {relationship}.",
+                    RecordedByUserId = nurses.Count > 0 ? nurses[Random.Shared.Next(nurses.Count)].Id : null,
+                    CreatedAt = DateTime.Today.AddDays(-Random.Shared.Next(0, 90))
                 });
             }
             await context.SaveChangesAsync();
