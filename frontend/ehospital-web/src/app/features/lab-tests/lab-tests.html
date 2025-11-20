@@ -1,14 +1,36 @@
 <div class="lab-tests-container">
+  <!-- Critical Alerts Banner -->
+  @if (showCriticalAlerts && criticalResults.length > 0) {
+    <div class="critical-alerts-banner">
+      <div class="alert-content">
+        <span class="material-icons">warning</span>
+        <div class="alert-text">
+          <strong>{{ criticalResults.length }} Critical Lab Result(s)</strong>
+          <span>Requires immediate attention</span>
+        </div>
+      </div>
+      <button class="btn-alert-dismiss" (click)="dismissCriticalAlerts()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+  }
+
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Lab Tests & Results</h2>
-      <p>Order lab tests, upload results, and manage test reports</p>
+      <h2>Laboratory Management System</h2>
+      <p>Order tests, track specimens, enter results, and manage lab workflow</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Order Lab Test
-    </button>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="openAddModal()">
+        <span class="material-icons">add</span>
+        Quick Order
+      </button>
+      <button class="btn-primary" (click)="openOrderingWizard()">
+        <span class="material-icons">science</span>
+        Order Test (Workflow)
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->
@@ -62,62 +84,110 @@
       <table class="lab-tests-table">
         <thead>
           <tr>
+            <th>Barcode</th>
             <th>Patient</th>
             <th>Test Name</th>
             <th>Type</th>
-            <th>Code</th>
+            <th>Priority</th>
             <th>Status</th>
+            <th>Specimen</th>
             <th>Ordered Date</th>
-            <th>Completed Date</th>
-            <th>File</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (lt of paginatedLabTests; track lt.id) {
-            <tr>
+            <tr [class.critical-row]="lt.isCritical">
+              <td class="barcode-cell">
+                @if (lt.barcode) {
+                  <div class="barcode-display">
+                    <span class="barcode-text">{{ lt.barcode }}</span>
+                    <button class="btn-icon-small" (click)="printBarcode(lt)" title="Print Barcode">
+                      <span class="material-icons">print</span>
+                    </button>
+                  </div>
+                } @else {
+                  <button class="btn-link" (click)="generateBarcodeForTest(lt.id)" title="Generate Barcode">
+                    <span class="material-icons">qr_code</span>
+                    Generate
+                  </button>
+                }
+              </td>
               <td class="name-cell">
                 <strong>{{ lt.patientName || 'Patient #' + lt.patientId }}</strong>
                 <p class="doctor-name">{{ lt.doctorName || 'Doctor #' + lt.doctorId }}</p>
+                @if (lt.isCritical) {
+                  <span class="critical-badge">
+                    <span class="material-icons">warning</span>
+                    Critical
+                  </span>
+                }
               </td>
               <td>{{ lt.testName }}</td>
               <td>
                 <span class="type-badge">{{ lt.testType }}</span>
               </td>
-              <td>{{ lt.testCode || '—' }}</td>
+              <td>
+                <span class="priority-badge" [ngClass]="getPriorityClass(lt.priority)">
+                  {{ lt.priority || 'Routine' }}
+                </span>
+              </td>
               <td>
                 <span class="status-badge" [ngClass]="getStatusClass(lt.status)">
                   {{ lt.status }}
                 </span>
               </td>
-              <td>{{ lt.orderedDate | date:'short' }}</td>
-              <td>{{ lt.completedDate ? (lt.completedDate | date:'short') : '—' }}</td>
-              <td>
-                @if (lt.hasFile) {
-                  <button class="btn-icon btn-success" (click)="downloadFile(lt)" title="Download File">
-                    <span class="material-icons">download</span>
-                  </button>
+              <td class="specimen-cell">
+                @if (lt.specimenType) {
+                  <div class="specimen-info">
+                    <span class="specimen-type">{{ lt.specimenType }}</span>
+                    @if (lt.specimenCollectedDate) {
+                      <span class="specimen-date">{{ lt.specimenCollectedDate | date:'short' }}</span>
+                    }
+                  </div>
                 } @else {
-                  <span class="empty-value">No file</span>
+                  <button class="btn-link" (click)="openSpecimenModal(lt)" title="Record Specimen">
+                    <span class="material-icons">inventory_2</span>
+                    Record
+                  </button>
                 }
               </td>
+              <td>{{ lt.orderedDate | date:'short' }}</td>
               <td class="actions-cell">
-                <button class="btn-icon" (click)="openEditModal(lt)" title="Edit">
-                  <span class="material-icons">edit</span>
-                </button>
-                @if (!lt.hasFile) {
-                  <button class="btn-icon btn-info" (click)="openFileUploadModal(lt)" title="Upload File">
-                    <span class="material-icons">upload_file</span>
+                <div class="action-buttons">
+                  @if (lt.status === 'Ordered' && !lt.specimenType) {
+                    <button class="btn-icon btn-info" (click)="openSpecimenModal(lt)" title="Record Specimen">
+                      <span class="material-icons">inventory_2</span>
+                    </button>
+                  }
+                  @if (lt.status === 'In Progress' || (lt.status === 'Ordered' && lt.specimenType)) {
+                    <button class="btn-icon btn-success" (click)="openResultModal(lt)" title="Enter Results">
+                      <span class="material-icons">assignment</span>
+                    </button>
+                  }
+                  @if (lt.status === 'Completed' && !lt.reviewedBy) {
+                    <button class="btn-icon btn-warning" (click)="reviewResults(lt)" title="Review Results">
+                      <span class="material-icons">visibility</span>
+                    </button>
+                  }
+                  @if (lt.hasFile) {
+                    <button class="btn-icon btn-success" (click)="downloadFile(lt)" title="Download File">
+                      <span class="material-icons">download</span>
+                    </button>
+                  } @else {
+                    <button class="btn-icon btn-info" (click)="openFileUploadModal(lt)" title="Upload File">
+                      <span class="material-icons">upload_file</span>
+                    </button>
+                  }
+                  <button class="btn-icon" (click)="openEditModal(lt)" title="Edit">
+                    <span class="material-icons">edit</span>
                   </button>
-                }
-                @if (lt.status === 'Ordered' || lt.status === 'In Progress') {
-                  <button class="btn-icon btn-success" (click)="updateStatus(lt, 'Completed')" title="Mark as Completed">
-                    <span class="material-icons">check_circle</span>
-                  </button>
-                }
-                <button class="btn-icon btn-danger" (click)="deleteLabTest(lt)" title="Delete">
-                  <span class="material-icons">delete</span>
-                </button>
+                  @if (lt.status !== 'Completed') {
+                    <button class="btn-icon btn-danger" (click)="updateStatus(lt, 'Cancelled')" title="Cancel">
+                      <span class="material-icons">cancel</span>
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }
@@ -273,6 +343,25 @@
                 />
               </div>
               <div class="form-group">
+                <label for="priority">Priority <span class="required">*</span></label>
+                <select id="priority" formControlName="priority">
+                  @for (priority of priorities; track priority) {
+                    <option [value]="priority">{{ priority }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="specimenType">Specimen Type</label>
+                <select id="specimenType" formControlName="specimenType">
+                  <option value="">Select Specimen Type</option>
+                  @for (specimen of specimenTypes; track specimen) {
+                    <option [value]="specimen">{{ specimen }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
                 <label for="status">Status <span class="required">*</span></label>
                 <select
                   id="status"
@@ -287,6 +376,15 @@
                   <span class="error-message">Status is required</span>
                 }
               </div>
+            </div>
+            <div class="form-group">
+              <label for="medicalRecordId">Link to Medical Record (Optional)</label>
+              <select id="medicalRecordId" formControlName="medicalRecordId">
+                <option value="">No Medical Record</option>
+                @for (record of medicalRecords; track record.id) {
+                  <option [value]="record.id">Visit on {{ record.createdAt | date:'short' }}</option>
+                }
+              </select>
             </div>
 
             @if (isEdit) {
@@ -360,6 +458,322 @@
             Upload File
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Multi-Step Ordering Wizard Modal -->
+  @if (showOrderingWizard) {
+    <div class="modal-overlay" (click)="closeOrderingWizard()">
+      <div class="modal-content wizard-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Order Lab Test - Step {{ currentStep }} of {{ totalSteps }}</h3>
+          <button class="btn-close" (click)="closeOrderingWizard()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        
+        <!-- Progress Steps -->
+        <div class="wizard-progress">
+          <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+            <div class="step-number">1</div>
+            <div class="step-label">Patient & Doctor</div>
+          </div>
+          <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+            <div class="step-number">2</div>
+            <div class="step-label">Test Details</div>
+          </div>
+          <div class="step" [class.active]="currentStep >= 3">
+            <div class="step-number">3</div>
+            <div class="step-label">Review & Submit</div>
+          </div>
+        </div>
+
+        <form [formGroup]="form">
+          <div class="modal-body">
+            <!-- Step 1: Patient & Doctor -->
+            @if (currentStep === 1) {
+              <div class="wizard-step">
+                <h4>Select Patient and Ordering Doctor</h4>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-patientId">Patient <span class="required">*</span></label>
+                    <select id="wizard-patientId" formControlName="patientId" [class.error]="form.get('patientId')?.invalid && form.get('patientId')?.touched">
+                      <option value="">Select Patient</option>
+                      @for (patient of patients; track patient.id) {
+                        <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-doctorId">Ordering Doctor <span class="required">*</span></label>
+                    <select id="wizard-doctorId" formControlName="doctorId" [class.error]="form.get('doctorId')?.invalid && form.get('doctorId')?.touched">
+                      <option value="">Select Doctor</option>
+                      @for (doctor of doctors; track doctor.id) {
+                        <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="wizard-medicalRecordId">Link to Medical Record (Optional)</label>
+                  <select id="wizard-medicalRecordId" formControlName="medicalRecordId">
+                    <option value="">No Medical Record</option>
+                    @for (record of medicalRecords; track record.id) {
+                      <option [value]="record.id">Visit on {{ record.createdAt | date:'short' }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
+
+            <!-- Step 2: Test Details -->
+            @if (currentStep === 2) {
+              <div class="wizard-step">
+                <h4>Test Information</h4>
+                <div class="form-group">
+                  <label for="wizard-testName">Test Name <span class="required">*</span></label>
+                  <input id="wizard-testName" type="text" formControlName="testName" placeholder="e.g., Complete Blood Count" />
+                </div>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-testType">Test Type <span class="required">*</span></label>
+                    <select id="wizard-testType" formControlName="testType">
+                      <option value="">Select Type</option>
+                      @for (type of testTypes; track type) {
+                        <option [value]="type">{{ type }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-priority">Priority <span class="required">*</span></label>
+                    <select id="wizard-priority" formControlName="priority">
+                      @for (priority of priorities; track priority) {
+                        <option [value]="priority">{{ priority }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-testCode">Test Code</label>
+                    <input id="wizard-testCode" type="text" formControlName="testCode" placeholder="e.g., CBC-001" />
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-specimenType">Specimen Type</label>
+                    <select id="wizard-specimenType" formControlName="specimenType">
+                      <option value="">Select Specimen Type</option>
+                      @for (specimen of specimenTypes; track specimen) {
+                        <option [value]="specimen">{{ specimen }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="wizard-notes">Notes</label>
+                  <textarea id="wizard-notes" formControlName="notes" rows="3" placeholder="Additional notes or instructions..."></textarea>
+                </div>
+              </div>
+            }
+
+            <!-- Step 3: Review -->
+            @if (currentStep === 3) {
+              <div class="wizard-step">
+                <h4>Review Order Details</h4>
+                <div class="review-summary">
+                  <div class="review-item">
+                    <strong>Patient:</strong>
+                    <span>{{ getPatientName(form.value.patientId) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Ordering Doctor:</strong>
+                    <span>{{ getDoctorName(form.value.doctorId) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Test Name:</strong>
+                    <span>{{ form.value.testName }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Test Type:</strong>
+                    <span>{{ form.value.testType }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Priority:</strong>
+                    <span [ngClass]="getPriorityClass(form.value.priority)">{{ form.value.priority }}</span>
+                  </div>
+                  @if (form.value.specimenType) {
+                    <div class="review-item">
+                      <strong>Specimen Type:</strong>
+                      <span>{{ form.value.specimenType }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="prevStep()" [disabled]="currentStep === 1">Previous</button>
+            @if (currentStep < totalSteps) {
+              <button type="button" class="btn-primary" (click)="nextStep()">Next</button>
+            } @else {
+              <button type="button" class="btn-primary" (click)="finishOrdering()">Submit Order</button>
+            }
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Specimen Tracking Modal -->
+  @if (showSpecimenModal && selectedLabTestForSpecimen) {
+    <div class="modal-overlay" (click)="closeSpecimenModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Record Specimen Collection</h3>
+          <button class="btn-close" (click)="closeSpecimenModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="specimenForm" (ngSubmit)="submitSpecimenInfo()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Lab Test: <strong>{{ selectedLabTestForSpecimen.testName }}</strong></label>
+              <p class="file-info">Patient: {{ selectedLabTestForSpecimen.patientName }}</p>
+            </div>
+            <div class="form-group">
+              <label for="specimenType">Specimen Type <span class="required">*</span></label>
+              <select id="specimenType" formControlName="specimenType" [class.error]="specimenForm.get('specimenType')?.invalid && specimenForm.get('specimenType')?.touched">
+                <option value="">Select Specimen Type</option>
+                @for (specimen of specimenTypes; track specimen) {
+                  <option [value]="specimen">{{ specimen }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-row-inline">
+              <div class="form-group">
+                <label for="collectedDate">Collection Date & Time <span class="required">*</span></label>
+                <input id="collectedDate" type="datetime-local" formControlName="collectedDate" />
+              </div>
+              <div class="form-group">
+                <label for="collectedBy">Collected By <span class="required">*</span></label>
+                <input id="collectedBy" type="text" formControlName="collectedBy" placeholder="Staff name" />
+              </div>
+            </div>
+            @if (selectedLabTestForSpecimen.barcode) {
+              <div class="barcode-preview">
+                <label>Barcode:</label>
+                <div class="barcode-display-large">
+                  <span class="barcode-text">{{ selectedLabTestForSpecimen.barcode }}</span>
+                  <button type="button" class="btn-secondary" (click)="printBarcode(selectedLabTestForSpecimen!)">
+                    <span class="material-icons">print</span>
+                    Print
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeSpecimenModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="specimenForm.invalid">
+              <span class="material-icons">save</span>
+              Save Specimen Info
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Result Entry Modal -->
+  @if (showResultModal && selectedLabTestForResult) {
+    <div class="modal-overlay" (click)="closeResultModal()">
+      <div class="modal-content result-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Enter Lab Results</h3>
+          <button class="btn-close" (click)="closeResultModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="resultForm" (ngSubmit)="submitResults()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Lab Test: <strong>{{ selectedLabTestForResult.testName }}</strong></label>
+              <p class="file-info">Patient: {{ selectedLabTestForResult.patientName }}</p>
+            </div>
+            
+            <div class="result-values-section">
+              <div class="section-header">
+                <h4>Test Results</h4>
+                <button type="button" class="btn-link" (click)="addResultValue()">
+                  <span class="material-icons">add</span>
+                  Add Parameter
+                </button>
+              </div>
+              
+              <div formArrayName="resultValues" class="result-values-list">
+                @for (control of resultValuesArray.controls; track $index) {
+                  <div [formGroupName]="$index" class="result-value-item">
+                    <div class="form-row-inline">
+                      <div class="form-group">
+                        <label>Parameter <span class="required">*</span></label>
+                        <input type="text" formControlName="parameter" placeholder="e.g., Hemoglobin" />
+                      </div>
+                      <div class="form-group">
+                        <label>Value <span class="required">*</span></label>
+                        <input type="text" formControlName="value" placeholder="e.g., 14.5" 
+                               (blur)="calculateFlag(control.get('value')?.value, control.get('normalRange')?.value, $index)" />
+                      </div>
+                      <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" formControlName="unit" placeholder="e.g., g/dL" />
+                      </div>
+                    </div>
+                    <div class="form-row-inline">
+                      <div class="form-group">
+                        <label>Normal Range</label>
+                        <input type="text" formControlName="normalRange" placeholder="e.g., 12.0-17.5" />
+                      </div>
+                      <div class="form-group">
+                        <label>Flag</label>
+                        <select formControlName="flag">
+                          <option value="Normal">Normal</option>
+                          <option value="High">High</option>
+                          <option value="Low">Low</option>
+                          <option value="Critical">Critical</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="button" class="btn-icon btn-danger" (click)="removeResultValue($index)">
+                          <span class="material-icons">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="resultNotes">Notes</label>
+              <textarea id="resultNotes" formControlName="notes" rows="3" placeholder="Additional findings or comments..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isCritical" />
+                <span>Mark as Critical Result (requires immediate attention)</span>
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeResultModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="resultForm.invalid">
+              <span class="material-icons">save</span>
+              Submit Results
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   }

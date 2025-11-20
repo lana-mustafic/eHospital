@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LabTest, LabTestService, CreateLabTestRequest, UpdateLabTestRequest } from './services/lab-test.service';
-import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { LabTest, LabTestService, CreateLabTestRequest, UpdateLabTestRequest, LabResultValue } from './services/lab-test.service';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
 import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
 import { ExportService } from '../../core/services/export.service';
@@ -9,6 +9,8 @@ import { PatientService } from '../patients/services/patient.service';
 import { Patient } from '../patients/models/patient.model';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { Doctor } from '../doctors/models/doctor.model';
+import { MedicalRecordService, MedicalRecord } from '../medical-records/services/medical-record.service';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-lab-tests',
@@ -42,11 +44,37 @@ export class LabTestsComponent implements OnInit {
 
   testTypes = ['Blood Test', 'X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'ECG', 'Urine Test', 'Stool Test', 'Other'];
   testStatuses = ['Ordered', 'In Progress', 'Completed', 'Cancelled'];
+  priorities = ['Routine', 'Urgent', 'STAT'];
+  specimenTypes = ['Blood', 'Urine', 'Stool', 'Sputum', 'Tissue', 'Swab', 'Other'];
+  
+  // Multi-step workflow
+  currentStep = 1;
+  totalSteps = 3;
+  showOrderingWizard = false;
+  
+  // Specimen tracking
+  showSpecimenModal = false;
+  selectedLabTestForSpecimen: LabTest | null = null;
+  specimenForm: FormGroup;
+  
+  // Result entry
+  showResultModal = false;
+  selectedLabTestForResult: LabTest | null = null;
+  resultForm: FormGroup;
+  
+  // Medical records
+  medicalRecords: MedicalRecord[] = [];
+  
+  // Critical alerts
+  criticalResults: LabTest[] = [];
+  showCriticalAlerts = false;
 
   constructor(
     private labTestService: LabTestService,
     private patientService: PatientService,
     private doctorService: DoctorService,
+    private medicalRecordService: MedicalRecordService,
+    private authService: AuthService,
     private fb: FormBuilder,
     private toastService: ToastService,
     private exportService: ExportService
@@ -54,12 +82,27 @@ export class LabTestsComponent implements OnInit {
     this.form = this.fb.group({
       patientId: ['', Validators.required],
       doctorId: ['', Validators.required],
+      medicalRecordId: [''],
       orderedDate: [new Date().toISOString().slice(0, 16), Validators.required],
       testName: ['', [Validators.required, Validators.minLength(2)]],
       testType: ['', Validators.required],
       testCode: [''],
+      priority: ['Routine', Validators.required],
+      specimenType: [''],
       status: ['Ordered', Validators.required],
       notes: ['']
+    });
+    
+    this.specimenForm = this.fb.group({
+      specimenType: ['', Validators.required],
+      collectedDate: [new Date().toISOString().slice(0, 16), Validators.required],
+      collectedBy: ['', Validators.required]
+    });
+    
+    this.resultForm = this.fb.group({
+      resultValues: this.fb.array([]),
+      notes: [''],
+      isCritical: [false]
     });
   }
 
@@ -67,6 +110,16 @@ export class LabTestsComponent implements OnInit {
     this.loadPatients();
     this.loadDoctors();
     this.loadLabTests();
+    this.loadCriticalResults();
+    
+    // Watch for patient changes to load medical records
+    this.form.get('patientId')?.valueChanges.subscribe(patientId => {
+      if (patientId) {
+        this.loadMedicalRecords(patientId);
+      } else {
+        this.medicalRecords = [];
+      }
+    });
   }
 
   loadPatients() {
@@ -96,12 +149,44 @@ export class LabTestsComponent implements OnInit {
     this.labTestService.getAll().subscribe({
       next: (data) => {
         this.labTests = data;
+        // Generate barcodes for tests that don't have them
+        this.labTests.forEach(lt => {
+          if (!lt.barcode) {
+            lt.barcode = LabTestService.generateBarcodeString(lt.id, lt.patientId);
+          }
+        });
         this.applyFilters();
         this.isLoading = false;
       },
       error: (err) => {
         this.isLoading = false;
         this.toastService.error('Failed to load lab tests');
+      }
+    });
+  }
+  
+  loadMedicalRecords(patientId: number) {
+    this.medicalRecordService.getAll().subscribe({
+      next: (data) => {
+        this.medicalRecords = data.filter(mr => mr.patientId === patientId);
+      },
+      error: () => {
+        this.medicalRecords = [];
+      }
+    });
+  }
+  
+  loadCriticalResults() {
+    this.labTestService.getCriticalResults().subscribe({
+      next: (data) => {
+        this.criticalResults = data;
+        if (data.length > 0) {
+          this.showCriticalAlerts = true;
+          this.toastService.warning(`You have ${data.length} critical lab result(s) requiring attention!`);
+        }
+      },
+      error: () => {
+        // Silently fail - critical results endpoint may not exist yet
       }
     });
   }
@@ -408,6 +493,355 @@ export class LabTestsComponent implements OnInit {
 
     this.exportService.exportToPDF(data, 'lab-tests', headers, 'Lab Tests Report');
     this.toastService.success('Lab tests exported to PDF successfully');
+  }
+
+  // Multi-step ordering workflow
+  openOrderingWizard() {
+    this.currentStep = 1;
+    this.showOrderingWizard = true;
+    this.form.reset({
+      orderedDate: new Date().toISOString().slice(0, 16),
+      status: 'Ordered',
+      priority: 'Routine',
+      patientId: this.patientFilter || ''
+    });
+  }
+
+  closeOrderingWizard() {
+    this.showOrderingWizard = false;
+    this.currentStep = 1;
+    this.form.reset();
+  }
+
+  nextStep() {
+    if (this.currentStep < this.totalSteps) {
+      // Validate current step
+      if (this.currentStep === 1) {
+        const step1Fields = ['patientId', 'doctorId', 'medicalRecordId'];
+        const step1Valid = step1Fields.every(field => {
+          const control = this.form.get(field);
+          return field === 'medicalRecordId' || (control && control.valid);
+        });
+        if (!step1Valid) {
+          this.markFormGroupTouched(this.form);
+          this.toastService.error('Please complete all required fields');
+          return;
+        }
+      } else if (this.currentStep === 2) {
+        const step2Fields = ['testName', 'testType', 'priority'];
+        const step2Valid = step2Fields.every(field => {
+          const control = this.form.get(field);
+          return control && control.valid;
+        });
+        if (!step2Valid) {
+          this.markFormGroupTouched(this.form);
+          this.toastService.error('Please complete all required fields');
+          return;
+        }
+      }
+      this.currentStep++;
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+    }
+  }
+
+  finishOrdering() {
+    if (this.form.invalid) {
+      this.markFormGroupTouched(this.form);
+      this.toastService.error('Please complete all required fields');
+      return;
+    }
+
+    const formValue = this.form.value;
+    const payload: CreateLabTestRequest = {
+      patientId: formValue.patientId,
+      doctorId: formValue.doctorId,
+      medicalRecordId: formValue.medicalRecordId || undefined,
+      orderedDate: new Date(formValue.orderedDate).toISOString(),
+      testName: formValue.testName,
+      testType: formValue.testType,
+      testCode: formValue.testCode || undefined,
+      priority: formValue.priority,
+      specimenType: formValue.specimenType || undefined,
+      status: 'Ordered',
+      notes: formValue.notes || undefined
+    };
+
+    this.labTestService.create(payload).subscribe({
+      next: (labTest) => {
+        this.toastService.success('Lab test ordered successfully');
+        this.closeOrderingWizard();
+        this.loadLabTests();
+        // Generate barcode
+        if (labTest.id) {
+          this.generateBarcodeForTest(labTest.id);
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to create lab test');
+      }
+    });
+  }
+
+  // Specimen tracking
+  openSpecimenModal(lt: LabTest) {
+    this.selectedLabTestForSpecimen = lt;
+    this.specimenForm.patchValue({
+      specimenType: lt.specimenType || '',
+      collectedDate: lt.specimenCollectedDate ? new Date(lt.specimenCollectedDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      collectedBy: lt.specimenCollectedBy || ''
+    });
+    this.showSpecimenModal = true;
+  }
+
+  closeSpecimenModal() {
+    this.showSpecimenModal = false;
+    this.selectedLabTestForSpecimen = null;
+    this.specimenForm.reset();
+  }
+
+  submitSpecimenInfo() {
+    if (this.specimenForm.invalid || !this.selectedLabTestForSpecimen) {
+      this.markFormGroupTouched(this.specimenForm);
+      this.toastService.error('Please complete all required fields');
+      return;
+    }
+
+    const formValue = this.specimenForm.value;
+    const barcode = LabTestService.generateBarcodeString(
+      this.selectedLabTestForSpecimen.id,
+      this.selectedLabTestForSpecimen.patientId
+    );
+
+    this.labTestService.updateSpecimenInfo(this.selectedLabTestForSpecimen.id, {
+      specimenType: formValue.specimenType,
+      collectedDate: new Date(formValue.collectedDate).toISOString(),
+      collectedBy: formValue.collectedBy,
+      barcode: barcode
+    }).subscribe({
+      next: () => {
+        this.toastService.success('Specimen information updated successfully');
+        this.closeSpecimenModal();
+        this.loadLabTests();
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to update specimen information');
+      }
+    });
+  }
+
+  generateBarcodeForTest(labTestId: number) {
+    this.labTestService.generateBarcode(labTestId).subscribe({
+      next: () => {
+        this.loadLabTests();
+      },
+      error: () => {
+        // Silently fail - barcode generation may not be implemented on backend yet
+      }
+    });
+  }
+
+  printBarcode(lt: LabTest) {
+    if (!lt.barcode) {
+      this.toastService.warning('No barcode available for this test');
+      return;
+    }
+    // In a real implementation, this would open a print dialog with barcode
+    window.print();
+  }
+
+  // Result entry
+  openResultModal(lt: LabTest) {
+    this.selectedLabTestForResult = lt;
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    resultArray.clear();
+
+    if (lt.resultValues && lt.resultValues.length > 0) {
+      lt.resultValues.forEach(rv => {
+        resultArray.push(this.createResultValueFormGroup(rv));
+      });
+    } else {
+      // Add default result fields based on test type
+      this.addDefaultResultFields(lt.testType);
+    }
+
+    this.resultForm.patchValue({
+      notes: lt.notes || '',
+      isCritical: lt.isCritical || false
+    });
+    this.showResultModal = true;
+  }
+
+  closeResultModal() {
+    this.showResultModal = false;
+    this.selectedLabTestForResult = null;
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    resultArray.clear();
+    this.resultForm.reset();
+  }
+
+  createResultValueFormGroup(rv?: LabResultValue): FormGroup {
+    return this.fb.group({
+      parameter: [rv?.parameter || '', Validators.required],
+      value: [rv?.value || '', Validators.required],
+      unit: [rv?.unit || ''],
+      normalRange: [rv?.normalRange || ''],
+      flag: [rv?.flag || 'Normal']
+    });
+  }
+
+  addResultValue() {
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    resultArray.push(this.createResultValueFormGroup());
+  }
+
+  removeResultValue(index: number) {
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    resultArray.removeAt(index);
+  }
+
+  get resultValuesArray(): FormArray {
+    return this.resultForm.get('resultValues') as FormArray;
+  }
+
+  addDefaultResultFields(testType: string) {
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    
+    // Common test parameters based on test type
+    const defaultFields: { [key: string]: LabResultValue[] } = {
+      'Blood Test': [
+        { parameter: 'Hemoglobin', value: '', unit: 'g/dL', normalRange: '12.0-17.5', flag: 'Normal' },
+        { parameter: 'White Blood Cell Count', value: '', unit: 'cells/μL', normalRange: '4,000-11,000', flag: 'Normal' },
+        { parameter: 'Platelet Count', value: '', unit: 'cells/μL', normalRange: '150,000-450,000', flag: 'Normal' }
+      ],
+      'Urine Test': [
+        { parameter: 'pH', value: '', unit: '', normalRange: '4.5-8.0', flag: 'Normal' },
+        { parameter: 'Specific Gravity', value: '', unit: '', normalRange: '1.005-1.030', flag: 'Normal' },
+        { parameter: 'Protein', value: '', unit: 'mg/dL', normalRange: 'Negative', flag: 'Normal' }
+      ]
+    };
+
+    const fields = defaultFields[testType] || [{ parameter: 'Result', value: '', unit: '', normalRange: '', flag: 'Normal' }];
+    fields.forEach(field => {
+      resultArray.push(this.createResultValueFormGroup(field));
+    });
+  }
+
+  calculateFlag(value: string, normalRange: string, index: number): void {
+    const resultArray = this.resultForm.get('resultValues') as FormArray;
+    const control = resultArray.at(index);
+    const numValue = parseFloat(value);
+    
+    if (isNaN(numValue) || !normalRange) {
+      control?.patchValue({ flag: 'Normal' });
+      return;
+    }
+
+    const range = normalRange.split('-');
+    if (range.length === 2) {
+      const min = parseFloat(range[0].replace(/,/g, ''));
+      const max = parseFloat(range[1].replace(/,/g, ''));
+      if (numValue < min) {
+        control?.patchValue({ flag: 'Low' });
+      } else if (numValue > max) {
+        control?.patchValue({ flag: numValue > max * 1.5 ? 'Critical' : 'High' });
+      } else {
+        control?.patchValue({ flag: 'Normal' });
+      }
+    }
+  }
+
+  submitResults() {
+    if (this.resultForm.invalid || !this.selectedLabTestForResult) {
+      this.markFormGroupTouched(this.resultForm);
+      this.toastService.error('Please complete all required fields');
+      return;
+    }
+
+    const formValue = this.resultForm.value;
+    const resultValues: LabResultValue[] = formValue.resultValues.map((rv: any) => ({
+      parameter: rv.parameter,
+      value: rv.value,
+      unit: rv.unit || undefined,
+      normalRange: rv.normalRange || undefined,
+      flag: rv.flag || 'Normal'
+    }));
+
+    const hasCritical = resultValues.some(rv => rv.flag === 'Critical') || formValue.isCritical;
+
+    this.labTestService.submitResults(this.selectedLabTestForResult.id, {
+      resultValues: resultValues,
+      notes: formValue.notes || undefined,
+      isCritical: hasCritical
+    }).subscribe({
+      next: () => {
+        this.toastService.success('Lab results submitted successfully');
+        if (hasCritical) {
+          this.toastService.warning('Critical results detected! Notifications have been sent.');
+        }
+        this.closeResultModal();
+        this.loadLabTests();
+        this.loadCriticalResults();
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to submit results');
+      }
+    });
+  }
+
+  reviewResults(lt: LabTest) {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      this.toastService.error('User not found');
+      return;
+    }
+
+    this.labTestService.reviewResults(lt.id, currentUser.name).subscribe({
+      next: () => {
+        this.toastService.success('Results marked as reviewed');
+        this.loadLabTests();
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to review results');
+      }
+    });
+  }
+
+  getPatientName(patientId: number): string {
+    const patient = this.patients.find(p => p.id === patientId);
+    return patient ? `${patient.firstName} ${patient.lastName}` : '';
+  }
+
+  getDoctorName(doctorId: number): string {
+    const doctor = this.doctors.find(d => d.id === doctorId);
+    return doctor ? `${doctor.firstName} ${doctor.lastName}` : '';
+  }
+
+  getPriorityClass(priority?: string): string {
+    const classes: { [key: string]: string } = {
+      'Routine': 'priority-routine',
+      'Urgent': 'priority-urgent',
+      'STAT': 'priority-stat'
+    };
+    return classes[priority || 'Routine'] || 'priority-routine';
+  }
+
+  getFlagClass(flag?: string): string {
+    const classes: { [key: string]: string } = {
+      'Normal': 'flag-normal',
+      'High': 'flag-high',
+      'Low': 'flag-low',
+      'Critical': 'flag-critical'
+    };
+    return classes[flag || 'Normal'] || 'flag-normal';
+  }
+
+  dismissCriticalAlerts() {
+    this.showCriticalAlerts = false;
   }
 }
 

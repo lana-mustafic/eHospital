@@ -25,6 +25,31 @@ export interface LabTest {
   performedByUserId?: number;
   performedByName?: string;
   hasFile?: boolean;
+  // Enhanced fields for Laboratory Management
+  barcode?: string;
+  specimenType?: string;
+  specimenCollectedDate?: string;
+  specimenCollectedBy?: string;
+  resultValues?: LabResultValue[];
+  isCritical?: boolean;
+  reviewedBy?: string;
+  reviewedDate?: string;
+  priority?: 'Routine' | 'Urgent' | 'STAT';
+}
+
+export interface LabResultValue {
+  parameter: string;
+  value: string;
+  unit?: string;
+  normalRange?: string;
+  flag?: 'Normal' | 'High' | 'Low' | 'Critical';
+}
+
+export interface SpecimenInfo {
+  specimenType: string;
+  collectedDate: string;
+  collectedBy: string;
+  barcode: string;
 }
 
 export interface CreateLabTestRequest {
@@ -37,6 +62,8 @@ export interface CreateLabTestRequest {
   patientId: number;
   doctorId: number;
   medicalRecordId?: number;
+  priority?: 'Routine' | 'Urgent' | 'STAT';
+  specimenType?: string;
 }
 
 export interface UpdateLabTestRequest {
@@ -49,6 +76,15 @@ export interface UpdateLabTestRequest {
   notes?: string;
   medicalRecordId?: number;
   performedByUserId?: number;
+  barcode?: string;
+  specimenType?: string;
+  specimenCollectedDate?: string;
+  specimenCollectedBy?: string;
+  resultValues?: LabResultValue[];
+  isCritical?: boolean;
+  reviewedBy?: string;
+  reviewedDate?: string;
+  priority?: 'Routine' | 'Urgent' | 'STAT';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -100,6 +136,37 @@ export class LabTestService {
 
   downloadFile(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
+  }
+
+  // Generate barcode for lab test
+  generateBarcode(id: number): Observable<{ barcode: string }> {
+    return this.http.post<{ barcode: string }>(`${this.apiUrl}/${id}/generate-barcode`, {});
+  }
+
+  // Update specimen collection info
+  updateSpecimenInfo(id: number, specimenInfo: SpecimenInfo): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/specimen`, specimenInfo);
+  }
+
+  // Submit lab results
+  submitResults(id: number, results: { resultValues: LabResultValue[]; notes?: string; isCritical?: boolean }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/results`, results);
+  }
+
+  // Review results
+  reviewResults(id: number, reviewedBy: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/review`, { reviewedBy });
+  }
+
+  // Get critical results
+  getCriticalResults(): Observable<LabTest[]> {
+    return this.http.get<LabTest[]>(`${this.apiUrl}/critical`);
+  }
+
+  // Generate barcode string (client-side helper)
+  static generateBarcodeString(labTestId: number, patientId: number): string {
+    const timestamp = Date.now().toString(36);
+    return `LAB-${labTestId}-${patientId}-${timestamp}`.toUpperCase();
   }
 }
 
