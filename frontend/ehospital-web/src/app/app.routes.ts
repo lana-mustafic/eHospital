@@ -96,6 +96,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/lab-tests/lab-tests').then(m => m.LabTestsComponent)
       },
       {
+        path: 'radiology',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        loadComponent: () => import('./features/radiology/radiology').then(m => m.RadiologyComponent)
+      },
+      {
         path: 'medical-history',
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Doctor', 'Nurse'] },

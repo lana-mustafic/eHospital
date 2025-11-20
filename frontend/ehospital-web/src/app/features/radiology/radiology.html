@@ -1,0 +1,558 @@
+<div class="radiology-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Radiology & Imaging Management</h2>
+      <p>Order imaging studies, view DICOM images, generate reports, and manage radiology workflow</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openOrderingWizard()">
+        <span class="material-icons">add</span>
+        Order Imaging Study
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        placeholder="Search by accession number, patient, study type, or description..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+        <option [ngValue]="null">All Patients</option>
+        @for (patient of patients; track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+        }
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+        <option value="">All Statuses</option>
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+      <select [(ngModel)]="studyTypeFilter" (change)="applyFilters()">
+        <option value="">All Study Types</option>
+        @for (type of studyTypes; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+    </div>
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        CSV
+      </button>
+    </div>
+    <div class="results-count">
+      {{ filteredStudies.length }} study(ies) found
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [headers]="9" [rows]="8"></app-table-skeleton>
+  }
+
+  <!-- Studies Table -->
+  @if (!isLoading) {
+    <div class="table-container">
+      <table class="studies-table">
+        <thead>
+          <tr>
+            <th>Accession #</th>
+            <th>Patient</th>
+            <th>Study Type</th>
+            <th>Body Part</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Study Date</th>
+            <th>Images</th>
+            <th>Report</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (study of paginatedStudies; track study.id) {
+            <tr>
+              <td class="accession-cell">
+                <strong>{{ study.accessionNumber || 'Pending' }}</strong>
+              </td>
+              <td class="name-cell">
+                <strong>{{ study.patientName || 'Patient #' + study.patientId }}</strong>
+                <p class="doctor-name">{{ study.orderingPhysicianName || 'Doctor #' + study.orderingPhysicianId }}</p>
+              </td>
+              <td>
+                <span class="type-badge">{{ study.studyType }}</span>
+                <span class="modality-badge">{{ study.modality }}</span>
+              </td>
+              <td>{{ study.bodyPart || '—' }}</td>
+              <td>
+                <span class="priority-badge" [ngClass]="getPriorityClass(study.priority)">
+                  {{ study.priority }}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(study.status)">
+                  {{ study.status }}
+                </span>
+              </td>
+              <td>{{ study.studyDate | date:'short' }}</td>
+              <td>
+                @if (study.hasImages) {
+                  <span class="image-count">
+                    <span class="material-icons">image</span>
+                    {{ study.imageCount || 0 }}
+                  </span>
+                } @else {
+                  <span class="empty-value">No images</span>
+                }
+              </td>
+              <td>
+                @if (study.reportId) {
+                  <span class="report-badge">
+                    <span class="material-icons">description</span>
+                    Report Available
+                  </span>
+                } @else {
+                  <span class="empty-value">No report</span>
+                }
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  @if (study.hasImages) {
+                    <button class="btn-icon btn-info" (click)="openImageViewer(study)" title="View Images">
+                      <span class="material-icons">visibility</span>
+                    </button>
+                  }
+                  @if (study.status === 'Ordered' || study.status === 'Scheduled') {
+                    <button class="btn-icon btn-success" (click)="openImageUploadModal(study)" title="Upload Images">
+                      <span class="material-icons">upload</span>
+                    </button>
+                  }
+                  @if (study.status === 'In Progress' || study.status === 'Completed') {
+                    <button class="btn-icon btn-primary" (click)="openReportModal(study)" title="View/Create Report">
+                      <span class="material-icons">description</span>
+                    </button>
+                  }
+                  @if (study.reportId) {
+                    <button class="btn-icon btn-success" (click)="generateReportPDF(study)" title="Download Report PDF">
+                      <span class="material-icons">picture_as_pdf</span>
+                    </button>
+                  }
+                  @if (study.status !== 'Completed' && study.status !== 'Cancelled') {
+                    <button class="btn-icon btn-danger" (click)="updateStatus(study, 'Cancelled')" title="Cancel">
+                      <span class="material-icons">cancel</span>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          @if (filteredStudies.length === 0) {
+            <tr>
+              <td colspan="10" class="empty-state">
+                <div class="empty-state-content">
+                  <span class="material-icons">radiology</span>
+                  <h3>No imaging studies found</h3>
+                  <p>
+                    @if (searchTerm || patientFilter || statusFilter || studyTypeFilter) {
+                      Try adjusting your search or filter criteria
+                    } @else {
+                      No imaging studies have been ordered yet
+                    }
+                  </p>
+                  @if (!searchTerm && !patientFilter && !statusFilter && !studyTypeFilter) {
+                    <button class="btn-primary" (click)="openOrderingWizard()">
+                      <span class="material-icons">add</span>
+                      Order First Study
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages > 1) {
+      <div class="pagination-controls">
+        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        @for (page of [].constructor(totalPages); track $index) {
+          <button
+            class="btn-pagination"
+            [class.active]="currentPage === $index + 1"
+            (click)="goToPage($index + 1)"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Multi-Step Ordering Wizard Modal -->
+  @if (showOrderingWizard) {
+    <div class="modal-overlay" (click)="closeOrderingWizard()">
+      <div class="modal-content wizard-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Order Imaging Study - Step {{ currentStep }} of {{ totalSteps }}</h3>
+          <button class="btn-close" (click)="closeOrderingWizard()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        
+        <!-- Progress Steps -->
+        <div class="wizard-progress">
+          <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+            <div class="step-number">1</div>
+            <div class="step-label">Patient & Physician</div>
+          </div>
+          <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+            <div class="step-number">2</div>
+            <div class="step-label">Study Details</div>
+          </div>
+          <div class="step" [class.active]="currentStep >= 3">
+            <div class="step-number">3</div>
+            <div class="step-label">Review & Submit</div>
+          </div>
+        </div>
+
+        <form [formGroup]="form">
+          <div class="modal-body">
+            <!-- Step 1: Patient & Physician -->
+            @if (currentStep === 1) {
+              <div class="wizard-step">
+                <h4>Select Patient and Ordering Physician</h4>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-patientId">Patient <span class="required">*</span></label>
+                    <select id="wizard-patientId" formControlName="patientId" [class.error]="form.get('patientId')?.invalid && form.get('patientId')?.touched">
+                      <option value="">Select Patient</option>
+                      @for (patient of patients; track patient.id) {
+                        <option [value]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-orderingPhysicianId">Ordering Physician <span class="required">*</span></label>
+                    <select id="wizard-orderingPhysicianId" formControlName="orderingPhysicianId" [class.error]="form.get('orderingPhysicianId')?.invalid && form.get('orderingPhysicianId')?.touched">
+                      <option value="">Select Physician</option>
+                      @for (doctor of doctors; track doctor.id) {
+                        <option [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="wizard-medicalRecordId">Link to Medical Record (Optional)</label>
+                  <select id="wizard-medicalRecordId" formControlName="medicalRecordId">
+                    <option value="">No Medical Record</option>
+                    @for (record of medicalRecords; track record.id) {
+                      <option [value]="record.id">Visit on {{ record.createdAt | date:'short' }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
+
+            <!-- Step 2: Study Details -->
+            @if (currentStep === 2) {
+              <div class="wizard-step">
+                <h4>Study Information</h4>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-studyType">Study Type <span class="required">*</span></label>
+                    <select id="wizard-studyType" formControlName="studyType">
+                      <option value="">Select Study Type</option>
+                      @for (type of studyTypes; track type) {
+                        <option [value]="type">{{ type }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-modality">Modality <span class="required">*</span></label>
+                    <select id="wizard-modality" formControlName="modality">
+                      <option value="">Select Modality</option>
+                      @for (modality of modalities; track modality) {
+                        <option [value]="modality">{{ modality }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-bodyPart">Body Part</label>
+                    <select id="wizard-bodyPart" formControlName="bodyPart">
+                      <option value="">Select Body Part</option>
+                      @for (part of bodyParts; track part) {
+                        <option [value]="part">{{ part }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-priority">Priority <span class="required">*</span></label>
+                    <select id="wizard-priority" formControlName="priority">
+                      @for (priority of priorities; track priority) {
+                        <option [value]="priority">{{ priority }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-inline">
+                  <div class="form-group">
+                    <label for="wizard-studyDate">Study Date <span class="required">*</span></label>
+                    <input id="wizard-studyDate" type="date" formControlName="studyDate" />
+                  </div>
+                  <div class="form-group">
+                    <label for="wizard-studyTime">Study Time</label>
+                    <input id="wizard-studyTime" type="time" formControlName="studyTime" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="wizard-description">Description <span class="required">*</span></label>
+                  <textarea id="wizard-description" formControlName="description" rows="3" placeholder="Describe the imaging study..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="wizard-notes">Notes</label>
+                  <textarea id="wizard-notes" formControlName="notes" rows="2" placeholder="Additional notes or instructions..."></textarea>
+                </div>
+              </div>
+            }
+
+            <!-- Step 3: Review -->
+            @if (currentStep === 3) {
+              <div class="wizard-step">
+                <h4>Review Order Details</h4>
+                <div class="review-summary">
+                  <div class="review-item">
+                    <strong>Patient:</strong>
+                    <span>{{ getPatientName(form.value.patientId) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Ordering Physician:</strong>
+                    <span>{{ getDoctorName(form.value.orderingPhysicianId) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Study Type:</strong>
+                    <span>{{ form.value.studyType }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Modality:</strong>
+                    <span>{{ form.value.modality }}</span>
+                  </div>
+                  @if (form.value.bodyPart) {
+                    <div class="review-item">
+                      <strong>Body Part:</strong>
+                      <span>{{ form.value.bodyPart }}</span>
+                    </div>
+                  }
+                  <div class="review-item">
+                    <strong>Priority:</strong>
+                    <span [ngClass]="getPriorityClass(form.value.priority)">{{ form.value.priority }}</span>
+                  </div>
+                  <div class="review-item">
+                    <strong>Study Date:</strong>
+                    <span>{{ form.value.studyDate }} {{ form.value.studyTime || '' }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="prevStep()" [disabled]="currentStep === 1">Previous</button>
+            @if (currentStep < totalSteps) {
+              <button type="button" class="btn-primary" (click)="nextStep()">Next</button>
+            } @else {
+              <button type="button" class="btn-primary" (click)="finishOrdering()">Submit Order</button>
+            }
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Image Upload Modal -->
+  @if (showImageUploadModal && selectedStudyForImages) {
+    <div class="modal-overlay" (click)="closeImageUploadModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Upload Images</h3>
+          <button class="btn-close" (click)="closeImageUploadModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Study: <strong>{{ selectedStudyForImages.description }}</strong></label>
+            <p class="file-info">Patient: {{ selectedStudyForImages.patientName }}</p>
+            <p class="file-info">Accession: {{ selectedStudyForImages.accessionNumber || 'Pending' }}</p>
+          </div>
+          <div class="form-group">
+            <label for="imageFiles">Select Images <span class="required">*</span></label>
+            <input
+              id="imageFiles"
+              type="file"
+              (change)="onFilesSelected($event)"
+              accept=".dcm,.dicom,.jpg,.jpeg,.png,.dicom"
+              multiple
+            />
+            @if (selectedFiles.length > 0) {
+              <div class="files-list">
+                @for (file of selectedFiles; track $index) {
+                  <div class="file-item">
+                    <span class="material-icons">image</span>
+                    <span>{{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                  </div>
+                }
+              </div>
+            }
+            <p class="file-hint">Supported formats: DICOM (.dcm), JPEG, PNG (Max 50MB per file)</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeImageUploadModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="uploadImages()" [disabled]="selectedFiles.length === 0">
+            <span class="material-icons">upload</span>
+            Upload {{ selectedFiles.length }} Image(s)
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- DICOM Image Viewer Modal -->
+  @if (showImageViewer && selectedStudy) {
+    <div class="modal-overlay image-viewer-overlay" (click)="closeImageViewer()">
+      <div class="image-viewer-modal" (click)="$event.stopPropagation()">
+        <div class="viewer-header">
+          <div class="viewer-title">
+            <h3>{{ selectedStudy.description }}</h3>
+            <p>{{ selectedStudy.patientName }} - {{ selectedStudy.accessionNumber }}</p>
+          </div>
+          <button class="btn-close" (click)="closeImageViewer()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="viewer-body">
+          <div class="viewer-controls">
+            <button class="btn-viewer" (click)="prevImage()" [disabled]="currentImageIndex === 0">
+              <span class="material-icons">chevron_left</span>
+              Previous
+            </button>
+            <div class="image-counter">
+              Image {{ currentImageIndex + 1 }} of {{ selectedImages.length }}
+            </div>
+            <button class="btn-viewer" (click)="nextImage()" [disabled]="currentImageIndex === selectedImages.length - 1">
+              Next
+              <span class="material-icons">chevron_right</span>
+            </button>
+          </div>
+          <div class="image-container">
+            @if (imageUrl) {
+              <img [src]="imageUrl" alt="DICOM Image" class="dicom-image" />
+            } @else {
+              <div class="image-placeholder">
+                <span class="material-icons">image_not_supported</span>
+                <p>Loading image...</p>
+              </div>
+            }
+          </div>
+          <div class="viewer-info">
+            <div class="info-item">
+              <strong>Study Type:</strong> {{ selectedStudy.studyType }}
+            </div>
+            <div class="info-item">
+              <strong>Body Part:</strong> {{ selectedStudy.bodyPart || 'N/A' }}
+            </div>
+            <div class="info-item">
+              <strong>Study Date:</strong> {{ selectedStudy.studyDate | date:'short' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Report Modal -->
+  @if (showReportModal && selectedStudyForReport) {
+    <div class="modal-overlay" (click)="closeReportModal()">
+      <div class="modal-content report-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Radiology Report</h3>
+          <button class="btn-close" (click)="closeReportModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <form [formGroup]="reportForm" (ngSubmit)="saveReport()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Study: <strong>{{ selectedStudyForReport.description }}</strong></label>
+              <p class="file-info">Patient: {{ selectedStudyForReport.patientName }}</p>
+              <p class="file-info">Accession: {{ selectedStudyForReport.accessionNumber || 'Pending' }}</p>
+            </div>
+            <div class="form-group">
+              <label for="findings">Findings <span class="required">*</span></label>
+              <textarea
+                id="findings"
+                formControlName="findings"
+                rows="6"
+                placeholder="Describe the imaging findings in detail..."
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="impression">Impression <span class="required">*</span></label>
+              <textarea
+                id="impression"
+                formControlName="impression"
+                rows="4"
+                placeholder="Provide the radiologist's impression and diagnosis..."
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="recommendations">Recommendations</label>
+              <textarea
+                id="recommendations"
+                formControlName="recommendations"
+                rows="3"
+                placeholder="Any recommendations for follow-up or additional studies..."
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="reportStatus">Report Status <span class="required">*</span></label>
+              <select id="reportStatus" formControlName="status">
+                @for (status of reportStatuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeReportModal()">Cancel</button>
+            <button type="button" class="btn-secondary" (click)="finalizeReport()" [disabled]="!selectedStudyForReport.reportId || reportForm.value.status === 'Final'">
+              Finalize Report
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="reportForm.invalid">
+              <span class="material-icons">save</span>
+              Save Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+
