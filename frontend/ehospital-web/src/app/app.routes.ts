@@ -54,6 +54,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/patients/components/patient-summary/patient-summary').then(m => m.PatientSummaryComponent)
       },
       {
+        path: 'patients/:id/timeline',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        loadComponent: () => import('./features/patients/components/patient-timeline/patient-timeline').then(m => m.PatientTimelineComponent)
+      },
+      {
         path: 'doctors',
         canActivate: [roleGuard],
         data: { roles: ['Admin'] },

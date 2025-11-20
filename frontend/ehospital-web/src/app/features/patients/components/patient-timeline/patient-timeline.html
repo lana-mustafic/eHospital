@@ -1,0 +1,392 @@
+<div class="timeline-container">
+  <!-- Header -->
+  <div class="timeline-header">
+    <div class="header-content">
+      <button class="btn-back" (click)="navigateToPatientList()">
+        <span class="material-icons">arrow_back</span>
+        Back to Patients
+      </button>
+      <h1>Patient Timeline</h1>
+      <p>Chronological view of all patient events and medical history</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="navigateToPatientSummary()">
+        <span class="material-icons">person</span>
+        View Summary
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <span class="material-icons">filter_list</span>
+      <h3>Filter by Type</h3>
+    </div>
+    <div class="filter-buttons">
+      @for (type of eventTypes; track type.value) {
+        <button
+          class="filter-btn"
+          [class.active]="selectedTypes.includes(type.value)"
+          (click)="toggleTypeFilter(type.value)">
+          <span class="material-icons">{{ type.icon }}</span>
+          {{ type.label }}
+          <span class="count">{{ getEventCount(type.value) }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading timeline...</p>
+    </div>
+  }
+
+  <!-- Timeline -->
+  @if (!isLoading && filteredEvents.length > 0) {
+    <div class="timeline">
+      @for (event of filteredEvents; track event.id; let i = $index) {
+        <div class="timeline-item" [ngClass]="{'expanded': isExpanded(event)}">
+          <div class="timeline-marker" [style.border-color]="event.color">
+            <span class="material-icons" [style.color]="event.color">{{ event.icon }}</span>
+          </div>
+          <div class="timeline-content">
+            <div class="event-header" (click)="toggleEvent(event)">
+              <div class="event-title-section">
+                <h3>{{ event.title }}</h3>
+                <span class="event-type-badge" [style.background-color]="event.color">
+                  {{ getTypeLabel(event.type) }}
+                </span>
+              </div>
+              <div class="event-meta">
+                <span class="event-date">{{ formatDate(event.date) }}</span>
+                <span class="material-icons expand-icon" [class.expanded]="isExpanded(event)">
+                  expand_more
+                </span>
+              </div>
+            </div>
+            <div class="event-description">
+              {{ event.description }}
+            </div>
+
+            <!-- Expanded Details -->
+            @if (isExpanded(event)) {
+              <div class="event-details">
+                @if (isAppointment(event.data)) {
+                  <div class="detail-section">
+                    <h4>Appointment Details</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item">
+                        <span class="label">Date:</span>
+                        <span class="value">{{ formatDateOnly(event.data.appointmentDate) }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Time:</span>
+                        <span class="value">{{ event.data.startTime }} - {{ event.data.endTime }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Doctor:</span>
+                        <span class="value">{{ event.data.doctorName || 'N/A' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Status:</span>
+                        <span class="value status-badge" [ngClass]="'status-' + event.data.status.toLowerCase().replace(' ', '-')">
+                          {{ event.data.status }}
+                        </span>
+                      </div>
+                      <div class="detail-item full-width">
+                        <span class="label">Reason:</span>
+                        <span class="value">{{ event.data.reason || 'N/A' }}</span>
+                      </div>
+                      @if (event.data.notes) {
+                        <div class="detail-item full-width">
+                          <span class="label">Notes:</span>
+                          <span class="value">{{ event.data.notes }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (isLabTest(event.data)) {
+                  <div class="detail-section">
+                    <h4>Lab Test Details</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item">
+                        <span class="label">Test Name:</span>
+                        <span class="value">{{ event.data.testName }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Test Type:</span>
+                        <span class="value">{{ event.data.testType }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Status:</span>
+                        <span class="value status-badge" [ngClass]="'status-' + event.data.status.toLowerCase().replace(' ', '-')">
+                          {{ event.data.status }}
+                        </span>
+                      </div>
+                      @if (event.data.testCode) {
+                        <div class="detail-item">
+                          <span class="label">Test Code:</span>
+                          <span class="value">{{ event.data.testCode }}</span>
+                        </div>
+                      }
+                      @if (event.data.orderedDate) {
+                        <div class="detail-item">
+                          <span class="label">Ordered:</span>
+                          <span class="value">{{ formatDate(event.data.orderedDate) }}</span>
+                        </div>
+                      }
+                      @if (event.data.completedDate) {
+                        <div class="detail-item">
+                          <span class="label">Completed:</span>
+                          <span class="value">{{ formatDate(event.data.completedDate) }}</span>
+                        </div>
+                      }
+                      @if (event.data.resultValues && event.data.resultValues.length > 0) {
+                        <div class="detail-item full-width">
+                          <span class="label">Results:</span>
+                          <div class="result-values">
+                            @for (result of event.data.resultValues; track result.parameter) {
+                              <div class="result-value" [ngClass]="'flag-' + (result.flag?.toLowerCase() || 'normal')">
+                                <strong>{{ result.parameter }}:</strong>
+                                {{ result.value }} {{ result.unit || '' }}
+                                @if (result.normalRange) {
+                                  <span class="range">({{ result.normalRange }})</span>
+                                }
+                                @if (result.flag && result.flag !== 'Normal') {
+                                  <span class="flag-badge">{{ result.flag }}</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else if (event.data.results) {
+                        <div class="detail-item full-width">
+                          <span class="label">Results:</span>
+                          <span class="value">{{ event.data.results }}</span>
+                        </div>
+                      }
+                      @if (event.data.notes) {
+                        <div class="detail-item full-width">
+                          <span class="label">Notes:</span>
+                          <span class="value">{{ event.data.notes }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (isPrescription(event.data)) {
+                  <div class="detail-section">
+                    <h4>Prescription Details</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item">
+                        <span class="label">Medication:</span>
+                        <span class="value">{{ event.data.medicationName }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Dosage:</span>
+                        <span class="value">{{ event.data.dosage }}</span>
+                      </div>
+                      @if (event.data.frequency) {
+                        <div class="detail-item">
+                          <span class="label">Frequency:</span>
+                          <span class="value">{{ event.data.frequency }}</span>
+                        </div>
+                      }
+                      @if (event.data.duration) {
+                        <div class="detail-item">
+                          <span class="label">Duration:</span>
+                          <span class="value">{{ event.data.duration }} days</span>
+                        </div>
+                      }
+                      <div class="detail-item">
+                        <span class="label">Status:</span>
+                        <span class="value status-badge" [ngClass]="'status-' + (event.data.status?.toLowerCase() || 'pending')">
+                          {{ event.data.status || 'Pending' }}
+                        </span>
+                      </div>
+                      @if (event.data.medicationForm) {
+                        <div class="detail-item">
+                          <span class="label">Form:</span>
+                          <span class="value">{{ event.data.medicationForm }}</span>
+                        </div>
+                      }
+                      @if (event.data.instructions) {
+                        <div class="detail-item full-width">
+                          <span class="label">Instructions:</span>
+                          <span class="value">{{ event.data.instructions }}</span>
+                        </div>
+                      }
+                      @if (event.data.doctorName) {
+                        <div class="detail-item">
+                          <span class="label">Prescribed By:</span>
+                          <span class="value">{{ event.data.doctorName }}</span>
+                        </div>
+                      }
+                      @if (event.data.prescribedDate) {
+                        <div class="detail-item">
+                          <span class="label">Prescribed Date:</span>
+                          <span class="value">{{ formatDate(event.data.prescribedDate) }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (isDiagnosis(event.data)) {
+                  <div class="detail-section">
+                    <h4>Diagnosis Details</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item full-width">
+                        <span class="label">Condition:</span>
+                        <span class="value">{{ event.data.condition }}</span>
+                      </div>
+                      @if (event.data.notes) {
+                        <div class="detail-item full-width">
+                          <span class="label">Notes:</span>
+                          <span class="value">{{ event.data.notes }}</span>
+                        </div>
+                      }
+                      @if (event.data.doctorName) {
+                        <div class="detail-item">
+                          <span class="label">Diagnosed By:</span>
+                          <span class="value">{{ event.data.doctorName }}</span>
+                        </div>
+                      }
+                      @if (event.data.createdAt) {
+                        <div class="detail-item">
+                          <span class="label">Date:</span>
+                          <span class="value">{{ formatDate(event.data.createdAt) }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (isMedicalRecord(event.data)) {
+                  <div class="detail-section">
+                    <h4>Medical Record Details</h4>
+                    <div class="detail-grid">
+                      @if (event.data.createdAt) {
+                        <div class="detail-item">
+                          <span class="label">Date:</span>
+                          <span class="value">{{ formatDateOnly(event.data.createdAt) }}</span>
+                        </div>
+                      }
+                      @if (event.data.doctorName) {
+                        <div class="detail-item">
+                          <span class="label">Doctor:</span>
+                          <span class="value">{{ event.data.doctorName }}</span>
+                        </div>
+                      }
+                      @if (event.data.diagnosis) {
+                        <div class="detail-item full-width">
+                          <span class="label">Diagnosis:</span>
+                          <span class="value">{{ event.data.diagnosis }}</span>
+                        </div>
+                      }
+                      @if (event.data.notes) {
+                        <div class="detail-item full-width">
+                          <span class="label">Notes:</span>
+                          <span class="value">{{ event.data.notes }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (isVitalSigns(event.data)) {
+                  <div class="detail-section">
+                    <h4>Vital Signs Details</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item">
+                        <span class="label">Recorded Date:</span>
+                        <span class="value">{{ formatDate(event.data.recordedDate) }}</span>
+                      </div>
+                      @if (event.data.bloodPressureSystolic && event.data.bloodPressureDiastolic) {
+                        <div class="detail-item">
+                          <span class="label">Blood Pressure:</span>
+                          <span class="value">{{ event.data.bloodPressureSystolic }}/{{ event.data.bloodPressureDiastolic }} mmHg</span>
+                        </div>
+                      }
+                      @if (event.data.temperature) {
+                        <div class="detail-item">
+                          <span class="label">Temperature:</span>
+                          <span class="value">{{ event.data.temperature }}°F</span>
+                        </div>
+                      }
+                      @if (event.data.heartRate) {
+                        <div class="detail-item">
+                          <span class="label">Heart Rate:</span>
+                          <span class="value">{{ event.data.heartRate }} bpm</span>
+                        </div>
+                      }
+                      @if (event.data.respiratoryRate) {
+                        <div class="detail-item">
+                          <span class="label">Respiratory Rate:</span>
+                          <span class="value">{{ event.data.respiratoryRate }} rpm</span>
+                        </div>
+                      }
+                      @if (event.data.weight) {
+                        <div class="detail-item">
+                          <span class="label">Weight:</span>
+                          <span class="value">{{ event.data.weight }} lbs</span>
+                        </div>
+                      }
+                      @if (event.data.height) {
+                        <div class="detail-item">
+                          <span class="label">Height:</span>
+                          <span class="value">{{ event.data.height }} in</span>
+                        </div>
+                      }
+                      @if (event.data.oxygenSaturation) {
+                        <div class="detail-item">
+                          <span class="label">Oxygen Saturation:</span>
+                          <span class="value">{{ event.data.oxygenSaturation }}%</span>
+                        </div>
+                      }
+                      @if (event.data.bloodGlucose) {
+                        <div class="detail-item">
+                          <span class="label">Blood Glucose:</span>
+                          <span class="value">{{ event.data.bloodGlucose }} mg/dL</span>
+                        </div>
+                      }
+                      @if (event.data.bmiIfAvailable) {
+                        <div class="detail-item">
+                          <span class="label">BMI:</span>
+                          <span class="value">{{ event.data.bmiIfAvailable }}</span>
+                        </div>
+                      }
+                      @if (event.data.notes) {
+                        <div class="detail-item full-width">
+                          <span class="label">Notes:</span>
+                          <span class="value">{{ event.data.notes }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && filteredEvents.length === 0) {
+    <div class="empty-state">
+      <span class="material-icons">timeline</span>
+      <h3>No events found</h3>
+      <p>No events match the selected filters. Try adjusting your filters.</p>
+    </div>
+  }
+</div>
+

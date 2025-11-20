@@ -100,6 +100,9 @@
             <button class="btn-icon" [routerLink]="['/patients', patient.id, 'summary']" title="View Patient Summary">
               <span class="material-icons">person</span>
             </button>
+            <button class="btn-icon" [routerLink]="['/patients', patient.id, 'timeline']" title="View Timeline">
+              <span class="material-icons">timeline</span>
+            </button>
             <button class="btn-icon" (click)="openHistoryModal(patient)" title="View Medical History">
               <span class="material-icons">history</span>
             </button>

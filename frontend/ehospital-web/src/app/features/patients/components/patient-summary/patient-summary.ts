@@ -179,5 +179,11 @@ export class PatientSummaryComponent implements OnInit {
       this.router.navigate(['/records'], { queryParams: { patientId: this.summary.patient.id } });
     }
   }
+
+  navigateToTimeline(): void {
+    if (this.summary) {
+      this.router.navigate(['/patients', this.summary.patient.id, 'timeline']);
+    }
+  }
 }
 
