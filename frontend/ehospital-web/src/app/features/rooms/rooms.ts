@@ -10,6 +10,7 @@ import { RoomTransferService } from './services/room-transfer.service';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { DepartmentService } from '../departments/services/department.service';
+import { AuthService } from '../../core/services/auth';
 import {
   Room, RoomType, Bed, Admission, RoomTransfer,
   CreateRoomRequest, UpdateRoomRequest,
@@ -95,7 +96,8 @@ export class RoomsComponent implements OnInit {
     private doctorService: DoctorService,
     private departmentService: DepartmentService,
     private fb: FormBuilder,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService
   ) {
     this.roomTypeForm = this.fb.group({
       name: ['', Validators.required],
@@ -256,12 +258,27 @@ export class RoomsComponent implements OnInit {
   }
 
   loadPatients() {
+    // Check if user has access to patients endpoint
+    const currentUser = this.authService.getCurrentUser();
+    const userRole = currentUser?.role?.toLowerCase() || '';
+    
+    // Receptionists don't have access to getAll patients endpoint
+    if (userRole === 'receptionist') {
+      // Silently skip - patients list not available for receptionists
+      this.patients = [];
+      return;
+    }
+
     this.patientService.getAll().subscribe({
       next: (data) => {
         this.patients = data;
       },
       error: () => {
-        this.toastService.error('Failed to load patients');
+        // Only show error if user should have access
+        if (userRole !== 'receptionist') {
+          this.toastService.error('Failed to load patients');
+        }
+        this.patients = [];
       }
     });
   }

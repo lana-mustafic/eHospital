@@ -9,6 +9,7 @@ import { PatientService } from '../patients/services/patient.service';
 import { Patient } from '../patients/models/patient.model';
 import { AppointmentService } from '../appointments/services/appointment.service';
 import { Appointment } from '../appointments/models/appointment.model';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-invoices',
@@ -51,7 +52,8 @@ export class InvoicesComponent implements OnInit {
     private appointmentService: AppointmentService,
     private fb: FormBuilder,
     private toastService: ToastService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private authService: AuthService
   ) {
     this.invoiceForm = this.fb.group({
       patientId: ['', Validators.required],
@@ -84,12 +86,29 @@ export class InvoicesComponent implements OnInit {
   }
 
   loadPatients() {
+    // Check if user has access to patients endpoint
+    const currentUser = this.authService.getCurrentUser();
+    const userRole = currentUser?.role?.toLowerCase() || '';
+    
+    // Receptionists don't have access to getAll patients endpoint
+    // But they can still work with invoices using patient IDs from invoices
+    if (userRole === 'receptionist') {
+      // Silently skip - patients list not available for receptionists
+      // They can still create invoices if they have patient IDs from other sources
+      this.patients = [];
+      return;
+    }
+
     this.patientService.getAll().subscribe({
       next: (data) => {
         this.patients = data;
       },
       error: () => {
-        this.toastService.error('Failed to load patients');
+        // Only show error if user should have access
+        if (userRole !== 'receptionist') {
+          this.toastService.error('Failed to load patients');
+        }
+        this.patients = [];
       }
     });
   }

@@ -31,6 +31,11 @@
             <span class="material-icons">queue</span>
             View Queue
           </button>
+        } @else if (isReceptionist) {
+          <button class="btn-primary" [routerLink]="['/appointments']">
+            <span class="material-icons">add</span>
+            Schedule Appointment
+          </button>
         } @else {
           <button class="btn-primary" [routerLink]="['/appointments']">
             <span class="material-icons">add</span>
@@ -506,8 +511,318 @@
       </div>
     }
 
+    <!-- Receptionist Dashboard View -->
+    @if (isReceptionist) {
+      <div class="receptionist-dashboard">
+        <!-- Quick Stats for Receptionists -->
+        <div class="receptionist-stats-grid">
+          <div class="receptionist-stat-card primary">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">event</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ todayAppointments }}</h3>
+              <p class="stat-label">Today's Appointments</p>
+              <div class="stat-sub">
+                <span>{{ pendingAppointments }} Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="receptionist-stat-card success">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">people</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ totalPatients }}</h3>
+              <p class="stat-label">Total Patients</p>
+              <div class="stat-sub">
+                <span>{{ activePatients }} Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="receptionist-stat-card revenue">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">attach_money</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ formatCurrency(todayRevenueAmount) }}</h3>
+              <p class="stat-label">Today's Revenue</p>
+              <div class="stat-sub">
+                <span>{{ formatCurrency(monthlyRevenue) }} This Month</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="receptionist-stat-card warning">
+            <div class="stat-icon-wrapper">
+              <span class="material-icons">receipt</span>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ pendingInvoicesCount }}</h3>
+              <p class="stat-label">Pending Invoices</p>
+              <div class="stat-sub">
+                <span>{{ formatCurrency(outstandingBills) }} Outstanding</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+          <h3 class="section-title">
+            <span class="material-icons">flash_on</span>
+            Quick Actions
+          </h3>
+          <div class="quick-actions-grid">
+            <a [routerLink]="['/appointments']" class="quick-action-card">
+              <div class="action-icon appointments">
+                <span class="material-icons">event</span>
+              </div>
+              <div class="action-content">
+                <h4>Schedule Appointment</h4>
+                <p>Book new appointment</p>
+              </div>
+            </a>
+            <a [routerLink]="['/patients']" class="quick-action-card">
+              <div class="action-icon patients">
+                <span class="material-icons">person_add</span>
+              </div>
+              <div class="action-content">
+                <h4>Register Patient</h4>
+                <p>Add new patient</p>
+              </div>
+            </a>
+            <a [routerLink]="['/invoices']" class="quick-action-card">
+              <div class="action-icon billing">
+                <span class="material-icons">receipt</span>
+              </div>
+              <div class="action-content">
+                <h4>Manage Billing</h4>
+                <p>View invoices & payments</p>
+              </div>
+            </a>
+            <a [routerLink]="['/queues']" class="quick-action-card">
+              <div class="action-icon queues">
+                <span class="material-icons">queue</span>
+              </div>
+              <div class="action-content">
+                <h4>Patient Queue</h4>
+                <p>Manage waiting list</p>
+              </div>
+            </a>
+            <a [routerLink]="['/rooms']" class="quick-action-card">
+              <div class="action-icon rooms">
+                <span class="material-icons">hotel</span>
+              </div>
+              <div class="action-content">
+                <h4>Room Status</h4>
+                <p>Check availability</p>
+              </div>
+            </a>
+            <a [routerLink]="['/emergency']" class="quick-action-card">
+              <div class="action-icon emergency">
+                <span class="material-icons">emergency</span>
+              </div>
+              <div class="action-content">
+                <h4>Emergency Dept</h4>
+                <p>Emergency cases</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="receptionist-content-grid">
+          <!-- Today's Appointments -->
+          <div class="receptionist-card large-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">today</span>
+                <h2>Today's Appointments</h2>
+              </div>
+              <a [routerLink]="['/appointments']" class="view-all-link">
+                View All
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              @if (todaySchedule.length === 0) {
+                <div class="empty-state">
+                  <span class="material-icons">event_available</span>
+                  <p>No appointments scheduled for today</p>
+                </div>
+              } @else {
+                <div class="appointments-list-compact">
+                  @for (appointment of todaySchedule.slice(0, 8); track $index) {
+                    <div class="appointment-item-compact" [routerLink]="['/appointments', appointment.id]">
+                      <div class="appointment-time-compact">
+                        <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                        <span class="time-end">{{ formatTime(appointment.endTime) }}</span>
+                      </div>
+                      <div class="appointment-details-compact">
+                        <div class="appointment-main">
+                          <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                          <span class="separator">•</span>
+                          <span>{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                        </div>
+                        @if (appointment.reason) {
+                          <div class="appointment-reason">{{ appointment.reason }}</div>
+                        }
+                      </div>
+                      <div class="appointment-status-compact">
+                        <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                          {{ appointment.status }}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Billing Summary -->
+          <div class="receptionist-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">account_balance_wallet</span>
+                <h2>Billing Summary</h2>
+              </div>
+              <a [routerLink]="['/invoices']" class="view-all-link">
+                Manage
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="billing-summary">
+                <div class="billing-item">
+                  <div class="billing-label">
+                    <span class="material-icons">today</span>
+                    Today's Revenue
+                  </div>
+                  <div class="billing-value success">{{ formatCurrency(todayRevenueAmount) }}</div>
+                </div>
+                <div class="billing-item">
+                  <div class="billing-label">
+                    <span class="material-icons">calendar_month</span>
+                    Monthly Revenue
+                  </div>
+                  <div class="billing-value">{{ formatCurrency(monthlyRevenue) }}</div>
+                </div>
+                <div class="billing-item">
+                  <div class="billing-label">
+                    <span class="material-icons">pending</span>
+                    Pending Invoices
+                  </div>
+                  <div class="billing-value warning">{{ pendingInvoicesCount }}</div>
+                </div>
+                <div class="billing-item">
+                  <div class="billing-label">
+                    <span class="material-icons">money_off</span>
+                    Outstanding Bills
+                  </div>
+                  <div class="billing-value danger">{{ formatCurrency(outstandingBills) }}</div>
+                </div>
+              </div>
+              <a [routerLink]="['/invoices']" class="btn-view-billing">
+                <span class="material-icons">receipt</span>
+                View All Invoices
+              </a>
+            </div>
+          </div>
+
+          <!-- Patient Queue -->
+          <div class="receptionist-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">queue</span>
+                <h2>Patient Queue</h2>
+              </div>
+              <a [routerLink]="['/queues']" class="view-all-link">
+                Manage
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="queue-summary">
+                <div class="queue-item">
+                  <div class="queue-indicator waiting"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">Waiting</span>
+                    <span class="queue-count">{{ pendingAppointments }}</span>
+                  </div>
+                </div>
+                <div class="queue-item">
+                  <div class="queue-indicator in-progress"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">In Progress</span>
+                    <span class="queue-count">{{ getInProgressCount() }}</span>
+                  </div>
+                </div>
+                <div class="queue-item">
+                  <div class="queue-indicator completed"></div>
+                  <div class="queue-info">
+                    <span class="queue-label">Completed</span>
+                    <span class="queue-count">{{ completedCount }}</span>
+                  </div>
+                </div>
+              </div>
+              <a [routerLink]="['/queues']" class="btn-view-queue">
+                <span class="material-icons">visibility</span>
+                View Full Queue
+              </a>
+            </div>
+          </div>
+
+          <!-- Recent Appointments -->
+          <div class="receptionist-card">
+            <div class="card-header">
+              <div class="card-title-section">
+                <span class="material-icons">history</span>
+                <h2>Recent Appointments</h2>
+              </div>
+              <a [routerLink]="['/appointments']" class="view-all-link">
+                View All
+                <span class="material-icons">arrow_forward</span>
+              </a>
+            </div>
+            <div class="card-body">
+              @if (recentAppointments.length === 0) {
+                <div class="empty-state-small">
+                  <span class="material-icons">event_busy</span>
+                  <p>No recent appointments</p>
+                </div>
+              } @else {
+                <div class="recent-list">
+                  @for (appointment of recentAppointments.slice(0, 5); track $index) {
+                    <div class="recent-item" [routerLink]="['/appointments', appointment.id]">
+                      <div class="recent-time">
+                        <span class="time">{{ formatTime(appointment.startTime) }}</span>
+                        <span class="date">{{ formatDate(appointment.appointmentDate) }}</span>
+                      </div>
+                      <div class="recent-details">
+                        <strong>{{ appointment.patientName || 'Unknown Patient' }}</strong>
+                        <span class="doctor">{{ appointment.doctorName || 'Unknown Doctor' }}</span>
+                      </div>
+                      <div class="recent-status">
+                        <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                          {{ appointment.status }}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Admin/General Dashboard View -->
-    @if (!isDoctor && !isNurse) {
+    @if (!isDoctor && !isNurse && !isReceptionist) {
       <!-- Key Performance Indicators -->
       <div class="kpi-grid">
         <div class="kpi-card primary">

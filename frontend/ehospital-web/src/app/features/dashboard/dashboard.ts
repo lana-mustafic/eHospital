@@ -96,6 +96,11 @@ export class Dashboard implements OnInit {
   myUpcomingAppointments: Appointment[] = [];
   myPatientsCount: number = 0;
   
+  // Receptionist-specific metrics
+  pendingInvoicesCount: number = 0;
+  todayRevenueAmount: number = 0;
+  upcomingAppointmentsToday: Appointment[] = [];
+  
   isLoading = false;
   error: string | null = null;
 
@@ -131,15 +136,19 @@ export class Dashboard implements OnInit {
 
     // Build forkJoin object based on user role
     const requests: any = {
-      patients: this.patientService.getAll().pipe(
-        timeout(10000),
-        catchError(() => of([]))
-      ),
       appointments: this.appointmentService.getAll().pipe(
         timeout(10000),
         catchError(() => of([]))
       )
     };
+
+    // Patients - only for Admin, Doctor, Nurse (Receptionist doesn't have access to getAll)
+    if (this.isAdmin || this.isDoctor || this.isNurse) {
+      requests.patients = this.patientService.getAll().pipe(
+        timeout(10000),
+        catchError(() => of([]))
+      );
+    }
 
     // Admin can see everything
     if (this.isAdmin) {
@@ -214,11 +223,20 @@ export class Dashboard implements OnInit {
         const rooms = Array.isArray(data.rooms) ? data.rooms : [];
         const invoices = Array.isArray(data.invoices) ? data.invoices : [];
 
-        // Patient metrics
-        this.totalPatients = patients.length;
-        this.activePatients = patients.length; // Can be enhanced with active status check
-        this.inPatients = 0; // Would need patient status field
-        this.outPatients = this.totalPatients - this.inPatients;
+        // Patient metrics (only if patients were loaded)
+        if (patients.length > 0 || this.isAdmin || this.isDoctor || this.isNurse) {
+          this.totalPatients = patients.length;
+          this.activePatients = patients.length; // Can be enhanced with active status check
+          this.inPatients = 0; // Would need patient status field
+          this.outPatients = this.totalPatients - this.inPatients;
+        } else {
+          // For receptionists, estimate from appointments
+          const uniquePatientIds = new Set(appointments.map((apt: Appointment) => apt.patientId));
+          this.totalPatients = uniquePatientIds.size;
+          this.activePatients = uniquePatientIds.size;
+          this.inPatients = 0;
+          this.outPatients = this.totalPatients;
+        }
 
         // Staff metrics (only for Admin)
         if (this.isAdmin && doctors.length > 0) {
@@ -324,6 +342,7 @@ export class Dashboard implements OnInit {
           const todayDateStr = new Date().toISOString().split('T')[0];
           const todayInvoices = invoices.filter((inv: any) => inv.invoiceDate === todayDateStr);
           this.todayRevenue = todayInvoices.reduce((sum: number, inv: any) => sum + (inv.paidAmount || 0), 0);
+          this.todayRevenueAmount = this.todayRevenue;
           
           const currentDate = new Date();
           const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -335,6 +354,12 @@ export class Dashboard implements OnInit {
           
           this.outstandingBills = invoices.reduce((sum: number, inv: any) => sum + (inv.balanceAmount || 0), 0);
           this.pendingInvoices = invoices.filter((inv: any) => inv.status === 'Pending' || inv.status === 'Unpaid').length;
+          this.pendingInvoicesCount = this.pendingInvoices;
+        }
+
+        // Receptionist-specific data
+        if (this.isReceptionist) {
+          this.upcomingAppointmentsToday = this.todaySchedule.slice(0, 10);
         }
 
         // Clinical metrics (only for Admin and Doctor)
