@@ -43,7 +43,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { path: '/records', icon: 'folder_shared', label: 'Medical Records', roles: ['Admin', 'Doctor'] },
         { path: '/vital-signs', icon: 'monitor_heart', label: 'Vital Signs', roles: ['Admin', 'Doctor', 'Nurse'] },
         { path: '/lab-tests', icon: 'science', label: 'Laboratory', roles: ['Admin', 'Doctor', 'Nurse'] },
-        { path: '/radiology', icon: 'radiology', label: 'Radiology & Imaging', roles: ['Admin', 'Doctor', 'Nurse'] },
+        { path: '/radiology', icon: 'image', label: 'Radiology & Imaging', roles: ['Admin', 'Doctor', 'Nurse'] },
         { path: '/medical-history', icon: 'history', label: 'Patient History', roles: ['Admin', 'Doctor', 'Nurse'] },
         { path: '/diagnoses', icon: 'assignment', label: 'Diagnoses', roles: ['Admin', 'Doctor'] },
         { path: '/prescriptions', icon: 'receipt_long', label: 'Prescriptions', roles: ['Admin', 'Doctor'] },
@@ -60,7 +60,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { path: '/rooms', icon: 'hotel', label: 'Room Management', roles: ['Admin', 'Nurse', 'Receptionist'] },
         { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Nurse'] },
         { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin'] },
-        { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Receptionist'] }
+        { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Receptionist'] },
+        { path: '/insurance', icon: 'verified_user', label: 'Insurance & Claims', roles: ['Admin', 'Receptionist'] }
       ]
     },
     {

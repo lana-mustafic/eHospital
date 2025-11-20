@@ -28,6 +28,7 @@ public class Invoice
     public User? CreatedByUser { get; set; }
     public ICollection<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public ICollection<Claim> Claims { get; set; } = new List<Claim>();
 }
 
 public class InvoiceItem

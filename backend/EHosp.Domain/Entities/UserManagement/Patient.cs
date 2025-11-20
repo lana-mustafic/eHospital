@@ -23,4 +23,5 @@ public class Patient
     public ICollection<FamilyMedicalHistory> FamilyMedicalHistories { get; set; } = new List<FamilyMedicalHistory>();
     public ICollection<DischargeSummary> DischargeSummaries { get; set; } = new List<DischargeSummary>();
     public ICollection<Admission> Admissions { get; set; } = new List<Admission>();
+    public ICollection<PatientInsurance> Insurances { get; set; } = new List<PatientInsurance>();
 }

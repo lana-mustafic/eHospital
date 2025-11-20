@@ -1,0 +1,609 @@
+<div class="insurance-container">
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Finance</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Insurance & Claims</span>
+      </div>
+      <h2>Insurance & Claims Management</h2>
+      <p>Manage insurance providers, patient insurance verification, claims submission, prior authorizations, and payment posting</p>
+    </div>
+    <button class="btn-primary" *ngIf="activeTab === 'providers'" (click)="openProviderModal()">
+      <span class="material-icons">add</span>
+      Add Provider
+    </button>
+    <button class="btn-primary" *ngIf="activeTab === 'patientInsurances'" (click)="openPatientInsuranceModal()">
+      <span class="material-icons">add</span>
+      Add Patient Insurance
+    </button>
+    <button class="btn-primary" *ngIf="activeTab === 'claims'" (click)="openClaimModal()">
+      <span class="material-icons">add</span>
+      Create Claim
+    </button>
+    <button class="btn-primary" *ngIf="activeTab === 'priorAuths'" (click)="openPriorAuthModal()">
+      <span class="material-icons">add</span>
+      Request Authorization
+    </button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button" [class.active]="activeTab === 'providers'" (click)="activeTab = 'providers'">
+      <span class="material-icons">business</span>
+      Insurance Providers
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'patientInsurances'" (click)="activeTab = 'patientInsurances'">
+      <span class="material-icons">verified_user</span>
+      Patient Insurance
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'claims'" (click)="activeTab = 'claims'">
+      <span class="material-icons">description</span>
+      Claims
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'priorAuths'" (click)="activeTab = 'priorAuths'">
+      <span class="material-icons">assignment</span>
+      Prior Authorizations
+    </button>
+  </div>
+
+  <!-- Insurance Providers Tab -->
+  <div *ngIf="activeTab === 'providers'" class="tab-content">
+    <div class="search-section">
+      <input type="text" class="search-input" placeholder="Search providers..." 
+             [(ngModel)]="providerSearchTerm" (input)="filterProviders()">
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Payer ID</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let provider of filteredProviders">
+          <td>{{ provider.name }}</td>
+          <td>{{ provider.code || 'N/A' }}</td>
+          <td>{{ provider.payerId || 'N/A' }}</td>
+          <td>{{ provider.phoneNumber || 'N/A' }}</td>
+          <td>{{ provider.email || 'N/A' }}</td>
+          <td><span class="badge" [ngClass]="provider.isActive ? 'status-success' : 'status-error'">
+            {{ provider.isActive ? 'Active' : 'Inactive' }}
+          </span></td>
+          <td>
+            <button class="btn-icon" (click)="openProviderModal(provider)" title="Edit">
+              <span class="material-icons">edit</span>
+            </button>
+            <button class="btn-icon btn-danger" (click)="deleteProvider(provider.id)" title="Delete">
+              <span class="material-icons">delete</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Patient Insurance Tab -->
+  <div *ngIf="activeTab === 'patientInsurances'" class="tab-content">
+    <div class="search-section">
+      <input type="text" class="search-input" placeholder="Search by policy number, patient, or provider..." 
+             [(ngModel)]="patientInsuranceSearchTerm" (input)="filterPatientInsurances()">
+    </div>
+
+    <div class="cards-grid">
+      <div class="insurance-card" *ngFor="let insurance of filteredPatientInsurances">
+        <div class="card-header">
+          <h3>{{ insurance.insuranceProviderName }}</h3>
+          <span class="badge" [ngClass]="insurance.isVerified ? 'status-success' : 'status-warning'">
+            {{ insurance.isVerified ? 'Verified' : 'Unverified' }}
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <span class="label">Policy Number:</span>
+            <span class="value">{{ insurance.policyNumber }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Patient:</span>
+            <span class="value">{{ insurance.patientName }}</span>
+          </div>
+          <div class="detail-row" *ngIf="insurance.groupNumber">
+            <span class="label">Group Number:</span>
+            <span class="value">{{ insurance.groupNumber }}</span>
+          </div>
+          <div class="detail-row" *ngIf="insurance.effectiveDate">
+            <span class="label">Effective Date:</span>
+            <span class="value">{{ insurance.effectiveDate | date:'short' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="insurance.expirationDate">
+            <span class="label">Expiration Date:</span>
+            <span class="value">{{ insurance.expirationDate | date:'short' }}</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-secondary" *ngIf="!insurance.isVerified" (click)="openVerificationModal(insurance)">
+            <span class="material-icons">verified</span>
+            Verify
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claims Tab -->
+  <div *ngIf="activeTab === 'claims'" class="tab-content">
+    <div class="filters-section">
+      <input type="text" class="search-input" placeholder="Search claims...">
+      <select class="filter-select" [(ngModel)]="claimStatusFilter" (change)="applyClaimFilters()">
+        <option value="">All Statuses</option>
+        <option value="Draft">Draft</option>
+        <option value="Submitted">Submitted</option>
+        <option value="Accepted">Accepted</option>
+        <option value="PartiallyPaid">Partially Paid</option>
+        <option value="Paid">Paid</option>
+        <option value="Denied">Denied</option>
+      </select>
+    </div>
+
+    <div class="claims-grid">
+      <div class="claim-card" *ngFor="let claim of filteredClaims">
+        <div class="card-header">
+          <h3>{{ claim.claimNumber }}</h3>
+          <span class="badge" [ngClass]="getStatusClass(claim.status)">{{ claim.status }}</span>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <span class="label">Patient:</span>
+            <span class="value">{{ claim.patientName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Insurance:</span>
+            <span class="value">{{ claim.insuranceProviderName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Service Date:</span>
+            <span class="value">{{ claim.serviceDate | date:'short' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Total Charges:</span>
+            <span class="value">${{ claim.totalCharges | number:'1.2-2' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="claim.paidAmount">
+            <span class="label">Paid Amount:</span>
+            <span class="value">${{ claim.paidAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="alert alert-danger" *ngIf="claim.denials && claim.denials.length > 0">
+            <span class="material-icons">warning</span>
+            {{ claim.denials.length }} denial(s)
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-primary" *ngIf="claim.status === 'Draft'" (click)="openSubmitClaimModal(claim)">
+            Submit
+          </button>
+          <button class="btn-success" *ngIf="claim.status === 'Submitted' || claim.status === 'Accepted'" (click)="openPaymentModal(claim)">
+            Post Payment
+          </button>
+          <button class="btn-danger" *ngIf="claim.status === 'Submitted' || claim.status === 'Accepted'" (click)="openDenialModal(claim)">
+            Add Denial
+          </button>
+          <button class="btn-secondary" (click)="openClaimModal(claim)">
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prior Authorizations Tab -->
+  <div *ngIf="activeTab === 'priorAuths'" class="tab-content">
+    <div class="filters-section">
+      <select class="filter-select" [(ngModel)]="priorAuthStatusFilter" (change)="applyPriorAuthFilters()">
+        <option value="">All Statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Denied">Denied</option>
+        <option value="Expired">Expired</option>
+      </select>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Request Number</th>
+          <th>Patient</th>
+          <th>Insurance</th>
+          <th>Service Type</th>
+          <th>Requested Amount</th>
+          <th>Status</th>
+          <th>Request Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let auth of filteredPriorAuths">
+          <td>{{ auth.requestNumber || 'N/A' }}</td>
+          <td>{{ auth.patientName }}</td>
+          <td>{{ auth.insuranceProviderName }}</td>
+          <td>{{ auth.serviceType || 'N/A' }}</td>
+          <td>${{ auth.requestedAmount | number:'1.2-2' }}</td>
+          <td><span class="badge" [ngClass]="getStatusClass(auth.status)">{{ auth.status }}</span></td>
+          <td>{{ auth.requestDate | date:'short' }}</td>
+          <td>
+            <button class="btn-success" *ngIf="auth.status === 'Pending'" (click)="updatePriorAuthStatus(auth, 'Approved', 'AUTH-' + auth.id)">
+              Approve
+            </button>
+            <button class="btn-danger" *ngIf="auth.status === 'Pending'" (click)="updatePriorAuthStatus(auth, 'Denied')">
+              Deny
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modals -->
+  <!-- Provider Modal -->
+  <div class="modal-overlay" *ngIf="showProviderModal" (click)="closeProviderModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedProvider ? 'Edit' : 'Add' }} Insurance Provider</h3>
+        <button class="btn-icon" (click)="closeProviderModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="providerForm" (ngSubmit)="saveProvider()">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" class="form-control">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Code</label>
+            <input type="text" formControlName="code" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Payer ID</label>
+            <input type="text" formControlName="payerId" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" formControlName="address" class="form-control">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" formControlName="city" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>State</label>
+            <input type="text" formControlName="state" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Zip Code</label>
+            <input type="text" formControlName="zipCode" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" formControlName="phoneNumber" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email" class="form-control">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeProviderModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="providerForm.invalid">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Patient Insurance Modal -->
+  <div class="modal-overlay" *ngIf="showPatientInsuranceModal" (click)="closePatientInsuranceModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add Patient Insurance</h3>
+        <button class="btn-icon" (click)="closePatientInsuranceModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="patientInsuranceForm" (ngSubmit)="savePatientInsurance()">
+        <div class="form-group">
+          <label>Patient *</label>
+          <select formControlName="patientId" class="form-control">
+            <option value="">Select Patient</option>
+            <option *ngFor="let patient of patients" [value]="patient.id">{{ patient.user?.firstName }} {{ patient.user?.lastName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Insurance Provider *</label>
+          <select formControlName="insuranceProviderId" class="form-control">
+            <option value="">Select Provider</option>
+            <option *ngFor="let provider of providers" [value]="provider.id">{{ provider.name }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Policy Number *</label>
+          <input type="text" formControlName="policyNumber" class="form-control">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Group Number</label>
+            <input type="text" formControlName="groupNumber" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Subscriber ID</label>
+            <input type="text" formControlName="subscriberId" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Coverage Type</label>
+          <select formControlName="coverageType" class="form-control">
+            <option value="Primary">Primary</option>
+            <option value="Secondary">Secondary</option>
+            <option value="Tertiary">Tertiary</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Effective Date</label>
+            <input type="date" formControlName="effectiveDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Expiration Date</label>
+            <input type="date" formControlName="expirationDate" class="form-control">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closePatientInsuranceModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="patientInsuranceForm.invalid">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Verification Modal -->
+  <div class="modal-overlay" *ngIf="showVerificationModal" (click)="closeVerificationModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Verify Insurance</h3>
+        <button class="btn-icon" (click)="closeVerificationModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="verificationForm" (ngSubmit)="verifyInsurance()">
+        <div class="form-group">
+          <label>Verification Notes</label>
+          <textarea formControlName="verificationNotes" class="form-control" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeVerificationModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Verify</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Claim Modal -->
+  <div class="modal-overlay" *ngIf="showClaimModal" (click)="closeClaimModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedClaim ? 'View' : 'Create' }} Claim</h3>
+        <button class="btn-icon" (click)="closeClaimModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="claimForm" (ngSubmit)="saveClaim()">
+        <div class="form-group">
+          <label>Service Date *</label>
+          <input type="date" formControlName="serviceDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Invoice ID *</label>
+          <input type="number" formControlName="invoiceId" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Patient Insurance *</label>
+          <select formControlName="patientInsuranceId" class="form-control">
+            <option value="">Select Insurance</option>
+            <option *ngFor="let insurance of patientInsurances" [value]="insurance.id">
+              {{ insurance.patientName }} - {{ insurance.insuranceProviderName }} ({{ insurance.policyNumber }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Diagnosis Codes</label>
+          <input type="text" formControlName="diagnosisCodes" class="form-control" placeholder="Comma-separated ICD-10 codes">
+        </div>
+        <div class="form-group">
+          <label>Procedure Codes</label>
+          <input type="text" formControlName="procedureCodes" class="form-control" placeholder="Comma-separated CPT codes">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-actions" *ngIf="!selectedClaim">
+          <button type="button" class="btn-secondary" (click)="closeClaimModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="claimForm.invalid">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Submit Claim Modal -->
+  <div class="modal-overlay" *ngIf="showSubmitClaimModal" (click)="closeSubmitClaimModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Submit Claim</h3>
+        <button class="btn-icon" (click)="closeSubmitClaimModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="submitClaimForm" (ngSubmit)="submitClaim()">
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeSubmitClaimModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Post Payment</h3>
+        <button class="btn-icon" (click)="closePaymentModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="paymentForm" (ngSubmit)="postPayment()">
+        <div class="form-group">
+          <label>Payment Reference *</label>
+          <input type="text" formControlName="paymentReference" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Payment Date *</label>
+          <input type="date" formControlName="paymentDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Amount *</label>
+          <input type="number" formControlName="amount" class="form-control" step="0.01" min="0.01">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Check Number</label>
+            <input type="text" formControlName="checkNumber" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>EFT Reference</label>
+            <input type="text" formControlName="eftReference" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closePaymentModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="paymentForm.invalid">Post Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Denial Modal -->
+  <div class="modal-overlay" *ngIf="showDenialModal" (click)="closeDenialModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add Denial</h3>
+        <button class="btn-icon" (click)="closeDenialModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="denialForm" (ngSubmit)="addDenial()">
+        <div class="form-group">
+          <label>Denial Code *</label>
+          <input type="text" formControlName="denialCode" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Denial Reason *</label>
+          <textarea formControlName="denialReason" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Adjustment Code</label>
+          <input type="text" formControlName="adjustmentCode" class="form-control">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Denied Amount *</label>
+            <input type="number" formControlName="deniedAmount" class="form-control" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Denial Date *</label>
+            <input type="date" formControlName="denialDate" class="form-control">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeDenialModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="denialForm.invalid">Add Denial</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Prior Authorization Modal -->
+  <div class="modal-overlay" *ngIf="showPriorAuthModal" (click)="closePriorAuthModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Request Prior Authorization</h3>
+        <button class="btn-icon" (click)="closePriorAuthModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="priorAuthForm" (ngSubmit)="savePriorAuth()">
+        <div class="form-group">
+          <label>Patient Insurance *</label>
+          <select formControlName="patientInsuranceId" class="form-control">
+            <option value="">Select Insurance</option>
+            <option *ngFor="let insurance of patientInsurances" [value]="insurance.id">
+              {{ insurance.patientName }} - {{ insurance.insuranceProviderName }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Service Type</label>
+          <input type="text" formControlName="serviceType" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Service Description</label>
+          <textarea formControlName="serviceDescription" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Diagnosis Code</label>
+            <input type="text" formControlName="diagnosisCode" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Procedure Code</label>
+            <input type="text" formControlName="procedureCode" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Requested Amount</label>
+            <input type="number" formControlName="requestedAmount" class="form-control" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Units</label>
+            <input type="number" formControlName="units" class="form-control" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closePriorAuthModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="priorAuthForm.invalid">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

@@ -56,6 +56,12 @@ namespace Infrastructure.Data
         public DbSet<Queue> Queues { get; set; }
         public DbSet<EDVisit> EDVisits { get; set; }
         public DbSet<DrugInteraction> DrugInteractions { get; set; }
+        public DbSet<InsuranceProvider> InsuranceProviders { get; set; }
+        public DbSet<PatientInsurance> PatientInsurances { get; set; }
+        public DbSet<Claim> Claims { get; set; }
+        public DbSet<PriorAuthorization> PriorAuthorizations { get; set; }
+        public DbSet<ClaimDenial> ClaimDenials { get; set; }
+        public DbSet<ClaimPayment> ClaimPayments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

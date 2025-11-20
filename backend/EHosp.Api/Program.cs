@@ -141,6 +141,14 @@ builder.Services.AddScoped<IDiagnosisService, DiagnosisService>();
         builder.Services.AddScoped<IDrugInteractionRepository, DrugInteractionRepository>();
         builder.Services.AddScoped<IDrugInteractionService, DrugInteractionService>();
         builder.Services.AddScoped<PrescriptionSafetyService>();
+        builder.Services.AddScoped<IInsuranceProviderRepository, InsuranceProviderRepository>();
+        builder.Services.AddScoped<IInsuranceProviderService, InsuranceProviderService>();
+        builder.Services.AddScoped<IPatientInsuranceRepository, PatientInsuranceRepository>();
+        builder.Services.AddScoped<IPatientInsuranceService, PatientInsuranceService>();
+        builder.Services.AddScoped<IClaimRepository, ClaimRepository>();
+        builder.Services.AddScoped<IClaimService, ClaimService>();
+        builder.Services.AddScoped<IPriorAuthorizationRepository, PriorAuthorizationRepository>();
+        builder.Services.AddScoped<IPriorAuthorizationService, PriorAuthorizationService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

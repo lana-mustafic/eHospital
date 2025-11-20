@@ -173,6 +173,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/emergency/emergency').then(m => m.EmergencyComponent)
       },
+      {
+        path: 'insurance',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Receptionist'] },
+        loadComponent: () => import('./features/insurance/insurance').then(m => m.InsuranceComponent)
+      },
     ],
   },
   {

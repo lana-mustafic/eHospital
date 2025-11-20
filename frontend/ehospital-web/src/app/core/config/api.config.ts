@@ -31,7 +31,11 @@ export const API_CONFIG = {
     suppliers: '/suppliers',
     inventoryItems: '/inventoryitems',
     purchaseOrders: '/purchaseorders',
-    stockMovements: '/stockmovements'
+    stockMovements: '/stockmovements',
+    insuranceProviders: '/insuranceproviders',
+    patientInsurances: '/patientinsurances',
+    claims: '/claims',
+    priorAuthorizations: '/priorauthorizations'
   }
 };
 
