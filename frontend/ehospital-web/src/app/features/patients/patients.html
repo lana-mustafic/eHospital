@@ -24,29 +24,46 @@
 
   <!-- Search and Filters -->
   <div class="search-section">
-    <div class="search-box">
-      <span class="material-icons">search</span>
-      <input
-        type="text"
-        placeholder="Search by name, email, or phone..."
-        [(ngModel)]="searchTerm"
-        (input)="search()"
-      />
-    </div>
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
-        <span class="material-icons">file_download</span>
-        CSV
-      </button>
-      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
-        <span class="material-icons">picture_as_pdf</span>
-        PDF
+    <div class="search-container">
+      <app-autocomplete-search
+        placeholder="Search patients by name, email, or phone..."
+        [options]="autocompleteOptions"
+        [minLength]="2"
+        (search)="onSearch($event)"
+        (select)="onPatientSelect($event)">
+      </app-autocomplete-search>
+      <button 
+        class="btn-filter" 
+        [class.active]="showAdvancedFilters"
+        (click)="toggleAdvancedFilters()"
+        title="Advanced Filters">
+        <span class="material-icons">tune</span>
+        Filters
       </button>
     </div>
-    <div class="results-count">
-      {{ filteredPatients.length }} patient(s) found
+    <div class="search-actions">
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+          <span class="material-icons">file_download</span>
+          CSV
+        </button>
+        <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+          <span class="material-icons">picture_as_pdf</span>
+          PDF
+        </button>
+      </div>
+      <div class="results-count">
+        {{ filteredPatients.length }} patient(s) found
+      </div>
     </div>
   </div>
+
+  <!-- Advanced Filters Panel -->
+  <app-advanced-filters
+    [isOpen]="showAdvancedFilters"
+    (filterChange)="onFilterChange($event)"
+    (close)="closeAdvancedFilters()">
+  </app-advanced-filters>
 
   <!-- Loading State -->
   <app-table-skeleton *ngIf="isLoading" [headers]="9" [rows]="8"></app-table-skeleton>

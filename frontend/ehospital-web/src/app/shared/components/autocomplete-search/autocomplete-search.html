@@ -1,0 +1,40 @@
+<div class="autocomplete-search">
+  <div class="search-input-wrapper">
+    <span class="material-icons search-icon">search</span>
+    <input
+      #inputElement
+      type="text"
+      class="search-input"
+      [placeholder]="placeholder"
+      [(ngModel)]="searchTerm"
+      (input)="onInputChange()"
+      (keydown)="onKeyDown($event)"
+      (focus)="searchTerm.length >= minLength && filteredOptions.length > 0 && (showDropdown = true)"
+    />
+    <button 
+      *ngIf="searchTerm" 
+      class="clear-btn" 
+      (click)="clearSearch()"
+      type="button"
+      title="Clear search">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+  
+  <div class="dropdown" *ngIf="showDropdown && filteredOptions.length > 0">
+    <div 
+      *ngFor="let option of filteredOptions; let i = index"
+      class="dropdown-item"
+      [class.selected]="i === selectedIndex"
+      (click)="selectOption(option)"
+      (mouseenter)="selectedIndex = i">
+      <div class="option-label">{{ option.label }}</div>
+      <div class="option-subtitle" *ngIf="option.subtitle">{{ option.subtitle }}</div>
+    </div>
+  </div>
+  
+  <div class="dropdown empty" *ngIf="showDropdown && filteredOptions.length === 0 && searchTerm.length >= minLength">
+    <div class="dropdown-item no-results">No results found</div>
+  </div>
+</div>
+

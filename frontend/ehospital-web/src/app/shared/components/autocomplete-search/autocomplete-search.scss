@@ -1,0 +1,138 @@
+.autocomplete-search {
+  position: relative;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .search-icon {
+    color: #999;
+    font-size: 20px;
+    margin-right: 8px;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 10px 0;
+    font-size: 14px;
+    background: transparent;
+
+    &::placeholder {
+      color: #999;
+    }
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .material-icons {
+      font-size: 18px;
+    }
+  }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+
+  &.empty {
+    padding: 12px;
+  }
+
+  .dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f5f5f5;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover,
+    &.selected {
+      background: #f0f7ff;
+    }
+
+    .option-label {
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .option-subtitle {
+      font-size: 12px;
+      color: #666;
+    }
+
+    &.no-results {
+      color: #999;
+      text-align: center;
+      cursor: default;
+      font-size: 14px;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+}
+
+// Scrollbar styling
+.dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+
+  &:hover {
+    background: #555;
+  }
+}
+

@@ -5,15 +5,18 @@ import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PatientService } from './services/patient.service';
 import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
+import { PatientSearchFilter } from './models/search-filter.model';
 import { ToastService } from '../../core/services/toast.service';
 import { TableSkeletonComponent } from '../../shared/components/table-skeleton/table-skeleton.component';
 import { ExportService } from '../../core/services/export.service';
 import { PatientHistoryTimelineComponent } from './components/patient-history-timeline/patient-history-timeline.component';
+import { AutocompleteSearchComponent, AutocompleteOption } from '../../shared/components/autocomplete-search/autocomplete-search';
+import { AdvancedFiltersComponent } from './components/advanced-filters/advanced-filters';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TableSkeletonComponent, PatientHistoryTimelineComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TableSkeletonComponent, PatientHistoryTimelineComponent, AutocompleteSearchComponent, AdvancedFiltersComponent],
   templateUrl: './patients.html',
   styleUrls: ['./patients.scss']
 })
@@ -25,10 +28,13 @@ export class PatientsComponent implements OnInit {
   searchTerm = '';
   showModal = false;
   showHistoryModal = false;
+  showAdvancedFilters = false;
   isEditMode = false;
   selectedPatient: Patient | null = null;
   selectedPatientForHistory: Patient | null = null;
   patientForm: FormGroup;
+  currentFilter: PatientSearchFilter = {};
+  autocompleteOptions: AutocompleteOption[] = [];
   
   // Pagination
   currentPage = 1;
@@ -64,8 +70,8 @@ export class PatientsComponent implements OnInit {
     this.patientService.getAll().subscribe({
       next: (data) => {
         this.patients = data;
-        this.filteredPatients = data;
-        this.updatePagination();
+        this.updateAutocompleteOptions();
+        this.applyFilters();
         this.isLoading = false;
       },
       error: (error) => {
@@ -76,20 +82,100 @@ export class PatientsComponent implements OnInit {
     });
   }
 
-  search() {
-    const term = this.searchTerm.toLowerCase().trim();
-    if (!term) {
-      this.filteredPatients = this.patients;
-    } else {
-      this.filteredPatients = this.patients.filter(patient =>
+  updateAutocompleteOptions(): void {
+    this.autocompleteOptions = this.patients.map(patient => ({
+      id: patient.id,
+      label: `${patient.firstName} ${patient.lastName}`,
+      subtitle: `${patient.email} • ${patient.phoneNumber}`,
+      data: patient
+    }));
+  }
+
+  onSearch(term: string): void {
+    this.searchTerm = term;
+    this.currentFilter.searchTerm = term || undefined;
+    this.applyFilters();
+  }
+
+  onPatientSelect(option: AutocompleteOption): void {
+    const patient = option.data as Patient;
+    if (patient) {
+      // Navigate to patient summary or filter to show only this patient
+      this.searchTerm = option.label;
+      this.currentFilter.searchTerm = `${patient.firstName} ${patient.lastName}`;
+      this.applyFilters();
+    }
+  }
+
+  onFilterChange(filter: PatientSearchFilter): void {
+    this.currentFilter = { ...filter };
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.patients];
+
+    // Apply search term filter
+    if (this.currentFilter.searchTerm) {
+      const term = this.currentFilter.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(patient =>
         patient.firstName.toLowerCase().includes(term) ||
         patient.lastName.toLowerCase().includes(term) ||
         patient.email.toLowerCase().includes(term) ||
         patient.phoneNumber.includes(term)
       );
     }
-    this.currentPage = 1; // Reset to first page on search
+
+    // Apply gender filter
+    if (this.currentFilter.gender) {
+      filtered = filtered.filter(p => p.gender === this.currentFilter.gender);
+    }
+
+    // Apply blood type filter
+    if (this.currentFilter.bloodType) {
+      filtered = filtered.filter(p => p.bloodType === this.currentFilter.bloodType);
+    }
+
+    // Apply date of birth range filter
+    if (this.currentFilter.dateOfBirthFrom) {
+      const fromDate = new Date(this.currentFilter.dateOfBirthFrom);
+      filtered = filtered.filter(p => new Date(p.dateOfBirth) >= fromDate);
+    }
+    if (this.currentFilter.dateOfBirthTo) {
+      const toDate = new Date(this.currentFilter.dateOfBirthTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(p => new Date(p.dateOfBirth) <= toDate);
+    }
+
+    // Apply age range filter
+    if (this.currentFilter.ageFrom !== undefined) {
+      filtered = filtered.filter(p => this.getAge(p.dateOfBirth) >= this.currentFilter.ageFrom!);
+    }
+    if (this.currentFilter.ageTo !== undefined) {
+      filtered = filtered.filter(p => this.getAge(p.dateOfBirth) <= this.currentFilter.ageTo!);
+    }
+
+    // Apply emergency contact filter
+    if (this.currentFilter.hasEmergencyContact) {
+      filtered = filtered.filter(p => p.emergencyContact && p.emergencyContact.trim().length > 0);
+    }
+
+    // Apply blood type presence filter
+    if (this.currentFilter.hasBloodType) {
+      filtered = filtered.filter(p => p.bloodType && p.bloodType.trim().length > 0);
+    }
+
+    this.filteredPatients = filtered;
+    this.currentPage = 1; // Reset to first page on filter
     this.updatePagination();
+  }
+
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters = !this.showAdvancedFilters;
+  }
+
+  closeAdvancedFilters(): void {
+    this.showAdvancedFilters = false;
   }
   
   updatePagination() {
