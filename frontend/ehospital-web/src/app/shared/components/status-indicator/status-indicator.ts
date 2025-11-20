@@ -44,86 +44,86 @@ export type StatusType = 'available' | 'occupied' | 'maintenance' | 'reserved' |
     }
 
     // Bed Status Colors
-    &.status-available {
+    .status-indicator.status-available {
       background-color: #d1fae5;
       color: #065f46;
       border-color: #10b981;
-      
-      .status-dot {
-        background-color: #10b981;
-      }
     }
 
-    &.status-occupied {
+    .status-indicator.status-available .status-dot {
+      background-color: #10b981;
+    }
+
+    .status-indicator.status-occupied {
       background-color: #fee2e2;
       color: #991b1b;
       border-color: #ef4444;
-      
-      .status-dot {
-        background-color: #ef4444;
-      }
     }
 
-    &.status-maintenance {
+    .status-indicator.status-occupied .status-dot {
+      background-color: #ef4444;
+    }
+
+    .status-indicator.status-maintenance {
       background-color: #fef3c7;
       color: #92400e;
       border-color: #f59e0b;
-      
-      .status-dot {
-        background-color: #f59e0b;
-      }
     }
 
-    &.status-reserved {
+    .status-indicator.status-maintenance .status-dot {
+      background-color: #f59e0b;
+    }
+
+    .status-indicator.status-reserved {
       background-color: #dbeafe;
       color: #1e40af;
       border-color: #3b82f6;
-      
-      .status-dot {
-        background-color: #3b82f6;
-      }
+    }
+
+    .status-indicator.status-reserved .status-dot {
+      background-color: #3b82f6;
     }
 
     // Priority Colors
-    &.status-urgent {
+    .status-indicator.status-urgent {
       background-color: #fee2e2;
       color: #991b1b;
       border-color: #ef4444;
       animation: pulse-urgent 2s infinite;
-      
-      .status-dot {
-        background-color: #ef4444;
-      }
     }
 
-    &.status-high {
+    .status-indicator.status-urgent .status-dot {
+      background-color: #ef4444;
+    }
+
+    .status-indicator.status-high {
       background-color: #fed7aa;
       color: #9a3412;
       border-color: #ea580c;
-      
-      .status-dot {
-        background-color: #ea580c;
-      }
     }
 
-    &.status-normal {
+    .status-indicator.status-high .status-dot {
+      background-color: #ea580c;
+    }
+
+    .status-indicator.status-normal {
       background-color: #dbeafe;
       color: #1e40af;
       border-color: #3b82f6;
-      
-      .status-dot {
-        background-color: #3b82f6;
-      }
     }
 
-    &.status-low {
+    .status-indicator.status-normal .status-dot {
+      background-color: #3b82f6;
+    }
+
+    .status-indicator.status-low {
       background-color: #e5e7eb;
       color: #4b5563;
       border-color: #9ca3af;
-      
-      .status-dot {
-        background-color: #9ca3af;
-      }
+    }
+
+    .status-indicator.status-low .status-dot {
+      background-color: #9ca3af;
     }
 
     @keyframes pulse-urgent {

@@ -16,6 +16,8 @@ import { InvoiceService } from '../invoices/services/invoice.service';
 import { Appointment } from '../appointments/models/appointment.model';
 import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
+import { MetricsService } from './services/metrics.service';
+import { MetricsSummary } from './models/metrics.model';
 import { forkJoin, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 
@@ -85,6 +87,10 @@ export class Dashboard implements OnInit {
   appointmentTrendData: Array<{ label: string; value: number }> = [];
   monthlyAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
   
+  // Realistic Metrics
+  metricsSummary?: MetricsSummary;
+  showMetrics = false;
+  
   // User role
   currentUserRole: string = '';
   currentUserName: string = '';
@@ -116,7 +122,8 @@ export class Dashboard implements OnInit {
     private prescriptionService: PrescriptionService,
     private roomService: RoomService,
     private invoiceService: InvoiceService,
-    private authService: AuthService
+    private authService: AuthService,
+    private metricsService: MetricsService
   ) {}
 
   ngOnInit() {
@@ -130,6 +137,41 @@ export class Dashboard implements OnInit {
       this.isReceptionist = this.currentUserRole.toLowerCase() === 'receptionist';
     }
     this.loadDashboardData();
+    // Load realistic metrics for admin users
+    if (this.isAdmin) {
+      this.loadMetrics();
+    }
+  }
+
+  loadMetrics() {
+    this.metricsService.getMetricsSummary().subscribe({
+      next: (metrics) => {
+        this.metricsSummary = metrics;
+        this.showMetrics = true;
+      },
+      error: (err) => {
+        console.error('Error loading metrics:', err);
+        // Don't show error to user, just don't display metrics
+      }
+    });
+  }
+
+  getCategoryLabel(key: string): string {
+    const labels: { [key: string]: string } = {
+      service: 'Service',
+      cleanliness: 'Cleanliness',
+      communication: 'Communication',
+      waitTime: 'Wait Time',
+      overall: 'Overall'
+    };
+    return labels[key] || key;
+  }
+
+  getSatisfactionCategories(): Array<[string, number]> {
+    if (!this.metricsSummary?.patientSatisfaction?.byCategory) {
+      return [];
+    }
+    return Object.entries(this.metricsSummary.patientSatisfaction.byCategory);
   }
 
   loadDashboardData() {

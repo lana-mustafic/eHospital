@@ -1107,6 +1107,219 @@
             ></app-bar-chart>
           </div>
         </div>
+
+        <!-- Realistic Metrics Section -->
+        @if (showMetrics && metricsSummary) {
+          <div class="realistic-metrics-section">
+            <h2 class="section-title">Performance Metrics</h2>
+            
+            <!-- Average Wait Time -->
+            <div class="metrics-card">
+              <div class="card-header">
+                <div class="card-title-section">
+                  <span class="material-icons">schedule</span>
+                  <h3>Average Wait Time</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="metric-main-value">
+                  <span class="value-large">{{ metricsSummary.averageWaitTime.overall }}</span>
+                  <span class="value-unit">minutes</span>
+                </div>
+                <div class="metric-breakdown">
+                  <div class="breakdown-section">
+                    <h4>By Department</h4>
+                    <div class="breakdown-list">
+                      @for (dept of metricsSummary.averageWaitTime.byDepartment.slice(0, 5); track dept.department) {
+                        <div class="breakdown-item">
+                          <span class="label">{{ dept.department }}</span>
+                          <span class="value">{{ dept.averageWaitTime }} min</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <div class="breakdown-section">
+                    <h4>7-Day Trend</h4>
+                    <div class="trend-chart-mini">
+                      @for (day of metricsSummary.averageWaitTime.trend; track day.date) {
+                        <div class="trend-bar" [style.height.%]="(day.averageWaitTime / 60) * 100" [title]="day.date + ': ' + day.averageWaitTime + ' min'">
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patient Satisfaction -->
+            <div class="metrics-card">
+              <div class="card-header">
+                <div class="card-title-section">
+                  <span class="material-icons">sentiment_satisfied</span>
+                  <h3>Patient Satisfaction</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="metric-main-value">
+                  <span class="value-large">{{ metricsSummary.patientSatisfaction.overall }}</span>
+                  <span class="value-unit">/ 100</span>
+                  <div class="rating-stars">
+                    @for (star of [1,2,3,4,5]; track star) {
+                      <span class="material-icons" [class.filled]="star <= metricsSummary.patientSatisfaction.averageRating">
+                        {{ star <= metricsSummary.patientSatisfaction.averageRating ? 'star' : 'star_border' }}
+                      </span>
+                    }
+                    <span class="rating-text">{{ metricsSummary.patientSatisfaction.averageRating.toFixed(1) }}</span>
+                  </div>
+                </div>
+                <div class="satisfaction-categories">
+                  @for (category of getSatisfactionCategories(); track category[0]) {
+                    <div class="category-item">
+                      <div class="category-header">
+                        <span class="category-label">{{ getCategoryLabel(category[0]) }}</span>
+                        <span class="category-value">{{ category[1] }}%</span>
+                      </div>
+                      <div class="category-bar">
+                        <div class="category-fill" [style.width.%]="category[1]"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div class="metric-footer">
+                  <span class="response-count">{{ metricsSummary.patientSatisfaction.totalResponses }} responses</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Readmission Rate -->
+            <div class="metrics-card">
+              <div class="card-header">
+                <div class="card-title-section">
+                  <span class="material-icons">repeat</span>
+                  <h3>Readmission Rate</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="metric-main-value">
+                  <span class="value-large" [class.warning]="metricsSummary.readmissionRate.overall > 10" [class.success]="metricsSummary.readmissionRate.overall <= 8">
+                    {{ metricsSummary.readmissionRate.overall }}%
+                  </span>
+                  <div class="rate-breakdown">
+                    <span class="rate-item">30 days: {{ metricsSummary.readmissionRate.within30Days }}%</span>
+                    <span class="rate-item">90 days: {{ metricsSummary.readmissionRate.within90Days }}%</span>
+                  </div>
+                </div>
+                <div class="readmission-by-dept">
+                  <h4>By Department</h4>
+                  <div class="dept-list">
+                    @for (dept of metricsSummary.readmissionRate.byDepartment.slice(0, 5); track dept.department) {
+                      <div class="dept-item">
+                        <div class="dept-header">
+                          <span class="dept-name">{{ dept.department }}</span>
+                          <span class="dept-rate" [class.warning]="dept.rate > 10">{{ dept.rate }}%</span>
+                        </div>
+                        <div class="dept-stats">
+                          <span>{{ dept.count }} readmissions / {{ dept.totalDischarges }} discharges</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Department Utilization -->
+            <div class="metrics-card">
+              <div class="card-header">
+                <div class="card-title-section">
+                  <span class="material-icons">business</span>
+                  <h3>Department Utilization</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="utilization-grid">
+                  @for (dept of metricsSummary.departmentUtilization.slice(0, 6); track dept.department) {
+                    <div class="utilization-item">
+                      <div class="util-header">
+                        <span class="util-name">{{ dept.department }}</span>
+                        <span class="util-rate" [class.high]="dept.utilizationRate > 80" [class.medium]="dept.utilizationRate > 50 && dept.utilizationRate <= 80">
+                          {{ dept.utilizationRate }}%
+                        </span>
+                      </div>
+                      <div class="util-bar">
+                        <div class="util-fill" [style.width.%]="dept.utilizationRate" [class.high]="dept.utilizationRate > 80" [class.medium]="dept.utilizationRate > 50 && dept.utilizationRate <= 80"></div>
+                      </div>
+                      <div class="util-details">
+                        <span>{{ dept.currentUsage }}/{{ dept.totalCapacity }} slots</span>
+                        <span>{{ dept.appointments }} appointments</span>
+                      </div>
+                      @if (dept.peakHours.length > 0) {
+                        <div class="peak-hours">
+                          <span class="peak-label">Peak: </span>
+                          @for (hour of dept.peakHours; track hour) {
+                            <span class="peak-hour">{{ hour }}</span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Staff Productivity -->
+            <div class="metrics-card">
+              <div class="card-header">
+                <div class="card-title-section">
+                  <span class="material-icons">work</span>
+                  <h3>Staff Productivity</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="productivity-table">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Department</th>
+                        <th>Appointments/Day</th>
+                        <th>Patients Seen</th>
+                        <th>Avg Consultation</th>
+                        <th>Completion Rate</th>
+                        <th>Satisfaction</th>
+                        <th>Efficiency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (staff of metricsSummary.staffProductivity.slice(0, 10); track staff.doctorId) {
+                        <tr>
+                          <td><strong>{{ staff.doctorName }}</strong></td>
+                          <td>{{ staff.department }}</td>
+                          <td>{{ staff.appointmentsPerDay }}</td>
+                          <td>{{ staff.patientsSeen }}</td>
+                          <td>{{ staff.averageConsultationTime }} min</td>
+                          <td>
+                            <span class="rate-badge" [class.high]="staff.completionRate >= 90" [class.medium]="staff.completionRate >= 75 && staff.completionRate < 90">
+                              {{ staff.completionRate }}%
+                            </span>
+                          </td>
+                          <td>
+                            <span class="satisfaction-badge">{{ staff.patientSatisfaction }}%</span>
+                          </td>
+                          <td>
+                            <span class="efficiency-badge" [class.excellent]="staff.efficiencyScore >= 90" [class.good]="staff.efficiencyScore >= 75 && staff.efficiencyScore < 90">
+                              {{ staff.efficiencyScore }}
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
       }
     }
   }
