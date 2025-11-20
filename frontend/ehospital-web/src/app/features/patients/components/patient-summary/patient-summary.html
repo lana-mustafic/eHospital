@@ -1,0 +1,337 @@
+<div class="patient-summary-container">
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading patient summary...</p>
+    </div>
+  } @else if (summary) {
+    <!-- Header -->
+    <div class="summary-header">
+      <div class="header-content">
+        <button class="btn-back" (click)="navigateToPatientList()">
+          <span class="material-icons">arrow_back</span>
+          Back to Patients
+        </button>
+        <div class="patient-header-info">
+          <h1>{{ summary.patient.firstName }} {{ summary.patient.lastName }}</h1>
+          <div class="patient-meta">
+            <span class="mrn">MRN: {{ summary.patient.id }}</span>
+            <span class="age">{{ summary.demographics.age }} years old</span>
+            <span class="gender">{{ summary.demographics.gender }}</span>
+            @if (summary.demographics.bloodType) {
+              <span class="blood-type">Blood Type: {{ summary.demographics.bloodType }}</span>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="navigateToMedicalRecord()">
+          <span class="material-icons">folder_shared</span>
+          View Full Medical Record
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="summary-grid">
+      <!-- Left Column -->
+      <div class="left-column">
+        <!-- Demographics Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">person</span>
+            <h2>Demographics</h2>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">Date of Birth</span>
+                <span class="value">{{ formatDate(summary.patient.dateOfBirth) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Age</span>
+                <span class="value">{{ summary.demographics.age }} years</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Gender</span>
+                <span class="value">{{ summary.demographics.gender }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Blood Type</span>
+                <span class="value">{{ summary.demographics.bloodType || 'Not specified' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Email</span>
+                <span class="value">{{ summary.demographics.email }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Phone</span>
+                <span class="value">{{ summary.demographics.phoneNumber }}</span>
+              </div>
+              @if (summary.demographics.address) {
+                <div class="info-item full-width">
+                  <span class="label">Address</span>
+                  <span class="value">{{ summary.demographics.address }}</span>
+                </div>
+              }
+              @if (summary.demographics.emergencyContact) {
+                <div class="info-item full-width">
+                  <span class="label">Emergency Contact</span>
+                  <span class="value">{{ summary.demographics.emergencyContact }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Allergies Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">warning</span>
+            <h2>Allergies</h2>
+            <span class="badge">{{ summary.allergies.length }}</span>
+          </div>
+          <div class="card-body">
+            @if (summary.allergies.length > 0) {
+              <div class="allergies-list">
+                @for (allergy of summary.allergies; track allergy.id) {
+                  <div class="allergy-item" [ngClass]="getSeverityClass(allergy.severity)">
+                    <div class="allergy-header">
+                      <strong>{{ allergy.allergenName }}</strong>
+                      <span class="severity-badge" [ngClass]="getSeverityClass(allergy.severity)">
+                        {{ allergy.severity }}
+                      </span>
+                    </div>
+                    <div class="allergy-details">
+                      <span class="type">{{ allergy.allergyType }}</span>
+                      @if (allergy.reaction) {
+                        <span class="reaction">Reaction: {{ allergy.reaction }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">No known allergies</p>
+            }
+          </div>
+        </div>
+
+        <!-- Active Medications Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">medication</span>
+            <h2>Active Medications</h2>
+            <span class="badge">{{ summary.activeMedications.length }}</span>
+          </div>
+          <div class="card-body">
+            @if (summary.activeMedications.length > 0) {
+              <div class="medications-list">
+                @for (med of summary.activeMedications; track med.id) {
+                  <div class="medication-item">
+                    <div class="medication-header">
+                      <strong>{{ med.medicationName }}</strong>
+                      <span class="status-badge" [ngClass]="getStatusClass(med.status || '')">
+                        {{ med.status }}
+                      </span>
+                    </div>
+                    <div class="medication-details">
+                      <span>Dosage: {{ med.dosage }}</span>
+                      @if (med.frequency) {
+                        <span>Frequency: {{ med.frequency }}</span>
+                      }
+                      @if (med.duration) {
+                        <span>Duration: {{ med.duration }} days</span>
+                      }
+                    </div>
+                    @if (med.instructions) {
+                      <div class="medication-instructions">{{ med.instructions }}</div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">No active medications</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="right-column">
+        <!-- Vital Signs Trend Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">monitor_heart</span>
+            <h2>Vital Signs Trend</h2>
+          </div>
+          <div class="card-body">
+            <div class="vital-signs-selector">
+              <button 
+                *ngFor="let sign of vitalSignOptions"
+                [class.active]="selectedVitalSign === sign"
+                (click)="selectVitalSign(sign)"
+                class="vital-sign-btn">
+                {{ getVitalSignButtonLabel(sign) }}
+              </button>
+            </div>
+            <div class="vital-signs-chart">
+              @if (getCurrentVitalSignData().length > 0) {
+                <div class="chart-container">
+                  <div class="chart-bars">
+                    @for (point of getCurrentVitalSignData(); track point.date) {
+                      <div class="chart-bar-wrapper">
+                        <div 
+                          class="chart-bar" 
+                          [style.height.%]="getBarHeight(point.value)"
+                          [title]="point.label || point.value.toString()">
+                        </div>
+                        <span class="chart-label">{{ formatDate(point.date) }}</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="chart-axis">
+                    <span class="axis-label min">{{ getVitalSignMinValue() }}</span>
+                    <span class="axis-label max">{{ getVitalSignMaxValue() }}</span>
+                  </div>
+                </div>
+                <div class="chart-title">{{ getVitalSignLabel() }}</div>
+              } @else {
+                <p class="empty-state">No vital signs data available</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Problems Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">assignment</span>
+            <h2>Active Problems</h2>
+            <span class="badge">{{ summary.activeProblems.length }}</span>
+          </div>
+          <div class="card-body">
+            @if (summary.activeProblems.length > 0) {
+              <div class="problems-list">
+                @for (problem of summary.activeProblems; track problem.id) {
+                  <div class="problem-item">
+                    <div class="problem-header">
+                      <strong>{{ problem.conditionName }}</strong>
+                      @if (problem.status) {
+                        <span class="status-badge">{{ problem.status }}</span>
+                      }
+                    </div>
+                    @if (problem.category) {
+                      <div class="problem-category">{{ problem.category }}</div>
+                    }
+                    @if (problem.diagnosisDate) {
+                      <div class="problem-date">Diagnosed: {{ formatDate(problem.diagnosisDate) }}</div>
+                    }
+                    @if (problem.treatment) {
+                      <div class="problem-treatment">Treatment: {{ problem.treatment }}</div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">No active problems</p>
+            }
+          </div>
+        </div>
+
+        <!-- Recent Visits Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">event</span>
+            <h2>Recent Visits</h2>
+          </div>
+          <div class="card-body">
+            @if (summary.recentVisits.length > 0) {
+              <div class="visits-list">
+                @for (visit of summary.recentVisits; track visit.id) {
+                  <div class="visit-item">
+                    <div class="visit-header">
+                      <strong>{{ formatDate(visit.appointmentDate) }}</strong>
+                      <span class="status-badge" [ngClass]="getStatusClass(visit.status)">
+                        {{ visit.status }}
+                      </span>
+                    </div>
+                    <div class="visit-details">
+                      <span>{{ visit.startTime }} - {{ visit.endTime }}</span>
+                      @if (visit.doctorName) {
+                        <span>Dr. {{ visit.doctorName }}</span>
+                      }
+                    </div>
+                    @if (visit.reason) {
+                      <div class="visit-reason">{{ visit.reason }}</div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">No recent visits</p>
+            }
+          </div>
+        </div>
+
+        <!-- Recent Lab Results Card -->
+        <div class="summary-card">
+          <div class="card-header">
+            <span class="material-icons">science</span>
+            <h2>Recent Lab Results</h2>
+          </div>
+          <div class="card-body">
+            @if (summary.recentLabResults.length > 0) {
+              <div class="lab-results-list">
+                @for (result of summary.recentLabResults; track result.id) {
+                  <div class="lab-result-item">
+                    <div class="lab-result-header">
+                      <strong>{{ result.testName }}</strong>
+                      <span class="test-type">{{ result.testType }}</span>
+                    </div>
+                    <div class="lab-result-date">{{ formatDateTime(result.completedDate || result.orderedDate) }}</div>
+                    @if (result.resultValues && result.resultValues.length > 0) {
+                      <div class="lab-result-values">
+                        @for (value of result.resultValues; track value.parameter) {
+                          <div class="result-value" [ngClass]="getFlagClass(value.flag)">
+                            <span class="parameter">{{ value.parameter }}:</span>
+                            <span class="value">{{ value.value }} {{ value.unit || '' }}</span>
+                            @if (value.normalRange) {
+                              <span class="range">({{ value.normalRange }})</span>
+                            }
+                            @if (value.flag && value.flag !== 'Normal') {
+                              <span class="flag-badge" [ngClass]="getFlagClass(value.flag)">
+                                {{ value.flag }}
+                              </span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else if (result.results) {
+                      <div class="lab-result-text">{{ result.results }}</div>
+                    }
+                    @if (result.isCritical) {
+                      <div class="critical-indicator">
+                        <span class="material-icons">warning</span>
+                        Critical Result
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">No recent lab results</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>Failed to load patient summary</p>
+      <button class="btn-primary" (click)="navigateToPatientList()">Back to Patients</button>
+    </div>
+  }
+</div>
+

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PatientService } from './services/patient.service';
 import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
@@ -12,7 +13,7 @@ import { PatientHistoryTimelineComponent } from './components/patient-history-ti
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent, PatientHistoryTimelineComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TableSkeletonComponent, PatientHistoryTimelineComponent],
   templateUrl: './patients.html',
   styleUrls: ['./patients.scss']
 })
