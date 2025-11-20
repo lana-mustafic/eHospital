@@ -47,7 +47,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { path: '/medical-history', icon: 'history', label: 'Patient History', roles: ['Admin', 'Doctor', 'Nurse'] },
         { path: '/diagnoses', icon: 'assignment', label: 'Diagnoses', roles: ['Admin', 'Doctor'] },
         { path: '/prescriptions', icon: 'receipt_long', label: 'Prescriptions', roles: ['Admin', 'Doctor'] },
-        { path: '/discharge-summaries', icon: 'description', label: 'Discharge Summaries', roles: ['Admin', 'Doctor'] }
+        { path: '/discharge-summaries', icon: 'description', label: 'Discharge Summaries', roles: ['Admin', 'Doctor'] },
+        { path: '/clinical-decision-support', icon: 'psychology', label: 'Clinical Decision Support', roles: ['Admin', 'Doctor', 'Nurse'] }
       ]
     },
     {

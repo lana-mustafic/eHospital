@@ -141,6 +141,7 @@ builder.Services.AddScoped<IDiagnosisService, DiagnosisService>();
         builder.Services.AddScoped<IDrugInteractionRepository, DrugInteractionRepository>();
         builder.Services.AddScoped<IDrugInteractionService, DrugInteractionService>();
         builder.Services.AddScoped<PrescriptionSafetyService>();
+        builder.Services.AddScoped<IClinicalDecisionSupportService, ClinicalDecisionSupportService>();
         builder.Services.AddScoped<IInsuranceProviderRepository, InsuranceProviderRepository>();
         builder.Services.AddScoped<IInsuranceProviderService, InsuranceProviderService>();
         builder.Services.AddScoped<IPatientInsuranceRepository, PatientInsuranceRepository>();

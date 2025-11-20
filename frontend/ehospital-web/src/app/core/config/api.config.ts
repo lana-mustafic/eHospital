@@ -35,7 +35,8 @@ export const API_CONFIG = {
     insuranceProviders: '/insuranceproviders',
     patientInsurances: '/patientinsurances',
     claims: '/claims',
-    priorAuthorizations: '/priorauthorizations'
+    priorAuthorizations: '/priorauthorizations',
+    clinicalDecisionSupport: '/clinicaldecisionsupport'
   }
 };
 

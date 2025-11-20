@@ -179,6 +179,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Receptionist'] },
         loadComponent: () => import('./features/insurance/insurance').then(m => m.InsuranceComponent)
       },
+      {
+        path: 'clinical-decision-support',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse'] },
+        loadComponent: () => import('./features/clinical-decision-support/clinical-decision-support').then(m => m.ClinicalDecisionSupportComponent)
+      },
     ],
   },
   {

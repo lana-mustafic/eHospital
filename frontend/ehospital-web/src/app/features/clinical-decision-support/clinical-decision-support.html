@@ -1,0 +1,517 @@
+<div class="cds-container">
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Clinical Decision Support</span>
+      </div>
+      <h2>Clinical Decision Support</h2>
+      <p>Drug interaction warnings, clinical guidelines, protocol suggestions, and critical value alerts</p>
+    </div>
+    <button class="btn-primary" *ngIf="activeTab === 'interactions'" (click)="openInteractionCheckModal()">
+      <span class="material-icons">science</span>
+      Check Interactions
+    </button>
+    <button class="btn-primary" *ngIf="activeTab === 'protocols'" (click)="protocolSearchForm.reset()">
+      <span class="material-icons">search</span>
+      Search Protocols
+    </button>
+  </div>
+
+  <!-- Critical Alerts Banner -->
+  <div class="alerts-banner" *ngIf="unacknowledgedAlerts.length > 0">
+    <div class="alert-header">
+      <span class="material-icons">warning</span>
+      <h3>Critical Value Alerts ({{ unacknowledgedAlerts.length }})</h3>
+    </div>
+    <div class="alert-items">
+      <div class="alert-item" *ngFor="let alert of unacknowledgedAlerts.slice(0, 5)" [ngClass]="getAlertSeverityClass(alert.severity)">
+        <div class="alert-content">
+          <strong>{{ alert.patientName }}</strong> - {{ alert.testName }}: {{ alert.parameter }} = {{ alert.value }} {{ alert.unit }}
+          <span class="alert-message">{{ alert.alertMessage }}</span>
+        </div>
+        <button class="btn-sm" (click)="acknowledgeAlert(alert)">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')">
+      <span class="material-icons">dashboard</span>
+      Dashboard
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'interactions'" (click)="setActiveTab('interactions')">
+      <span class="material-icons">warning</span>
+      Drug Interactions
+      <span class="badge" *ngIf="dashboard && dashboard.activeInteractions">{{ dashboard.activeInteractions }}</span>
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'guidelines'" (click)="setActiveTab('guidelines')">
+      <span class="material-icons">menu_book</span>
+      Clinical Guidelines
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'protocols'" (click)="setActiveTab('protocols')">
+      <span class="material-icons">assignment</span>
+      Protocol Suggestions
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'alerts'" (click)="setActiveTab('alerts')">
+      <span class="material-icons">notifications_active</span>
+      Critical Alerts
+      <span class="badge badge-danger" *ngIf="unacknowledgedAlerts.length">{{ unacknowledgedAlerts.length }}</span>
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'reminders'" (click)="setActiveTab('reminders')">
+      <span class="material-icons">event_note</span>
+      Reminders
+    </button>
+  </div>
+
+  <!-- Dashboard Tab -->
+  <div *ngIf="activeTab === 'dashboard'" class="tab-content">
+    <div class="dashboard-grid" *ngIf="dashboard">
+      <div class="stat-card">
+        <div class="stat-icon interactions">
+          <span class="material-icons">warning</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.activeInteractions }}</div>
+          <div class="stat-label">Active Interactions</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon alerts">
+          <span class="material-icons">notifications_active</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.pendingAlerts }}</div>
+          <div class="stat-label">Pending Alerts</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon guidelines">
+          <span class="material-icons">menu_book</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.guidelinesAvailable }}</div>
+          <div class="stat-label">Guidelines Available</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon protocols">
+          <span class="material-icons">assignment</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.protocolsSuggested }}</div>
+          <div class="stat-label">Protocols Suggested</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-sections">
+      <div class="section-card">
+        <h3>Recent Critical Alerts</h3>
+        <div class="alert-list" *ngIf="dashboard && dashboard.recentAlerts && dashboard.recentAlerts.length > 0">
+          <div class="alert-item-small" *ngFor="let alert of dashboard.recentAlerts.slice(0, 5)" [ngClass]="getAlertSeverityClass(alert.severity)">
+            <span class="material-icons">warning</span>
+            <div class="alert-info">
+              <strong>{{ alert.patientName }}</strong>
+              <span>{{ alert.testName }}: {{ alert.parameter }} = {{ alert.value }} {{ alert.unit }}</span>
+            </div>
+            <span class="alert-time">{{ alert.timestamp | date:'short' }}</span>
+          </div>
+        </div>
+        <p class="empty-state" *ngIf="!dashboard || !dashboard.recentAlerts || dashboard.recentAlerts.length === 0">No recent alerts</p>
+      </div>
+
+      <div class="section-card">
+        <h3>Recent Drug Interactions</h3>
+        <div class="interaction-list" *ngIf="dashboard && dashboard.recentInteractions && dashboard.recentInteractions.length > 0">
+          <div class="interaction-item" *ngFor="let interaction of dashboard.recentInteractions.slice(0, 5)" [ngClass]="getSeverityClass(interaction.severity)">
+            <span class="material-icons">science</span>
+            <div class="interaction-info">
+              <strong>{{ interaction.medication1Name }} + {{ interaction.medication2Name }}</strong>
+              <span>{{ interaction.severity }} - {{ interaction.description }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="empty-state" *ngIf="!dashboard || !dashboard.recentInteractions || dashboard.recentInteractions.length === 0">No recent interactions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drug Interactions Tab -->
+  <div *ngIf="activeTab === 'interactions'" class="tab-content">
+    <div class="search-section">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input type="text" placeholder="Search interactions..." />
+      </div>
+      <select [(ngModel)]="patientFilter" (change)="onPatientFilterChange()" class="filter-select">
+        <option [value]="null">All Patients</option>
+        <option *ngFor="let patient of patients" [value]="patient.id">
+          {{ patient.firstName }} {{ patient.lastName }}
+        </option>
+      </select>
+    </div>
+
+    <div class="interactions-grid" *ngIf="filteredInteractions.length > 0">
+      <div class="interaction-card" *ngFor="let interaction of filteredInteractions" [ngClass]="getSeverityClass(interaction.severity)">
+        <div class="card-header">
+          <div class="medication-names">
+            <span class="medication">{{ interaction.medication1Name }}</span>
+            <span class="material-icons">add</span>
+            <span class="medication">{{ interaction.medication2Name }}</span>
+          </div>
+          <span class="severity-badge" [ngClass]="getSeverityClass(interaction.severity)">
+            {{ interaction.severity }}
+          </span>
+        </div>
+        <div class="card-body">
+          <p class="description">{{ interaction.description }}</p>
+          <div class="management" *ngIf="interaction.management">
+            <strong>Management:</strong> {{ interaction.management }}
+          </div>
+          <div class="clinical-significance" *ngIf="interaction.clinicalSignificance">
+            <strong>Clinical Significance:</strong> {{ interaction.clinicalSignificance }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="empty-state" *ngIf="filteredInteractions.length === 0">No interactions found</p>
+  </div>
+
+  <!-- Clinical Guidelines Tab -->
+  <div *ngIf="activeTab === 'guidelines'" class="tab-content">
+    <div class="search-section">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input type="text" placeholder="Search guidelines..." 
+               [(ngModel)]="guidelineSearchTerm" (input)="applyGuidelineFilters()">
+      </div>
+      <select [(ngModel)]="guidelineCategoryFilter" (change)="loadGuidelines()" class="filter-select">
+        <option value="">All Categories</option>
+        <option value="Cardiology">Cardiology</option>
+        <option value="Oncology">Oncology</option>
+        <option value="Infectious Disease">Infectious Disease</option>
+        <option value="Emergency">Emergency</option>
+        <option value="General">General</option>
+      </select>
+      <input type="text" placeholder="Condition..." 
+             [(ngModel)]="guidelineConditionFilter" (input)="loadGuidelines()" class="filter-input">
+    </div>
+
+    <div class="guidelines-grid" *ngIf="filteredGuidelines.length > 0">
+      <div class="guideline-card" *ngFor="let guideline of filteredGuidelines" (click)="openGuidelineModal(guideline)">
+        <div class="card-header">
+          <h4>{{ guideline.title }}</h4>
+          <span class="evidence-badge" [ngClass]="getEvidenceLevelClass(guideline.evidenceLevel)">
+            Level {{ guideline.evidenceLevel }}
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="meta-info">
+            <span class="category">{{ guideline.category }}</span>
+            <span class="condition">{{ guideline.condition }}</span>
+          </div>
+          <p class="description">{{ guideline.description }}</p>
+          <div class="recommendations-preview" *ngIf="guideline.recommendations && guideline.recommendations.length > 0">
+            <strong>Key Recommendations:</strong>
+            <ul>
+              <li *ngFor="let rec of guideline.recommendations.slice(0, 3)">{{ rec }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="last-updated">Updated: {{ guideline.lastUpdated | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+    <p class="empty-state" *ngIf="filteredGuidelines.length === 0">No guidelines found</p>
+  </div>
+
+  <!-- Protocol Suggestions Tab -->
+  <div *ngIf="activeTab === 'protocols'" class="tab-content">
+    <div class="protocol-search-form">
+      <form [formGroup]="protocolSearchForm" (ngSubmit)="searchProtocols()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Condition *</label>
+            <input type="text" formControlName="condition" placeholder="e.g., Hypertension, Diabetes, Sepsis">
+          </div>
+          <div class="form-group">
+            <label>Patient (Optional)</label>
+            <select formControlName="patientId">
+              <option value="">Select Patient</option>
+              <option *ngFor="let patient of patients" [value]="patient.id">
+                {{ patient.firstName }} {{ patient.lastName }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Symptoms (Comma-separated)</label>
+          <input type="text" formControlName="symptoms" placeholder="e.g., fever, cough, shortness of breath">
+        </div>
+        <button type="submit" class="btn-primary" [disabled]="protocolSearchForm.invalid">
+          <span class="material-icons">search</span>
+          Search Protocols
+        </button>
+      </form>
+    </div>
+
+    <div class="protocols-grid" *ngIf="filteredProtocols.length > 0">
+      <div class="protocol-card" *ngFor="let protocol of filteredProtocols" (click)="openProtocolModal(protocol)">
+        <div class="card-header">
+          <h4>{{ protocol.protocolName }}</h4>
+          <span class="priority-badge" [ngClass]="getPriorityClass(protocol.priority)">
+            {{ protocol.priority }}
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="condition-badge">{{ protocol.condition }}</div>
+          <p class="description">{{ protocol.description }}</p>
+          <div class="indications" *ngIf="protocol.indications && protocol.indications.length > 0">
+            <strong>Indications:</strong>
+            <ul>
+              <li *ngFor="let indication of protocol.indications.slice(0, 3)">{{ indication }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="empty-state" *ngIf="filteredProtocols.length === 0">No protocols found. Search for a condition to get suggestions.</p>
+  </div>
+
+  <!-- Critical Alerts Tab -->
+  <div *ngIf="activeTab === 'alerts'" class="tab-content">
+    <div class="search-section">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input type="text" placeholder="Search alerts..." 
+               [(ngModel)]="alertSearchTerm" (input)="applyAlertFilters()">
+      </div>
+      <select [(ngModel)]="alertSeverityFilter" (change)="applyAlertFilters()" class="filter-select">
+        <option value="">All Severities</option>
+        <option value="Warning">Warning</option>
+        <option value="Critical">Critical</option>
+        <option value="Life-threatening">Life-threatening</option>
+      </select>
+    </div>
+
+    <div class="alerts-list" *ngIf="filteredAlerts.length > 0">
+      <div class="alert-card" *ngFor="let alert of filteredAlerts" [ngClass]="getAlertSeverityClass(alert.severity)">
+        <div class="alert-icon">
+          <span class="material-icons">warning</span>
+        </div>
+        <div class="alert-content">
+          <div class="alert-header-row">
+            <strong>{{ alert.patientName }}</strong>
+            <span class="severity-badge" [ngClass]="getAlertSeverityClass(alert.severity)">
+              {{ alert.severity }}
+            </span>
+          </div>
+          <div class="alert-details">
+            <div class="detail-item">
+              <span class="label">Test:</span>
+              <span class="value">{{ alert.testName }} ({{ alert.testType }})</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Parameter:</span>
+              <span class="value">{{ alert.parameter }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Value:</span>
+              <span class="value critical-value">{{ alert.value }} {{ alert.unit }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Normal Range:</span>
+              <span class="value">{{ alert.normalRange }}</span>
+            </div>
+            <div class="alert-message">{{ alert.alertMessage }}</div>
+          </div>
+          <div class="alert-footer">
+            <span class="timestamp">{{ alert.timestamp | date:'short' }}</span>
+            <span class="acknowledged" *ngIf="alert.acknowledged">
+              Acknowledged by {{ alert.acknowledgedBy }} on {{ alert.acknowledgedAt | date:'short' }}
+            </span>
+            <button class="btn-sm" *ngIf="!alert.acknowledged" (click)="acknowledgeAlert(alert)">
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="empty-state" *ngIf="filteredAlerts.length === 0">No alerts found</p>
+  </div>
+
+  <!-- Reminders Tab -->
+  <div *ngIf="activeTab === 'reminders'" class="tab-content">
+    <div class="reminders-list" *ngIf="filteredReminders.length > 0">
+      <div class="reminder-card" *ngFor="let reminder of filteredReminders">
+        <div class="reminder-icon">
+          <span class="material-icons">event_note</span>
+        </div>
+        <div class="reminder-content">
+          <h4>{{ reminder.title }}</h4>
+          <p>{{ reminder.description }}</p>
+          <div class="reminder-meta">
+            <span class="category">{{ reminder.category }}</span>
+            <span class="condition">{{ reminder.condition }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="empty-state" *ngIf="filteredReminders.length === 0">No reminders available</p>
+  </div>
+
+  <!-- Interaction Check Modal -->
+  <div class="modal-overlay" *ngIf="showInteractionModal" (click)="closeInteractionModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Check Drug Interactions</h3>
+        <button class="btn-icon" (click)="closeInteractionModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="interactionCheckForm">
+          <div class="form-group">
+            <label>Patient (Optional)</label>
+            <select formControlName="patientId">
+              <option value="">Select Patient</option>
+              <option *ngFor="let patient of patients" [value]="patient.id">
+                {{ patient.firstName }} {{ patient.lastName }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Select Medications *</label>
+            <div class="medication-selector">
+              <select #medSelect (change)="addMedicationToCheck(medSelect.value); medSelect.value=''" class="medication-dropdown">
+                <option value="">Select a medication...</option>
+                <option *ngFor="let med of availableMedications" [value]="med.id">
+                  {{ med.name }}
+                </option>
+              </select>
+            </div>
+            <div class="selected-medications" *ngIf="selectedMedications.length > 0">
+              <div class="selected-med" *ngFor="let med of selectedMedications">
+                <span>{{ med.name }}</span>
+                <button type="button" class="btn-icon-sm" (click)="removeMedicationFromCheck(med)">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-primary" (click)="checkInteractions()" 
+                  [disabled]="selectedMedications.length < 2">
+            Check Interactions
+          </button>
+        </form>
+        <div class="check-result" *ngIf="checkResult">
+          <div class="result-header" [ngClass]="checkResult.hasInteractions ? 'has-interactions' : 'no-interactions'">
+            <span class="material-icons">{{ checkResult.hasInteractions ? 'warning' : 'check_circle' }}</span>
+            <strong>{{ checkResult.hasInteractions ? 'Interactions Detected' : 'No Interactions Found' }}</strong>
+          </div>
+          <div class="interactions-list" *ngIf="checkResult.hasInteractions && checkResult.interactions">
+            <div class="interaction-result" *ngFor="let interaction of checkResult.interactions" 
+                 [ngClass]="getSeverityClass(interaction.severity)">
+              <div class="interaction-header">
+                <strong>{{ interaction.medication1Name }} + {{ interaction.medication2Name }}</strong>
+                <span class="severity-badge">{{ interaction.severity }}</span>
+              </div>
+              <p>{{ interaction.description }}</p>
+              <div class="management" *ngIf="interaction.management">
+                <strong>Management:</strong> {{ interaction.management }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guideline Detail Modal -->
+  <div class="modal-overlay" *ngIf="showGuidelineModal && selectedGuideline" (click)="closeGuidelineModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedGuideline.title }}</h3>
+        <button class="btn-icon" (click)="closeGuidelineModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="guideline-detail">
+          <div class="meta-info">
+            <span class="category">{{ selectedGuideline.category }}</span>
+            <span class="condition">{{ selectedGuideline.condition }}</span>
+            <span class="evidence-badge" [ngClass]="getEvidenceLevelClass(selectedGuideline.evidenceLevel)">
+              Evidence Level {{ selectedGuideline.evidenceLevel }}
+            </span>
+          </div>
+          <div class="description">
+            <h4>Description</h4>
+            <p>{{ selectedGuideline.description }}</p>
+          </div>
+          <div class="recommendations" *ngIf="selectedGuideline.recommendations && selectedGuideline.recommendations.length > 0">
+            <h4>Recommendations</h4>
+            <ul>
+              <li *ngFor="let rec of selectedGuideline.recommendations">{{ rec }}</li>
+            </ul>
+          </div>
+          <div class="last-updated">
+            Last Updated: {{ selectedGuideline.lastUpdated | date:'medium' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Detail Modal -->
+  <div class="modal-overlay" *ngIf="showProtocolModal && selectedProtocol" (click)="closeProtocolModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedProtocol.protocolName }}</h3>
+        <button class="btn-icon" (click)="closeProtocolModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="protocol-detail">
+          <div class="meta-info">
+            <span class="condition-badge">{{ selectedProtocol.condition }}</span>
+            <span class="priority-badge" [ngClass]="getPriorityClass(selectedProtocol.priority)">
+              {{ selectedProtocol.priority }}
+            </span>
+          </div>
+          <div class="description">
+            <h4>Description</h4>
+            <p>{{ selectedProtocol.description }}</p>
+          </div>
+          <div class="protocol-steps" *ngIf="selectedProtocol.steps && selectedProtocol.steps.length > 0">
+            <h4>Protocol Steps</h4>
+            <ol class="steps-list">
+              <li *ngFor="let step of selectedProtocol.steps">
+                <strong>Step {{ step.stepNumber }}:</strong> {{ step.description }}
+                <span class="duration" *ngIf="step.duration"> ({{ step.duration }})</span>
+                <p class="step-notes" *ngIf="step.notes">{{ step.notes }}</p>
+              </li>
+            </ol>
+          </div>
+          <div class="indications" *ngIf="selectedProtocol.indications && selectedProtocol.indications.length > 0">
+            <h4>Indications</h4>
+            <ul>
+              <li *ngFor="let indication of selectedProtocol.indications">{{ indication }}</li>
+            </ul>
+          </div>
+          <div class="contraindications" *ngIf="selectedProtocol.contraindications && selectedProtocol.contraindications.length > 0">
+            <h4>Contraindications</h4>
+            <ul>
+              <li *ngFor="let contraindication of selectedProtocol.contraindications">{{ contraindication }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
