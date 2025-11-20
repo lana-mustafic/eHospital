@@ -4,11 +4,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { filter, map, Subscription } from 'rxjs';
 import { AuthService, User } from '../../../core/services/auth';
+import { NotificationService } from '../../../features/notifications/services/notification.service';
+import { NotificationCenterComponent } from '../../components/notification-center/notification-center';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss']
 })
@@ -19,10 +21,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   visibleMenuSections: any[] = [];
   globalSearchTerm = '';
   showSearchSuggestions = false;
+  showNotificationCenter = false;
+  unreadNotificationCount = 0;
   private routerSubscription?: Subscription;
   private userSubscription?: Subscription;
   private allMenuItemsCache: any[] = [];
   private searchTimeout?: any;
+  private notificationPollingSubscription?: Subscription;
 
   menuSections = [
     {
@@ -98,7 +103,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -128,8 +134,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       if (user) {
         this.currentUser = user;
         this.updateVisibleMenuSections();
+        this.startNotificationPolling();
       }
     });
+
+    // Start notification polling if user already exists
+    if (this.currentUser?.id) {
+      this.startNotificationPolling();
+    }
 
     // Update page title based on current route
     this.routerSubscription = this.router.events
@@ -153,6 +165,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routerSubscription?.unsubscribe();
     this.userSubscription?.unsubscribe();
+    this.stopNotificationPolling();
   }
 
   toggleSidebar() {
@@ -315,6 +328,61 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       return ['/my/home'];
     }
     return ['/dashboard'];
+  }
+
+  startNotificationPolling(): void {
+    this.stopNotificationPolling();
+    
+    if (!this.currentUser?.id) return;
+
+    // Load initial count
+    this.loadUnreadNotificationCount();
+
+    // Poll every 30 seconds
+    this.notificationPollingSubscription = this.notificationService.getUnreadCount(Number(this.currentUser.id))
+      .subscribe({
+        next: (data) => {
+          this.unreadNotificationCount = data.count;
+        },
+        error: () => {
+          // Silently fail
+        }
+      });
+
+    // Set up interval polling
+    setInterval(() => {
+      if (this.currentUser?.id) {
+        this.loadUnreadNotificationCount();
+      }
+    }, 30000);
+  }
+
+  stopNotificationPolling(): void {
+    if (this.notificationPollingSubscription) {
+      this.notificationPollingSubscription.unsubscribe();
+      this.notificationPollingSubscription = undefined;
+    }
+  }
+
+  loadUnreadNotificationCount(): void {
+    if (!this.currentUser?.id) return;
+    
+    this.notificationService.getUnreadCount(Number(this.currentUser.id)).subscribe({
+      next: (data) => {
+        this.unreadNotificationCount = data.count;
+      },
+      error: () => {
+        // Silently fail
+      }
+    });
+  }
+
+  toggleNotificationCenter(): void {
+    this.showNotificationCenter = !this.showNotificationCenter;
+  }
+
+  closeNotificationCenter(): void {
+    this.showNotificationCenter = false;
   }
 }
 

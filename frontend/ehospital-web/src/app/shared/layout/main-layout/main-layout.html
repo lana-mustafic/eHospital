@@ -90,10 +90,19 @@
       </div>
       <div class="header-right">
         <div class="header-actions">
-          <button class="header-btn" [routerLink]="['/notifications']" title="Notifications">
-            <span class="material-icons">notifications</span>
-            <span class="badge" *ngIf="false">3</span>
-          </button>
+          <div class="notification-wrapper">
+            <button 
+              class="header-btn" 
+              (click)="toggleNotificationCenter()" 
+              title="Notifications"
+              [class.has-notifications]="unreadNotificationCount > 0">
+              <span class="material-icons">notifications</span>
+              <span class="badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
+            </button>
+            <app-notification-center 
+              [isOpen]="showNotificationCenter">
+            </app-notification-center>
+          </div>
           <button 
             class="header-btn" 
             [routerLink]="getDashboardRoute()" 

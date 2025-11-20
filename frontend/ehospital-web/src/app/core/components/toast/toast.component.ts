@@ -11,7 +11,12 @@ import { Subscription } from 'rxjs';
     <div class="toast-container">
       @for (toast of toasts; track toast.id) {
         <div class="toast toast-{{ toast.type }}">
-          <span class="toast-message">{{ toast.message }}</span>
+          <div class="toast-content">
+            @if (toast.title) {
+              <div class="toast-title">{{ toast.title }}</div>
+            }
+            <span class="toast-message">{{ toast.message }}</span>
+          </div>
           <button class="toast-close" (click)="remove(toast.id)">×</button>
         </div>
       }
@@ -31,13 +36,21 @@ import { Subscription } from 'rxjs';
 
     .toast {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       padding: 12px 16px;
       border-radius: 4px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       animation: slideIn 0.3s ease-out;
       min-width: 300px;
+      gap: 12px;
+    }
+
+    .toast-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
     @keyframes slideIn {
@@ -69,6 +82,28 @@ import { Subscription } from 'rxjs';
     .toast-warning {
       background-color: #ff9800;
       color: white;
+    }
+
+    .toast-critical {
+      background-color: #d32f2f;
+      color: white;
+      border-left: 4px solid #ff0000;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+      }
+      50% {
+        box-shadow: 0 2px 16px rgba(211, 47, 47, 0.6);
+      }
+    }
+
+    .toast-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
     }
 
     .toast-message {
