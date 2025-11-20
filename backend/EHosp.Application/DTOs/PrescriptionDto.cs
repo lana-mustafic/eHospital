@@ -18,6 +18,20 @@ namespace EHosp.Application.DTOs
         public string DoctorName { get; set; } = string.Empty;
         public int PatientId { get; set; }
         public string PatientName { get; set; } = string.Empty;
+        
+        // Prescription processing workflow
+        public string Status { get; set; } = "Pending";
+        public int? VerifiedByUserId { get; set; }
+        public string? VerifiedByUserName { get; set; }
+        public int? DispensedByUserId { get; set; }
+        public string? DispensedByUserName { get; set; }
+        public DateTime? VerifiedAt { get; set; }
+        public DateTime? DispensedAt { get; set; }
+        public bool AllergyChecked { get; set; }
+        public bool InteractionChecked { get; set; }
+        public string? PharmacistNotes { get; set; }
+        public string? AllergyAlert { get; set; }
+        public string? InteractionAlert { get; set; }
     }
 
     public class CreatePrescriptionDto

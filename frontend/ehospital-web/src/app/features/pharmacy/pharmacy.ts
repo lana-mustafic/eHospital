@@ -7,6 +7,8 @@ import { InventoryItemService } from './services/inventory-item.service';
 import { PurchaseOrderService } from './services/purchase-order.service';
 import { StockMovementService } from './services/stock-movement.service';
 import { MedicationService, Medication } from '../medications/services/medication.service';
+import { PrescriptionService, Prescription } from '../prescriptions/services/prescription.service';
+import { AuthService } from '../../core/services/auth';
 import {
   Supplier, InventoryItem, PurchaseOrder, StockMovement, LowStockAlert, ExpiringItems,
   CreateSupplierRequest, UpdateSupplierRequest,
@@ -23,7 +25,7 @@ import {
   styleUrls: ['./pharmacy.scss']
 })
 export class PharmacyComponent implements OnInit {
-  activeTab: 'dashboard' | 'suppliers' | 'inventory' | 'purchaseOrders' | 'stockMovements' = 'dashboard';
+  activeTab: 'dashboard' | 'suppliers' | 'inventory' | 'purchaseOrders' | 'stockMovements' | 'prescriptions' = 'dashboard';
 
   // Suppliers
   suppliers: Supplier[] = [];
@@ -45,6 +47,13 @@ export class PharmacyComponent implements OnInit {
 
   // Medications
   medications: Medication[] = [];
+
+  // Prescriptions
+  prescriptions: Prescription[] = [];
+  filteredPrescriptions: Prescription[] = [];
+  selectedPrescription: Prescription | null = null;
+  showPrescriptionModal = false;
+  prescriptionNotes = '';
 
   isLoading = false;
   searchTerm = '';
@@ -80,6 +89,8 @@ export class PharmacyComponent implements OnInit {
     private purchaseOrderService: PurchaseOrderService,
     private stockMovementService: StockMovementService,
     private medicationService: MedicationService,
+    private prescriptionService: PrescriptionService,
+    private authService: AuthService,
     private fb: FormBuilder,
     private toastService: ToastService
   ) {
@@ -160,6 +171,7 @@ export class PharmacyComponent implements OnInit {
     this.loadStockMovements();
     this.loadMedications();
     this.loadAlerts();
+    this.loadPrescriptions();
   }
 
   // Load data
@@ -648,7 +660,10 @@ export class PharmacyComponent implements OnInit {
       'InStock': 'status-available',
       'LowStock': 'status-warning',
       'OutOfStock': 'status-error',
-      'Expired': 'status-error'
+      'Expired': 'status-error',
+      'Verified': 'status-approved',
+      'Dispensed': 'status-available',
+      'Completed': 'status-available'
     };
     return statusMap[status] || 'status-default';
   }
@@ -724,6 +739,132 @@ export class PharmacyComponent implements OnInit {
       return 0;
     }
     return this.selectedPurchaseOrder.items[index].quantity;
+  }
+
+  // Prescription Processing
+  loadPrescriptions() {
+    this.isLoading = true;
+    this.prescriptionService.getPending().subscribe({
+      next: (data) => {
+        this.prescriptions = data;
+        this.filteredPrescriptions = data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toastService.error('Failed to load prescriptions');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  openPrescriptionModal(prescription: Prescription) {
+    this.selectedPrescription = prescription;
+    this.prescriptionNotes = '';
+    this.showPrescriptionModal = true;
+  }
+
+  closePrescriptionModal() {
+    this.showPrescriptionModal = false;
+    this.selectedPrescription = null;
+    this.prescriptionNotes = '';
+  }
+
+  verifyPrescription() {
+    if (!this.selectedPrescription) return;
+    
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      this.toastService.error('User not found');
+      return;
+    }
+
+    const userId = parseInt(currentUser.id, 10);
+    if (isNaN(userId)) {
+      this.toastService.error('Invalid user ID');
+      return;
+    }
+
+    this.isLoading = true;
+    this.prescriptionService.verify(this.selectedPrescription.id, userId, this.prescriptionNotes).subscribe({
+      next: () => {
+        this.toastService.success('Prescription verified successfully');
+        this.closePrescriptionModal();
+        this.loadPrescriptions();
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        this.toastService.error(err.error?.message || 'Failed to verify prescription');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  dispensePrescription() {
+    if (!this.selectedPrescription) return;
+    
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      this.toastService.error('User not found');
+      return;
+    }
+
+    const userId = parseInt(currentUser.id, 10);
+    if (isNaN(userId)) {
+      this.toastService.error('Invalid user ID');
+      return;
+    }
+
+    if (this.selectedPrescription.status !== 'Verified') {
+      this.toastService.warning('Prescription must be verified before dispensing');
+      return;
+    }
+
+    this.isLoading = true;
+    this.prescriptionService.dispense(this.selectedPrescription.id, userId, this.prescriptionNotes).subscribe({
+      next: () => {
+        this.toastService.success('Prescription dispensed successfully');
+        this.closePrescriptionModal();
+        this.loadPrescriptions();
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        this.toastService.error(err.error?.message || 'Failed to dispense prescription');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  cancelPrescription() {
+    if (!this.selectedPrescription) return;
+    
+    if (!confirm('Are you sure you want to cancel this prescription?')) return;
+
+    this.isLoading = true;
+    this.prescriptionService.cancel(this.selectedPrescription.id, this.prescriptionNotes).subscribe({
+      next: () => {
+        this.toastService.success('Prescription cancelled successfully');
+        this.closePrescriptionModal();
+        this.loadPrescriptions();
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        this.toastService.error(err.error?.message || 'Failed to cancel prescription');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  filterPrescriptions() {
+    if (!this.searchTerm) {
+      this.filteredPrescriptions = this.prescriptions;
+      return;
+    }
+    const term = this.searchTerm.toLowerCase();
+    this.filteredPrescriptions = this.prescriptions.filter(p =>
+      p.patientName?.toLowerCase().includes(term) ||
+      p.medicationName?.toLowerCase().includes(term) ||
+      p.doctorName?.toLowerCase().includes(term)
+    );
   }
 }
 

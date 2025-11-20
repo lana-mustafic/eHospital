@@ -18,6 +18,7 @@
 
   <div class="tabs">
     <button class="tab-button" [class.active]="activeTab === 'dashboard'" (click)="activeTab = 'dashboard'">Dashboard</button>
+    <button class="tab-button" [class.active]="activeTab === 'prescriptions'" (click)="activeTab = 'prescriptions'">Prescription Processing</button>
     <button class="tab-button" [class.active]="activeTab === 'suppliers'" (click)="activeTab = 'suppliers'">Suppliers</button>
     <button class="tab-button" [class.active]="activeTab === 'inventory'" (click)="activeTab = 'inventory'">Inventory</button>
     <button class="tab-button" [class.active]="activeTab === 'purchaseOrders'" (click)="activeTab = 'purchaseOrders'">Purchase Orders</button>
@@ -233,6 +234,104 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Prescription Processing Tab -->
+  <div *ngIf="activeTab === 'prescriptions'" class="tab-content">
+    <div class="search-section">
+      <input type="text" placeholder="Search prescriptions by patient, medication, or doctor..." 
+             [(ngModel)]="searchTerm" (input)="filterPrescriptions()" />
+    </div>
+    <div class="prescriptions-grid">
+      <div *ngFor="let prescription of filteredPrescriptions" class="prescription-card" 
+           [class.has-alert]="prescription.allergyAlert || prescription.interactionAlert">
+        <div class="prescription-header">
+          <div>
+            <h4>{{ prescription.patientName }}</h4>
+            <p class="text-muted">{{ prescription.medicationName }} ({{ prescription.medicationForm }})</p>
+          </div>
+          <span class="badge" [ngClass]="getStatusClass(prescription.status || 'Pending')">
+            {{ prescription.status || 'Pending' }}
+          </span>
+        </div>
+        
+        <div class="prescription-details">
+          <div class="detail-row">
+            <span class="label">Doctor:</span>
+            <span>{{ prescription.doctorName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Dosage:</span>
+            <span>{{ prescription.dosage }}</span>
+          </div>
+          <div class="detail-row" *ngIf="prescription.frequency">
+            <span class="label">Frequency:</span>
+            <span>{{ prescription.frequency }}</span>
+          </div>
+          <div class="detail-row" *ngIf="prescription.duration">
+            <span class="label">Duration:</span>
+            <span>{{ prescription.duration }} days</span>
+          </div>
+          <div class="detail-row" *ngIf="prescription.instructions">
+            <span class="label">Instructions:</span>
+            <span>{{ prescription.instructions }}</span>
+          </div>
+        </div>
+
+        <!-- Allergy Alert -->
+        <div *ngIf="prescription.allergyAlert" class="alert alert-danger">
+          <span class="material-icons">warning</span>
+          <div>
+            <strong>Allergy Alert</strong>
+            <p>{{ prescription.allergyAlert }}</p>
+          </div>
+        </div>
+
+        <!-- Drug Interaction Alert -->
+        <div *ngIf="prescription.interactionAlert" class="alert" 
+             [ngClass]="prescription.interactionAlert.includes('CRITICAL') ? 'alert-danger' : 'alert-warning'">
+          <span class="material-icons">error</span>
+          <div>
+            <strong>Drug Interaction</strong>
+            <p>{{ prescription.interactionAlert }}</p>
+          </div>
+        </div>
+
+        <!-- Safety Checks Status -->
+        <div class="safety-checks">
+          <span class="check-badge" [class.checked]="prescription.allergyChecked">
+            <span class="material-icons">{{ prescription.allergyChecked ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            Allergy Checked
+          </span>
+          <span class="check-badge" [class.checked]="prescription.interactionChecked">
+            <span class="material-icons">{{ prescription.interactionChecked ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            Interaction Checked
+          </span>
+        </div>
+
+        <div class="prescription-actions">
+          <button *ngIf="prescription.status === 'Pending'" 
+                  class="btn-primary" 
+                  (click)="openPrescriptionModal(prescription)">
+            <span class="material-icons">verified</span>
+            Verify & Check Safety
+          </button>
+          <button *ngIf="prescription.status === 'Verified'" 
+                  class="btn-success" 
+                  (click)="openPrescriptionModal(prescription)">
+            <span class="material-icons">local_pharmacy</span>
+            Dispense
+          </button>
+          <button *ngIf="prescription.status === 'Pending' || prescription.status === 'Verified'" 
+                  class="btn-secondary" 
+                  (click)="openPrescriptionModal(prescription)">
+            <span class="material-icons">visibility</span>
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+    <p *ngIf="filteredPrescriptions.length === 0" class="no-data">No pending prescriptions</p>
   </div>
 
   <!-- Stock Movements Tab -->
@@ -611,6 +710,79 @@
             <button type="submit" class="btn-primary">Adjust</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prescription Processing Modal -->
+  <div *ngIf="showPrescriptionModal && selectedPrescription" class="modal-overlay" (click)="closePrescriptionModal()">
+    <div class="modal-content prescription-modal" (click)="$event.stopPropagation()">
+      <h3>Prescription Processing</h3>
+      
+      <div class="prescription-info">
+        <div class="info-section">
+          <h4>Patient Information</h4>
+          <p><strong>Name:</strong> {{ selectedPrescription.patientName }}</p>
+          <p><strong>Doctor:</strong> {{ selectedPrescription.doctorName }}</p>
+        </div>
+        
+        <div class="info-section">
+          <h4>Medication Details</h4>
+          <p><strong>Medication:</strong> {{ selectedPrescription.medicationName }} ({{ selectedPrescription.medicationForm }})</p>
+          <p><strong>Dosage:</strong> {{ selectedPrescription.dosage }}</p>
+          <p *ngIf="selectedPrescription.frequency"><strong>Frequency:</strong> {{ selectedPrescription.frequency }}</p>
+          <p *ngIf="selectedPrescription.duration"><strong>Duration:</strong> {{ selectedPrescription.duration }} days</p>
+          <p *ngIf="selectedPrescription.instructions"><strong>Instructions:</strong> {{ selectedPrescription.instructions }}</p>
+        </div>
+
+        <!-- Alerts -->
+        <div *ngIf="selectedPrescription.allergyAlert" class="alert alert-danger">
+          <span class="material-icons">warning</span>
+          <div>
+            <strong>⚠️ ALLERGY ALERT</strong>
+            <p>{{ selectedPrescription.allergyAlert }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="selectedPrescription.interactionAlert" class="alert" 
+             [ngClass]="selectedPrescription.interactionAlert.includes('CRITICAL') ? 'alert-danger' : 'alert-warning'">
+          <span class="material-icons">error</span>
+          <div>
+            <strong>🚨 DRUG INTERACTION</strong>
+            <p>{{ selectedPrescription.interactionAlert }}</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Pharmacist Notes</label>
+          <textarea [(ngModel)]="prescriptionNotes" rows="4" 
+                    placeholder="Add notes about verification, dispensing, or any concerns..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" (click)="closePrescriptionModal()">Close</button>
+        <button *ngIf="selectedPrescription.status === 'Pending'" 
+                type="button" 
+                class="btn-primary" 
+                (click)="verifyPrescription()">
+          <span class="material-icons">verified</span>
+          Verify Prescription
+        </button>
+        <button *ngIf="selectedPrescription.status === 'Verified'" 
+                type="button" 
+                class="btn-success" 
+                (click)="dispensePrescription()">
+          <span class="material-icons">local_pharmacy</span>
+          Dispense Medication
+        </button>
+        <button *ngIf="selectedPrescription.status === 'Pending' || selectedPrescription.status === 'Verified'" 
+                type="button" 
+                class="btn-danger" 
+                (click)="cancelPrescription()">
+          <span class="material-icons">cancel</span>
+          Cancel
+        </button>
       </div>
     </div>
   </div>

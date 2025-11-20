@@ -55,6 +55,7 @@ namespace Infrastructure.Data
         public DbSet<StockMovement> StockMovements { get; set; }
         public DbSet<Queue> Queues { get; set; }
         public DbSet<EDVisit> EDVisits { get; set; }
+        public DbSet<DrugInteraction> DrugInteractions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

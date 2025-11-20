@@ -20,6 +20,8 @@ namespace EHosp.Infrastructure.Repositories
                           .Include(p => p.Medication)
                           .Include(p => p.Doctor)
                           .ThenInclude(doc => doc.User)
+                          .Include(p => p.VerifiedByUser)
+                          .Include(p => p.DispensedByUser)
                           .FirstOrDefaultAsync(p => p.Id == id);
 
         public async Task<IEnumerable<Prescription>> GetPrescriptionsByMedicalRecordAsync(int medicalRecordId)

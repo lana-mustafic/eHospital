@@ -138,6 +138,9 @@ builder.Services.AddScoped<IDiagnosisService, DiagnosisService>();
         builder.Services.AddScoped<IInventoryItemService, InventoryItemService>();
         builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
         builder.Services.AddScoped<IStockMovementService, StockMovementService>();
+        builder.Services.AddScoped<IDrugInteractionRepository, DrugInteractionRepository>();
+        builder.Services.AddScoped<IDrugInteractionService, DrugInteractionService>();
+        builder.Services.AddScoped<PrescriptionSafetyService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

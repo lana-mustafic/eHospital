@@ -10,8 +10,29 @@ export interface Prescription {
   doctorName?: string;
   medicationName: string;
   dosage: string;
+  frequency?: string;
+  duration?: number;
   instructions?: string;
   issuedAt?: string;
+  prescribedDate?: string;
+  medicalRecordId?: number;
+  medicationId?: number;
+  doctorId?: number;
+  medicationForm?: string;
+  
+  // Prescription processing workflow
+  status?: string; // Pending, Verified, Dispensed, Completed, Cancelled
+  verifiedByUserId?: number;
+  verifiedByUserName?: string;
+  dispensedByUserId?: number;
+  dispensedByUserName?: string;
+  verifiedAt?: string;
+  dispensedAt?: string;
+  allergyChecked?: boolean;
+  interactionChecked?: boolean;
+  pharmacistNotes?: string;
+  allergyAlert?: string;
+  interactionAlert?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +54,30 @@ export class PrescriptionService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getPending(): Observable<Prescription[]> {
+    return this.http.get<Prescription[]>(`${this.apiUrl}/pending`);
+  }
+
+  verify(id: number, verifiedByUserId: number, notes?: string): Observable<Prescription> {
+    return this.http.post<Prescription>(`${this.apiUrl}/${id}/verify`, {
+      verifiedByUserId,
+      notes
+    });
+  }
+
+  dispense(id: number, dispensedByUserId: number, notes?: string): Observable<Prescription> {
+    return this.http.post<Prescription>(`${this.apiUrl}/${id}/dispense`, {
+      dispensedByUserId,
+      notes
+    });
+  }
+
+  cancel(id: number, reason?: string): Observable<Prescription> {
+    return this.http.post<Prescription>(`${this.apiUrl}/${id}/cancel`, {
+      reason
+    });
   }
 }
 

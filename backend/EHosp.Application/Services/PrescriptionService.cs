@@ -13,6 +13,7 @@ namespace EHosp.Application.Services
         private readonly IDoctorRepository _doctorRepository;
         private readonly ILogger<PrescriptionService> _logger;
         private readonly IAuditService _auditService;
+        private readonly PrescriptionSafetyService _safetyService;
 
         public PrescriptionService(
             IPrescriptionRepository prescriptionRepository,
@@ -20,7 +21,8 @@ namespace EHosp.Application.Services
             IMedicationRepository medicationRepository,
             IDoctorRepository doctorRepository,
             ILogger<PrescriptionService> logger,
-            IAuditService auditService)
+            IAuditService auditService,
+            PrescriptionSafetyService safetyService)
         {
             _prescriptionRepository = prescriptionRepository;
             _medicalRecordRepository = medicalRecordRepository;
@@ -28,6 +30,7 @@ namespace EHosp.Application.Services
             _doctorRepository = doctorRepository;
             _logger = logger;
             _auditService = auditService;
+            _safetyService = safetyService;
         }
 
         public async Task<IEnumerable<PrescriptionDto>> GetAllPrescriptionsAsync()
@@ -64,6 +67,14 @@ namespace EHosp.Application.Services
         {
             var prescriptions = await _prescriptionRepository.GetPrescriptionsByMedicationAsync(medicationId);
             return prescriptions.Select(MapToDto);
+        }
+
+        public async Task<IEnumerable<PrescriptionDto>> GetPendingPrescriptionsAsync()
+        {
+            var prescriptions = await _prescriptionRepository.GetAllPrescriptionsWithDetailsAsync();
+            return prescriptions
+                .Where(p => p.Status == "Pending")
+                .Select(MapToDto);
         }
 
         public async Task<PrescriptionDto> CreatePrescriptionAsync(CreatePrescriptionDto createPrescriptionDto)
@@ -157,6 +168,119 @@ namespace EHosp.Application.Services
             await _auditService.WriteAsync("system", "Doctor", "Delete", "Prescription", prescription.Id.ToString(), $"MedicationId={prescription.MedicationId}");
         }
 
+        public async Task<PrescriptionDto> VerifyPrescriptionAsync(int id, int verifiedByUserId, string? notes = null)
+        {
+            var prescription = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            if (prescription == null)
+            {
+                throw new ArgumentException("Prescription not found");
+            }
+
+            if (prescription.Status != "Pending")
+            {
+                throw new InvalidOperationException($"Cannot verify prescription with status: {prescription.Status}");
+            }
+
+            // Check allergies
+            var allergyCheck = await _safetyService.CheckAllergiesAsync(
+                prescription.MedicalRecord.PatientId,
+                prescription.MedicationId);
+            
+            prescription.AllergyChecked = true;
+            if (allergyCheck.HasAllergy)
+            {
+                prescription.AllergyAlert = allergyCheck.AlertMessage;
+            }
+
+            // Check interactions
+            var interactionCheck = await _safetyService.CheckInteractionsAsync(id);
+            
+            prescription.InteractionChecked = true;
+            if (interactionCheck.HasInteractions)
+            {
+                prescription.InteractionAlert = interactionCheck.AlertMessage;
+            }
+
+            prescription.Status = "Verified";
+            prescription.VerifiedByUserId = verifiedByUserId;
+            prescription.VerifiedAt = DateTime.UtcNow;
+            if (!string.IsNullOrEmpty(notes))
+            {
+                prescription.PharmacistNotes = notes;
+            }
+
+            await _prescriptionRepository.UpdateAsync(prescription);
+            await _auditService.WriteAsync("system", "Pharmacist", "Verify", "Prescription", prescription.Id.ToString(), $"VerifiedBy={verifiedByUserId}");
+            
+            var updated = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            return MapToDto(updated!);
+        }
+
+        public async Task<PrescriptionDto> DispensePrescriptionAsync(int id, int dispensedByUserId, string? notes = null)
+        {
+            var prescription = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            if (prescription == null)
+            {
+                throw new ArgumentException("Prescription not found");
+            }
+
+            if (prescription.Status != "Verified")
+            {
+                throw new InvalidOperationException($"Cannot dispense prescription with status: {prescription.Status}. Prescription must be verified first.");
+            }
+
+            // Check stock availability
+            var medication = await _medicationRepository.GetByIdAsync(prescription.MedicationId);
+            if (medication == null || medication.StockQuantity <= 0)
+            {
+                throw new InvalidOperationException("Medication is out of stock");
+            }
+
+            // Reduce stock (in a real system, this would be handled by stock movement)
+            medication.StockQuantity -= 1;
+            await _medicationRepository.UpdateAsync(medication);
+
+            prescription.Status = "Dispensed";
+            prescription.DispensedByUserId = dispensedByUserId;
+            prescription.DispensedAt = DateTime.UtcNow;
+            if (!string.IsNullOrEmpty(notes))
+            {
+                prescription.PharmacistNotes = (prescription.PharmacistNotes ?? "") + "\n" + notes;
+            }
+
+            await _prescriptionRepository.UpdateAsync(prescription);
+            await _auditService.WriteAsync("system", "Pharmacist", "Dispense", "Prescription", prescription.Id.ToString(), $"DispensedBy={dispensedByUserId}");
+            
+            var updated = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            return MapToDto(updated!);
+        }
+
+        public async Task<PrescriptionDto> CancelPrescriptionAsync(int id, string? reason = null)
+        {
+            var prescription = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            if (prescription == null)
+            {
+                throw new ArgumentException("Prescription not found");
+            }
+
+            if (prescription.Status == "Dispensed" || prescription.Status == "Completed")
+            {
+                throw new InvalidOperationException($"Cannot cancel prescription with status: {prescription.Status}");
+            }
+
+            prescription.Status = "Cancelled";
+            if (!string.IsNullOrEmpty(reason))
+            {
+                prescription.PharmacistNotes = (prescription.PharmacistNotes ?? "") + "\nCancelled: " + reason;
+            }
+
+            await _prescriptionRepository.UpdateAsync(prescription);
+            await _auditService.WriteAsync("system", "Pharmacist", "Cancel", "Prescription", prescription.Id.ToString(), $"Reason={reason ?? "Not specified"}");
+            
+            var updated = await _prescriptionRepository.GetPrescriptionWithDetailsAsync(id);
+            return MapToDto(updated!);
+        }
+
         private static PrescriptionDto MapToDto(Prescription prescription) => new()
         {
             Id = prescription.Id,
@@ -172,7 +296,23 @@ namespace EHosp.Application.Services
             DoctorId = prescription.DoctorId,
             DoctorName = $"{prescription.Doctor?.User?.FirstName} {prescription.Doctor?.User?.LastName}".Trim(),
             PatientId = prescription.MedicalRecord?.PatientId ?? 0,
-            PatientName = $"{prescription.MedicalRecord?.Patient?.User?.FirstName} {prescription.MedicalRecord?.Patient?.User?.LastName}".Trim()
+            PatientName = $"{prescription.MedicalRecord?.Patient?.User?.FirstName} {prescription.MedicalRecord?.Patient?.User?.LastName}".Trim(),
+            Status = prescription.Status,
+            VerifiedByUserId = prescription.VerifiedByUserId,
+            VerifiedByUserName = prescription.VerifiedByUser != null 
+                ? $"{prescription.VerifiedByUser.FirstName} {prescription.VerifiedByUser.LastName}".Trim() 
+                : null,
+            DispensedByUserId = prescription.DispensedByUserId,
+            DispensedByUserName = prescription.DispensedByUser != null 
+                ? $"{prescription.DispensedByUser.FirstName} {prescription.DispensedByUser.LastName}".Trim() 
+                : null,
+            VerifiedAt = prescription.VerifiedAt,
+            DispensedAt = prescription.DispensedAt,
+            AllergyChecked = prescription.AllergyChecked,
+            InteractionChecked = prescription.InteractionChecked,
+            PharmacistNotes = prescription.PharmacistNotes,
+            AllergyAlert = prescription.AllergyAlert,
+            InteractionAlert = prescription.InteractionAlert
         };
     }
 }
