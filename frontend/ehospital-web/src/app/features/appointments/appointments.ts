@@ -336,10 +336,18 @@ export class AppointmentsComponent implements OnInit {
     });
   }
 
-  getStatusClass(status: string): string {
+  getStatusClass(status: string, appointmentDate?: string, startTime?: string): string {
+    // Check if appointment is overdue (past scheduled time and still scheduled)
+    if (status === 'Scheduled' && appointmentDate && startTime) {
+      if (this.isPastAppointment(appointmentDate, startTime)) {
+        return 'status-overdue';
+      }
+      return 'status-pending';
+    }
+
     switch (status) {
       case 'Scheduled':
-        return 'status-scheduled';
+        return 'status-pending';
       case 'Checked-In':
         return 'status-checkedin';
       case 'Completed':
@@ -351,6 +359,10 @@ export class AppointmentsComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  isOverdue(appointmentDate: string, startTime: string, status: string): boolean {
+    return status === 'Scheduled' && this.isPastAppointment(appointmentDate, startTime);
   }
 
   isPastAppointment(date: string, time: string): boolean {

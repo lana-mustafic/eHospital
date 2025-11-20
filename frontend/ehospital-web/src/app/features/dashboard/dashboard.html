@@ -120,17 +120,30 @@
               } @else {
                 <div class="appointments-list">
                   @for (appointment of myUpcomingAppointments.slice(0, 8); track $index) {
-                    <div class="appointment-card" [routerLink]="['/appointments', appointment.id]">
+                    <div class="appointment-card" [routerLink]="['/appointments', appointment.id]" [class.overdue]="isOverdueAppointment(appointment)">
                       <div class="appointment-time">
                         <div class="time-main">{{ formatTime(appointment.startTime) }}</div>
                         <div class="time-date">{{ formatDate(appointment.appointmentDate) }}</div>
                       </div>
                       <div class="appointment-info">
-                        <div class="patient-name">{{ appointment.patientName || 'Unknown Patient' }}</div>
+                        <div class="patient-name">
+                          {{ appointment.patientName || 'Unknown Patient' }}
+                          <app-status-indicator 
+                            *ngIf="isOverdueAppointment(appointment)"
+                            status="urgent" 
+                            label="Overdue"
+                            icon="warning"
+                            [showDot]="true">
+                          </app-status-indicator>
+                        </div>
                         <div class="appointment-reason">{{ appointment.reason || 'No reason provided' }}</div>
                       </div>
                       <div class="appointment-status">
-                        <span class="status-badge status-scheduled">{{ appointment.status }}</span>
+                        <app-status-indicator 
+                          [status]="getAppointmentStatusType(appointment)"
+                          [label]="isOverdueAppointment(appointment) ? 'Overdue' : appointment.status"
+                          [showDot]="true">
+                        </app-status-indicator>
                       </div>
                     </div>
                   }
@@ -362,7 +375,11 @@
                         }
                       </div>
                       <div class="schedule-status-compact">
-                        <span class="status-badge status-scheduled">{{ appointment.status }}</span>
+                        <app-status-indicator 
+                          [status]="getAppointmentStatusType(appointment)"
+                          [label]="isOverdueAppointment(appointment) ? 'Overdue' : appointment.status"
+                          [showDot]="true">
+                        </app-status-indicator>
                       </div>
                     </div>
                   }
@@ -471,21 +488,24 @@
             <div class="card-body">
               <div class="room-status-grid">
                 <div class="room-stat">
-                  <div class="room-stat-icon available">
-                    <span class="material-icons">bed</span>
-                  </div>
+                  <app-status-indicator status="available" [label]="'Available'" [showDot]="true"></app-status-indicator>
                   <div class="room-stat-content">
                     <h4>{{ availableBeds }}</h4>
                     <p>Available Beds</p>
                   </div>
                 </div>
                 <div class="room-stat">
-                  <div class="room-stat-icon occupied">
-                    <span class="material-icons">bed</span>
-                  </div>
+                  <app-status-indicator status="occupied" [label]="'Occupied'" [showDot]="true"></app-status-indicator>
                   <div class="room-stat-content">
                     <h4>{{ occupiedBeds }}</h4>
                     <p>Occupied Beds</p>
+                  </div>
+                </div>
+                <div class="room-stat">
+                  <app-status-indicator status="maintenance" [label]="'Maintenance'" [showDot]="true"></app-status-indicator>
+                  <div class="room-stat-content">
+                    <h4>{{ totalBeds - availableBeds - occupiedBeds }}</h4>
+                    <p>Maintenance</p>
                   </div>
                 </div>
                 <div class="room-stat">

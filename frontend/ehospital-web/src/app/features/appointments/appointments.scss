@@ -309,7 +309,9 @@
     }
 
     .status-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 0.375rem 0.75rem;
       border-radius: 6px;
       font-size: 0.75rem;
@@ -317,24 +319,54 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
 
-      &.status-scheduled {
-        background-color: #dbeafe;
-        color: #1e40af;
+      .status-icon {
+        font-size: 14px;
+      }
+
+      &.status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fbbf24;
+      }
+
+      &.status-overdue {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+        animation: pulse-overdue 2s infinite;
       }
 
       &.status-completed {
         background-color: #d1fae5;
         color: #065f46;
+        border: 1px solid #10b981;
+      }
+
+      &.status-checkedin {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #3b82f6;
       }
 
       &.status-cancelled {
-        background-color: #fee2e2;
-        color: #991b1b;
+        background-color: #f3f4f6;
+        color: #6b7280;
+        border: 1px solid #9ca3af;
       }
 
       &.status-noshow {
         background-color: #f3f4f6;
         color: #374151;
+        border: 1px solid #9ca3af;
+      }
+    }
+
+    @keyframes pulse-overdue {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
       }
     }
 

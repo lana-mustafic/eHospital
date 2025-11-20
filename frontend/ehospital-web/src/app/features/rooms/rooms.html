@@ -31,7 +31,11 @@
       <div *ngFor="let room of availability" class="room-card">
         <div class="room-header">
           <h3>{{ room.roomNumber }}</h3>
-          <span class="badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</span>
+          <app-status-indicator 
+            [status]="getBedStatusType(room.status)" 
+            [label]="room.status"
+            [showDot]="true">
+          </app-status-indicator>
         </div>
         <div class="room-info">
           <p><strong>Type:</strong> {{ room.roomTypeName }}</p>
@@ -39,9 +43,13 @@
           <p><strong>Beds:</strong> {{ room.occupiedBeds }}/{{ room.totalBeds }} occupied</p>
         </div>
         <div class="beds-list">
-          <div *ngFor="let bed of room.availableBedsList" class="bed-item">
-            <span>{{ bed.bedNumber }}</span>
-            <span class="badge status-available">{{ bed.status }}</span>
+          <div *ngFor="let bed of room.availableBedsList" class="bed-item" [ngClass]="getBedStatusClass(bed.status)">
+            <span class="bed-number">{{ bed.bedNumber }}</span>
+            <app-status-indicator 
+              [status]="getBedStatusType(bed.status)" 
+              [label]="bed.status"
+              [showDot]="true">
+            </app-status-indicator>
           </div>
         </div>
       </div>

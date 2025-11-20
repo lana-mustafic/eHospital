@@ -99,8 +99,11 @@
                 }
               </td>
               <td>
-                <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
-                  {{ appointment.status }}
+                <span class="status-badge" [ngClass]="getStatusClass(appointment.status, appointment.appointmentDate, appointment.startTime)">
+                  @if (isOverdue(appointment.appointmentDate, appointment.startTime, appointment.status)) {
+                    <span class="material-icons status-icon">warning</span>
+                  }
+                  {{ isOverdue(appointment.appointmentDate, appointment.startTime, appointment.status) ? 'Overdue' : appointment.status }}
                 </span>
               </td>
               <td class="reason-cell">{{ appointment.reason || '—' }}</td>

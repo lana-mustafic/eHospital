@@ -130,11 +130,23 @@
                     <div class="queue-list">
                       @for (queue of getQueuesByDoctor(doctor.id); track queue.id) {
                         <div class="queue-item" [ngClass]="getStatusClass(queue.status)">
-                          <div class="queue-number-badge">
-                            {{ queue.queueNumber }}
+                          <div class="queue-number-badge" [ngClass]="getQueuePositionClass(queue)">
+                            <span class="position-number">{{ queue.queueNumber }}</span>
+                            <span class="position-indicator" *ngIf="getQueuePosition(queue) <= 3">
+                              <span class="material-icons">{{ getQueuePositionIcon(getQueuePosition(queue)) }}</span>
+                            </span>
                           </div>
                           <div class="queue-info">
-                            <div class="patient-name">{{ queue.patientName }}</div>
+                            <div class="patient-name">
+                              {{ queue.patientName }}
+                              <app-status-indicator 
+                                *ngIf="isUrgentCase(queue)"
+                                status="urgent" 
+                                label="Urgent"
+                                icon="priority_high"
+                                [showDot]="true">
+                              </app-status-indicator>
+                            </div>
                             <div class="queue-details">
                               <span class="appointment-time">{{ queue.appointmentTime }}</span>
                               <span class="separator">•</span>

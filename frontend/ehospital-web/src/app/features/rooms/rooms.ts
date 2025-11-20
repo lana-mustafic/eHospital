@@ -11,6 +11,7 @@ import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { DepartmentService } from '../departments/services/department.service';
 import { AuthService } from '../../core/services/auth';
+import { StatusIndicatorComponent, StatusType } from '../../shared/components/status-indicator/status-indicator';
 import {
   Room, RoomType, Bed, Admission, RoomTransfer,
   CreateRoomRequest, UpdateRoomRequest,
@@ -26,7 +27,7 @@ import { Department } from '../departments/models/department.model';
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, StatusIndicatorComponent],
   templateUrl: './rooms.html',
   styleUrls: ['./rooms.scss']
 })
@@ -642,6 +643,20 @@ export class RoomsComponent implements OnInit {
       'Transferred': 'status-transferred'
     };
     return statusMap[status] || 'status-default';
+  }
+
+  getBedStatusType(status: string): StatusType {
+    const statusMap: { [key: string]: StatusType } = {
+      'Available': 'available',
+      'Occupied': 'occupied',
+      'Maintenance': 'maintenance',
+      'Reserved': 'reserved'
+    };
+    return statusMap[status] || 'normal';
+  }
+
+  getBedStatusClass(status: string): string {
+    return `bed-${status.toLowerCase().replace(' ', '-')}`;
   }
 
   getPatientName(patientId: number): string {

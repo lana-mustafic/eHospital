@@ -9,12 +9,13 @@ import { Doctor } from '../doctors/models/doctor.model';
 import { Appointment } from '../appointments/models/appointment.model';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
+import { StatusIndicatorComponent } from '../../shared/components/status-indicator/status-indicator';
 import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-queues',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatusIndicatorComponent],
   templateUrl: './queues.html',
   styleUrls: ['./queues.scss']
 })
@@ -152,6 +153,38 @@ export class QueuesComponent implements OnInit, OnDestroy {
 
   getWaitingCount(doctorId: number): number {
     return this.getQueuesByDoctor(doctorId).filter(q => q.status === 'Waiting').length;
+  }
+
+  getQueuePosition(queue: Queue): number {
+    const waitingQueues = this.getQueuesByDoctor(queue.doctorId)
+      .filter(q => q.status === 'Waiting')
+      .sort((a, b) => a.queueNumber - b.queueNumber);
+    return waitingQueues.findIndex(q => q.id === queue.id) + 1;
+  }
+
+  getQueuePositionClass(queue: Queue): string {
+    if (queue.status !== 'Waiting') {
+      return '';
+    }
+    const position = this.getQueuePosition(queue);
+    if (position === 1) return 'position-next';
+    if (position <= 3) return 'position-soon';
+    return 'position-waiting';
+  }
+
+  getQueuePositionIcon(position: number): string {
+    if (position === 1) return 'priority_high';
+    if (position === 2) return 'schedule';
+    return 'hourglass_empty';
+  }
+
+  isUrgentCase(queue: Queue): boolean {
+    // Consider urgent if wait time exceeds 60 minutes or if notes contain urgent keywords
+    const urgentKeywords = ['urgent', 'emergency', 'critical', 'asap'];
+    const notesLower = (queue.notes || '').toLowerCase();
+    return queue.estimatedWaitTimeMinutes > 60 || 
+           urgentKeywords.some(keyword => notesLower.includes(keyword)) ||
+           queue.actualWaitTimeMinutes > 90;
   }
 
   formatWaitTime(minutes: number): string {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LineChartComponent } from '../../shared/components/charts/line-chart/line-chart.component';
 import { BarChartComponent } from '../../shared/components/charts/bar-chart/bar-chart.component';
+import { StatusIndicatorComponent } from '../../shared/components/status-indicator/status-indicator';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
@@ -25,7 +26,8 @@ import { catchError, timeout } from 'rxjs/operators';
     CommonModule,
     RouterLink,
     LineChartComponent,
-    BarChartComponent
+    BarChartComponent,
+    StatusIndicatorComponent
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
@@ -552,5 +554,29 @@ export class Dashboard implements OnInit {
 
   getInProgressCount(): number {
     return this.todaySchedule.filter((apt: Appointment) => apt.status === 'Checked-In').length;
+  }
+
+  getAppointmentStatusType(appointment: Appointment): 'completed' | 'pending' | 'overdue' | 'cancelled' {
+    if (appointment.status === 'Completed') {
+      return 'completed';
+    }
+    if (appointment.status === 'Cancelled' || appointment.status === 'No Show') {
+      return 'cancelled';
+    }
+    if (this.isPastAppointment(appointment.appointmentDate, appointment.startTime)) {
+      return 'overdue';
+    }
+    return 'pending';
+  }
+
+  isPastAppointment(date: string, time: string): boolean {
+    if (!date || !time) return false;
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    const appointmentDateTime = new Date(`${date}T${normalizedTime}`);
+    return appointmentDateTime < new Date();
+  }
+
+  isOverdueAppointment(appointment: Appointment): boolean {
+    return appointment.status === 'Scheduled' && this.isPastAppointment(appointment.appointmentDate, appointment.startTime);
   }
 }

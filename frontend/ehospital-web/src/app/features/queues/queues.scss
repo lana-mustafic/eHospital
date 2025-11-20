@@ -468,17 +468,59 @@
             }
 
             .queue-number-badge {
-              width: 48px;
-              height: 48px;
               display: flex;
+              flex-direction: column;
               align-items: center;
               justify-content: center;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
+              min-width: 60px;
+              padding: 12px 8px;
               border-radius: 8px;
-              font-size: 1.25rem;
               font-weight: 700;
+              font-size: 1.25rem;
+              color: white;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              position: relative;
+
+              .position-number {
+                line-height: 1;
+              }
+
+              .position-indicator {
+                margin-top: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                .material-icons {
+                  font-size: 16px;
+                }
+              }
+
+              &.position-next {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                animation: pulse-next 2s infinite;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+              }
+
+              &.position-soon {
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+              }
+
+              &.position-waiting {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              }
+
+              @keyframes pulse-next {
+                0%, 100% {
+                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+                }
+                50% {
+                  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
+                }
+              }
             }
+
 
             .queue-info {
               flex: 1;
