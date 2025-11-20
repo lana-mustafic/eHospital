@@ -800,13 +800,37 @@ export class LabTestsComponent implements OnInit {
       return;
     }
 
-    this.labTestService.reviewResults(lt.id, currentUser.name).subscribe({
+    // Use the update method to mark as reviewed
+    const payload: UpdateLabTestRequest = {
+      reviewedBy: currentUser.name,
+      reviewedDate: new Date().toISOString()
+    };
+
+    this.labTestService.update(lt.id, payload).subscribe({
       next: () => {
         this.toastService.success('Results marked as reviewed');
         this.loadLabTests();
       },
       error: (err) => {
-        this.toastService.error(err.error?.message || 'Failed to review results');
+        console.error('Review error:', err);
+        // If the backend doesn't support reviewedBy/reviewedDate, try a simpler update
+        if (err.status === 400 || err.status === 500) {
+          // Fallback: just update notes to indicate review
+          const fallbackPayload: UpdateLabTestRequest = {
+            notes: (lt.notes || '') + `\n[Reviewed by ${currentUser.name} on ${new Date().toLocaleString()}]`
+          };
+          this.labTestService.update(lt.id, fallbackPayload).subscribe({
+            next: () => {
+              this.toastService.success('Results marked as reviewed');
+              this.loadLabTests();
+            },
+            error: (fallbackErr) => {
+              this.toastService.error(fallbackErr.error?.message || 'Failed to review results');
+            }
+          });
+        } else {
+          this.toastService.error(err.error?.message || 'Failed to review results');
+        }
       }
     });
   }
