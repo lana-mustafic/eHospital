@@ -137,6 +137,53 @@ export class Dashboard implements OnInit, OnDestroy {
   private realtimeSubscription?: Subscription;
   private readonly REALTIME_UPDATE_INTERVAL = 30000; // 30 seconds
 
+  // Trend Analysis data
+  trendAnalysisData = {
+    revenueTrends: {
+      daily: [] as Array<{ date: string; revenue: number; target: number }>,
+      weekly: [] as Array<{ week: string; revenue: number; growth: number }>,
+      monthly: [] as Array<{ month: string; revenue: number; growth: number }>
+    },
+    patientVolumeTrends: {
+      daily: [] as Array<{ date: string; inPatients: number; outPatients: number; emergency: number }>,
+      weekly: [] as Array<{ week: string; totalPatients: number; growth: number }>,
+      monthly: [] as Array<{ month: string; totalPatients: number; growth: number }>
+    },
+    appointmentNoShowRates: {
+      overall: 0,
+      byDepartment: [] as Array<{ department: string; noShowRate: number; totalAppointments: number; noShows: number }>,
+      trend: [] as Array<{ date: string; noShowRate: number }>
+    },
+    bedTurnoverRates: {
+      overall: 0,
+      byDepartment: [] as Array<{ department: string; turnoverRate: number; avgStayDays: number; discharges: number }>,
+      trend: [] as Array<{ date: string; turnoverRate: number; occupancyRate: number }>
+    },
+    departmentPerformance: [] as Array<{
+      department: string;
+      efficiency: number;
+      patientSatisfaction: number;
+      avgWaitTime: number;
+      revenue: number;
+      utilization: number;
+      staffProductivity: number;
+      trend: 'up' | 'down' | 'stable'
+    }>,
+    workflowImprovements: [] as Array<{
+      area: string;
+      currentMetric: number;
+      targetMetric: number;
+      improvementPotential: number;
+      priority: 'high' | 'medium' | 'low';
+      suggestions: string[];
+      estimatedImpact: string;
+    }>
+  };
+
+  // Trend analysis display settings
+  selectedRevenuePeriod: 'daily' | 'weekly' | 'monthly' = 'monthly';
+  selectedPatientVolumePeriod: 'daily' | 'weekly' | 'monthly' = 'weekly';
+
   constructor(
     private patientService: PatientService,
     private doctorService: DoctorService,
@@ -165,6 +212,7 @@ export class Dashboard implements OnInit, OnDestroy {
     // Load realistic metrics for admin users
     if (this.isAdmin) {
       this.loadMetrics();
+      this.loadTrendAnalysisData();
     }
     // Start real-time monitoring
     this.startRealtimeMonitoring();
@@ -778,5 +826,386 @@ export class Dashboard implements OnInit, OnDestroy {
 
   getEquipmentEntries(): Array<[string, any]> {
     return Object.entries(this.realtimeData.equipmentAvailability);
+  }
+
+  // Trend Analysis methods
+  loadTrendAnalysisData() {
+    this.loadRevenueTrends();
+    this.loadPatientVolumeTrends();
+    this.loadAppointmentNoShowRates();
+    this.loadBedTurnoverRates();
+    this.loadDepartmentPerformance();
+    this.loadWorkflowImprovements();
+  }
+
+  private loadRevenueTrends() {
+    // Generate daily revenue trends (last 30 days)
+    const dailyData = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const baseRevenue = 15000 + Math.random() * 10000;
+      const target = 18000;
+      dailyData.push({
+        date: date.toISOString().split('T')[0],
+        revenue: Math.round(baseRevenue),
+        target
+      });
+    }
+    this.trendAnalysisData.revenueTrends.daily = dailyData;
+
+    // Generate weekly revenue trends (last 12 weeks)
+    const weeklyData = [];
+    for (let i = 11; i >= 0; i--) {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - (i * 7));
+      const revenue = 100000 + Math.random() * 50000;
+      const prevRevenue = 100000 + Math.random() * 50000;
+      const growth = ((revenue - prevRevenue) / prevRevenue) * 100;
+      weeklyData.push({
+        week: `Week ${52 - i}`,
+        revenue: Math.round(revenue),
+        growth: Math.round(growth * 100) / 100
+      });
+    }
+    this.trendAnalysisData.revenueTrends.weekly = weeklyData;
+
+    // Generate monthly revenue trends (last 12 months)
+    const monthlyData = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const revenue = 400000 + Math.random() * 200000;
+      const prevRevenue = 400000 + Math.random() * 200000;
+      const growth = ((revenue - prevRevenue) / prevRevenue) * 100;
+      monthlyData.push({
+        month: months[date.getMonth()],
+        revenue: Math.round(revenue),
+        growth: Math.round(growth * 100) / 100
+      });
+    }
+    this.trendAnalysisData.revenueTrends.monthly = monthlyData;
+  }
+
+  private loadPatientVolumeTrends() {
+    // Generate daily patient volume trends (last 30 days)
+    const dailyData = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dailyData.push({
+        date: date.toISOString().split('T')[0],
+        inPatients: Math.floor(Math.random() * 50) + 80,
+        outPatients: Math.floor(Math.random() * 100) + 150,
+        emergency: Math.floor(Math.random() * 30) + 20
+      });
+    }
+    this.trendAnalysisData.patientVolumeTrends.daily = dailyData;
+
+    // Generate weekly trends
+    const weeklyData = [];
+    for (let i = 11; i >= 0; i--) {
+      const totalPatients = Math.floor(Math.random() * 500) + 1200;
+      const prevTotal = Math.floor(Math.random() * 500) + 1200;
+      const growth = ((totalPatients - prevTotal) / prevTotal) * 100;
+      weeklyData.push({
+        week: `Week ${52 - i}`,
+        totalPatients,
+        growth: Math.round(growth * 100) / 100
+      });
+    }
+    this.trendAnalysisData.patientVolumeTrends.weekly = weeklyData;
+
+    // Generate monthly trends
+    const monthlyData = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const totalPatients = Math.floor(Math.random() * 2000) + 5000;
+      const prevTotal = Math.floor(Math.random() * 2000) + 5000;
+      const growth = ((totalPatients - prevTotal) / prevTotal) * 100;
+      monthlyData.push({
+        month: months[date.getMonth()],
+        totalPatients,
+        growth: Math.round(growth * 100) / 100
+      });
+    }
+    this.trendAnalysisData.patientVolumeTrends.monthly = monthlyData;
+  }
+
+  private loadAppointmentNoShowRates() {
+    this.trendAnalysisData.appointmentNoShowRates.overall = 12.5;
+    
+    const departments = ['Cardiology', 'Orthopedics', 'Pediatrics', 'Dermatology', 'Neurology', 'Oncology'];
+    this.trendAnalysisData.appointmentNoShowRates.byDepartment = departments.map(dept => {
+      const totalAppointments = Math.floor(Math.random() * 200) + 100;
+      const noShows = Math.floor(totalAppointments * (Math.random() * 0.2 + 0.05));
+      const noShowRate = (noShows / totalAppointments) * 100;
+      return {
+        department: dept,
+        noShowRate: Math.round(noShowRate * 100) / 100,
+        totalAppointments,
+        noShows
+      };
+    });
+
+    // Generate trend data (last 30 days)
+    const trendData = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const noShowRate = Math.random() * 20 + 5; // 5-25% range
+      trendData.push({
+        date: date.toISOString().split('T')[0],
+        noShowRate: Math.round(noShowRate * 100) / 100
+      });
+    }
+    this.trendAnalysisData.appointmentNoShowRates.trend = trendData;
+  }
+
+  private loadBedTurnoverRates() {
+    this.trendAnalysisData.bedTurnoverRates.overall = 2.3;
+
+    const departments = ['ICU', 'Emergency', 'Surgery', 'Maternity', 'Pediatrics', 'General Medicine'];
+    this.trendAnalysisData.bedTurnoverRates.byDepartment = departments.map(dept => {
+      const avgStayDays = Math.random() * 8 + 2; // 2-10 days
+      const discharges = Math.floor(Math.random() * 50) + 20;
+      const turnoverRate = 30 / avgStayDays; // beds per month
+      return {
+        department: dept,
+        turnoverRate: Math.round(turnoverRate * 100) / 100,
+        avgStayDays: Math.round(avgStayDays * 100) / 100,
+        discharges
+      };
+    });
+
+    // Generate trend data (last 30 days)
+    const trendData = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const turnoverRate = Math.random() * 2 + 1.5; // 1.5-3.5 range
+      const occupancyRate = Math.random() * 30 + 70; // 70-100% range
+      trendData.push({
+        date: date.toISOString().split('T')[0],
+        turnoverRate: Math.round(turnoverRate * 100) / 100,
+        occupancyRate: Math.round(occupancyRate * 100) / 100
+      });
+    }
+    this.trendAnalysisData.bedTurnoverRates.trend = trendData;
+  }
+
+  private loadDepartmentPerformance() {
+    const departments = ['Cardiology', 'Emergency', 'Surgery', 'Pediatrics', 'Orthopedics', 'Neurology'];
+    this.trendAnalysisData.departmentPerformance = departments.map(dept => {
+      const efficiency = Math.random() * 30 + 70; // 70-100%
+      const patientSatisfaction = Math.random() * 20 + 80; // 80-100%
+      const avgWaitTime = Math.random() * 45 + 15; // 15-60 minutes
+      const revenue = Math.random() * 100000 + 50000; // $50k-$150k
+      const utilization = Math.random() * 25 + 75; // 75-100%
+      const staffProductivity = Math.random() * 20 + 80; // 80-100%
+      const trends = ['up', 'down', 'stable'] as const;
+      const trend = trends[Math.floor(Math.random() * trends.length)];
+
+      return {
+        department: dept,
+        efficiency: Math.round(efficiency * 100) / 100,
+        patientSatisfaction: Math.round(patientSatisfaction * 100) / 100,
+        avgWaitTime: Math.round(avgWaitTime),
+        revenue: Math.round(revenue),
+        utilization: Math.round(utilization * 100) / 100,
+        staffProductivity: Math.round(staffProductivity * 100) / 100,
+        trend
+      };
+    });
+  }
+
+  private loadWorkflowImprovements() {
+    this.trendAnalysisData.workflowImprovements = [
+      {
+        area: 'Patient Check-in Process',
+        currentMetric: 8.5,
+        targetMetric: 5.0,
+        improvementPotential: 41.2,
+        priority: 'high' as const,
+        suggestions: [
+          'Implement digital check-in kiosks',
+          'Pre-registration via mobile app',
+          'Automated insurance verification'
+        ],
+        estimatedImpact: '3.5 min reduction in wait time'
+      },
+      {
+        area: 'Bed Assignment Efficiency',
+        currentMetric: 45,
+        targetMetric: 30,
+        improvementPotential: 33.3,
+        priority: 'high' as const,
+        suggestions: [
+          'Real-time bed tracking system',
+          'Automated housekeeping notifications',
+          'Predictive discharge planning'
+        ],
+        estimatedImpact: '15 min faster bed assignments'
+      },
+      {
+        area: 'Lab Result Processing',
+        currentMetric: 120,
+        targetMetric: 90,
+        improvementPotential: 25.0,
+        priority: 'medium' as const,
+        suggestions: [
+          'Automated result distribution',
+          'Priority flagging system',
+          'Integration with EMR alerts'
+        ],
+        estimatedImpact: '30 min faster result delivery'
+      },
+      {
+        area: 'Medication Administration',
+        currentMetric: 15,
+        targetMetric: 10,
+        improvementPotential: 33.3,
+        priority: 'medium' as const,
+        suggestions: [
+          'Barcode scanning for medications',
+          'Electronic medication records',
+          'Automated dosage calculations'
+        ],
+        estimatedImpact: '5 min reduction per administration'
+      },
+      {
+        area: 'Discharge Process',
+        currentMetric: 180,
+        targetMetric: 120,
+        improvementPotential: 33.3,
+        priority: 'low' as const,
+        suggestions: [
+          'Electronic discharge summaries',
+          'Automated prescription sending',
+          'Digital patient education materials'
+        ],
+        estimatedImpact: '60 min faster discharge process'
+      }
+    ];
+  }
+
+  // Helper methods for trend analysis
+  getRevenueTrendData() {
+    switch (this.selectedRevenuePeriod) {
+      case 'daily': return this.trendAnalysisData.revenueTrends.daily;
+      case 'weekly': return this.trendAnalysisData.revenueTrends.weekly;
+      case 'monthly': return this.trendAnalysisData.revenueTrends.monthly;
+      default: return this.trendAnalysisData.revenueTrends.monthly;
+    }
+  }
+
+  getPatientVolumeTrendData() {
+    switch (this.selectedPatientVolumePeriod) {
+      case 'daily': return this.trendAnalysisData.patientVolumeTrends.daily;
+      case 'weekly': return this.trendAnalysisData.patientVolumeTrends.weekly;
+      case 'monthly': return this.trendAnalysisData.patientVolumeTrends.monthly;
+      default: return this.trendAnalysisData.patientVolumeTrends.weekly;
+    }
+  }
+
+  getPerformanceStatusClass(value: number, threshold: { good: number; warning: number }): string {
+    if (value >= threshold.good) return 'status-good';
+    if (value >= threshold.warning) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getTrendIcon(trend: 'up' | 'down' | 'stable'): string {
+    switch (trend) {
+      case 'up': return 'trending_up';
+      case 'down': return 'trending_down';
+      case 'stable': return 'trending_flat';
+      default: return 'trending_flat';
+    }
+  }
+
+  getTrendClass(trend: 'up' | 'down' | 'stable'): string {
+    switch (trend) {
+      case 'up': return 'trend-up';
+      case 'down': return 'trend-down';
+      case 'stable': return 'trend-stable';
+      default: return 'trend-stable';
+    }
+  }
+
+  getPriorityClass(priority: 'high' | 'medium' | 'low'): string {
+    switch (priority) {
+      case 'high': return 'priority-high';
+      case 'medium': return 'priority-medium';
+      case 'low': return 'priority-low';
+      default: return 'priority-medium';
+    }
+  }
+
+  formatCurrencyShort(amount: number): string {
+    if (amount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `$${(amount / 1000).toFixed(0)}K`;
+    }
+    return `$${amount.toFixed(0)}`;
+  }
+
+  formatPercentage(value: number): string {
+    return `${value.toFixed(1)}%`;
+  }
+
+  getTotalMonthlyRevenue(): number {
+    return this.trendAnalysisData.revenueTrends.monthly.reduce((sum, item) => sum + item.revenue, 0);
+  }
+
+  getLatestMonthlyGrowth(): number {
+    const monthly = this.trendAnalysisData.revenueTrends.monthly;
+    return monthly.length > 0 ? monthly[monthly.length - 1].growth : 0;
+  }
+
+  getRevenueTooltip(item: any, period: string): string {
+    if (period === 'daily') {
+      return `${item.date}: ${this.formatCurrencyShort(item.revenue)}`;
+    } else if (period === 'weekly') {
+      return `${item.week}: ${this.formatCurrencyShort(item.revenue)}`;
+    } else {
+      return `${item.month}: ${this.formatCurrencyShort(item.revenue)}`;
+    }
+  }
+
+  getRevenueLabel(item: any, period: string): string {
+    if (period === 'daily') {
+      return item.date.split('-')[2];
+    } else if (period === 'weekly') {
+      return item.week.split(' ')[1];
+    } else {
+      return item.month;
+    }
+  }
+
+  getPatientVolumeTooltip(item: any, period: string): string {
+    if (period === 'weekly') {
+      return `${item.week}: ${item.totalPatients} patients`;
+    } else {
+      return `${item.month}: ${item.totalPatients} patients`;
+    }
+  }
+
+  getPatientVolumeLabel(item: any, period: string): string {
+    if (period === 'weekly') {
+      return item.week.split(' ')[1];
+    } else {
+      return item.month;
+    }
+  }
+
+  getPatientVolumeHeight(item: any): number {
+    if ('totalPatients' in item) {
+      return (item.totalPatients / 7000) * 100;
+    }
+    return 0;
   }
 }

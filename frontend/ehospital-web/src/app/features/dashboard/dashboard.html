@@ -247,6 +247,386 @@
       </div>
     }
 
+    <!-- Trend Analysis Dashboard -->
+    @if (isAdmin) {
+      <div class="trend-analysis-section">
+        <div class="trend-analysis-header">
+          <div class="trend-title-section">
+            <span class="material-icons">analytics</span>
+            <h2>Trend Analysis & Performance Insights</h2>
+          </div>
+        </div>
+
+        <!-- Revenue Trends -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">attach_money</span>
+              <h3>Revenue Trends</h3>
+            </div>
+            <div class="period-selector">
+              <button 
+                class="period-btn" 
+                [class.active]="selectedRevenuePeriod === 'daily'"
+                (click)="selectedRevenuePeriod = 'daily'">
+                Daily
+              </button>
+              <button 
+                class="period-btn" 
+                [class.active]="selectedRevenuePeriod === 'weekly'"
+                (click)="selectedRevenuePeriod = 'weekly'">
+                Weekly
+              </button>
+              <button 
+                class="period-btn" 
+                [class.active]="selectedRevenuePeriod === 'monthly'"
+                (click)="selectedRevenuePeriod = 'monthly'">
+                Monthly
+              </button>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            <div class="trend-summary">
+              @if (selectedRevenuePeriod === 'monthly') {
+                <div class="summary-stat">
+                  <span class="stat-label">Total Revenue (Last 12 Months)</span>
+                  <span class="stat-value">{{ formatCurrencyShort(getTotalMonthlyRevenue()) }}</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">Average Monthly Growth</span>
+                  <span class="stat-value" [class]="getLatestMonthlyGrowth() >= 0 ? 'positive' : 'negative'">
+                    {{ formatPercentage(getLatestMonthlyGrowth()) }}
+                  </span>
+                </div>
+              }
+            </div>
+            <div class="trend-chart-container">
+              <div class="trend-chart">
+                @for (item of getRevenueTrendData(); track $index) {
+                  <div class="chart-bar-container">
+                    <div 
+                      class="chart-bar revenue" 
+                      [style.height.%]="selectedRevenuePeriod === 'daily' ? (item.revenue / 25000) * 100 : selectedRevenuePeriod === 'weekly' ? (item.revenue / 150000) * 100 : (item.revenue / 600000) * 100"
+                      [title]="getRevenueTooltip(item, selectedRevenuePeriod)">
+                    </div>
+                    <div class="chart-label">
+                      {{ getRevenueLabel(item, selectedRevenuePeriod) }}
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Patient Volume Trends -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">people</span>
+              <h3>Patient Volume Trends</h3>
+            </div>
+            <div class="period-selector">
+              <button 
+                class="period-btn" 
+                [class.active]="selectedPatientVolumePeriod === 'daily'"
+                (click)="selectedPatientVolumePeriod = 'daily'">
+                Daily
+              </button>
+              <button 
+                class="period-btn" 
+                [class.active]="selectedPatientVolumePeriod === 'weekly'"
+                (click)="selectedPatientVolumePeriod = 'weekly'">
+                Weekly
+              </button>
+              <button 
+                class="period-btn" 
+                [class.active]="selectedPatientVolumePeriod === 'monthly'"
+                (click)="selectedPatientVolumePeriod = 'monthly'">
+                Monthly
+              </button>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            @if (selectedPatientVolumePeriod === 'daily') {
+              <div class="patient-volume-chart">
+                @for (item of trendAnalysisData.patientVolumeTrends.daily; track $index) {
+                  <div class="volume-day-container">
+                    <div class="volume-bars">
+                      <div class="volume-bar inpatient" [style.height.px]="item.inPatients" title="In-Patients: {{ item.inPatients }}"></div>
+                      <div class="volume-bar outpatient" [style.height.px]="item.outPatients" title="Out-Patients: {{ item.outPatients }}"></div>
+                      <div class="volume-bar emergency" [style.height.px]="item.emergency" title="Emergency: {{ item.emergency }}"></div>
+                    </div>
+                    <div class="volume-label">{{ item.date.split('-')[2] }}</div>
+                  </div>
+                }
+              </div>
+              <div class="volume-legend">
+                <div class="legend-item">
+                  <div class="legend-color inpatient"></div>
+                  <span>In-Patients</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color outpatient"></div>
+                  <span>Out-Patients</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color emergency"></div>
+                  <span>Emergency</span>
+                </div>
+              </div>
+            } @else {
+              <div class="trend-chart-container">
+                <div class="trend-chart">
+                  @for (item of getPatientVolumeTrendData(); track $index) {
+                    <div class="chart-bar-container">
+                      <div 
+                        class="chart-bar patients" 
+                        [style.height.%]="getPatientVolumeHeight(item)"
+                        [title]="getPatientVolumeTooltip(item, selectedPatientVolumePeriod)">
+                      </div>
+                      <div class="chart-label">
+                        {{ getPatientVolumeLabel(item, selectedPatientVolumePeriod) }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Appointment No-Show Rates -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">event_busy</span>
+              <h3>Appointment No-Show Analysis</h3>
+            </div>
+            <div class="overall-metric">
+              <span class="metric-label">Overall Rate:</span>
+              <span class="metric-value" [class]="trendAnalysisData.appointmentNoShowRates.overall <= 10 ? 'good' : trendAnalysisData.appointmentNoShowRates.overall <= 15 ? 'warning' : 'critical'">
+                {{ formatPercentage(trendAnalysisData.appointmentNoShowRates.overall) }}
+              </span>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            <div class="no-show-grid">
+              <div class="no-show-by-department">
+                <h4>By Department</h4>
+                <div class="department-no-show-list">
+                  @for (dept of trendAnalysisData.appointmentNoShowRates.byDepartment; track dept.department) {
+                    <div class="dept-no-show-item">
+                      <div class="dept-info">
+                        <span class="dept-name">{{ dept.department }}</span>
+                        <span class="dept-stats">{{ dept.noShows }}/{{ dept.totalAppointments }} appointments</span>
+                      </div>
+                      <div class="dept-rate" [class]="dept.noShowRate <= 10 ? 'good' : dept.noShowRate <= 15 ? 'warning' : 'critical'">
+                        {{ formatPercentage(dept.noShowRate) }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="no-show-trend">
+                <h4>30-Day Trend</h4>
+                <div class="trend-mini-chart">
+                  @for (item of trendAnalysisData.appointmentNoShowRates.trend; track item.date) {
+                    <div 
+                      class="trend-mini-bar" 
+                      [style.height.%]="(item.noShowRate / 25) * 100"
+                      [title]="item.date + ': ' + formatPercentage(item.noShowRate)">
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bed Turnover Rates -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">hotel</span>
+              <h3>Bed Turnover Analysis</h3>
+            </div>
+            <div class="overall-metric">
+              <span class="metric-label">Overall Rate:</span>
+              <span class="metric-value good">{{ trendAnalysisData.bedTurnoverRates.overall }} beds/month</span>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            <div class="turnover-grid">
+              <div class="turnover-by-department">
+                <h4>By Department</h4>
+                <div class="department-turnover-list">
+                  @for (dept of trendAnalysisData.bedTurnoverRates.byDepartment; track dept.department) {
+                    <div class="dept-turnover-item">
+                      <div class="dept-info">
+                        <span class="dept-name">{{ dept.department }}</span>
+                        <span class="dept-stats">{{ dept.avgStayDays }} avg days • {{ dept.discharges }} discharges</span>
+                      </div>
+                      <div class="dept-rate" [class]="dept.turnoverRate >= 2 ? 'good' : dept.turnoverRate >= 1.5 ? 'warning' : 'critical'">
+                        {{ dept.turnoverRate }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="turnover-trend">
+                <h4>30-Day Trend</h4>
+                <div class="dual-trend-chart">
+                  @for (item of trendAnalysisData.bedTurnoverRates.trend; track item.date) {
+                    <div class="dual-trend-container">
+                      <div 
+                        class="trend-bar turnover" 
+                        [style.height.%]="(item.turnoverRate / 4) * 100"
+                        [title]="item.date + ': Turnover ' + item.turnoverRate">
+                      </div>
+                      <div 
+                        class="trend-bar occupancy" 
+                        [style.height.%]="item.occupancyRate"
+                        [title]="item.date + ': Occupancy ' + formatPercentage(item.occupancyRate)">
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div class="dual-legend">
+                  <div class="legend-item">
+                    <div class="legend-color turnover"></div>
+                    <span>Turnover Rate</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-color occupancy"></div>
+                    <span>Occupancy %</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Department Performance Comparison -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">compare_arrows</span>
+              <h3>Department Performance Comparison</h3>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            <div class="performance-table-container">
+              <table class="performance-table">
+                <thead>
+                  <tr>
+                    <th>Department</th>
+                    <th>Efficiency</th>
+                    <th>Patient Satisfaction</th>
+                    <th>Avg Wait Time</th>
+                    <th>Revenue</th>
+                    <th>Utilization</th>
+                    <th>Staff Productivity</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (dept of trendAnalysisData.departmentPerformance; track dept.department) {
+                    <tr>
+                      <td><strong>{{ dept.department }}</strong></td>
+                      <td>
+                        <span class="performance-value" [class]="getPerformanceStatusClass(dept.efficiency, {good: 85, warning: 70})">
+                          {{ formatPercentage(dept.efficiency) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="performance-value" [class]="getPerformanceStatusClass(dept.patientSatisfaction, {good: 90, warning: 80})">
+                          {{ formatPercentage(dept.patientSatisfaction) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="performance-value" [class]="dept.avgWaitTime <= 30 ? 'status-good' : dept.avgWaitTime <= 45 ? 'status-warning' : 'status-critical'">
+                          {{ dept.avgWaitTime }} min
+                        </span>
+                      </td>
+                      <td>
+                        <span class="performance-value">{{ formatCurrencyShort(dept.revenue) }}</span>
+                      </td>
+                      <td>
+                        <span class="performance-value" [class]="getPerformanceStatusClass(dept.utilization, {good: 85, warning: 75})">
+                          {{ formatPercentage(dept.utilization) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="performance-value" [class]="getPerformanceStatusClass(dept.staffProductivity, {good: 90, warning: 80})">
+                          {{ formatPercentage(dept.staffProductivity) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="trend-indicator" [class]="getTrendClass(dept.trend)">
+                          <span class="material-icons">{{ getTrendIcon(dept.trend) }}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Improvements -->
+        <div class="trend-card">
+          <div class="trend-card-header">
+            <div class="trend-card-title">
+              <span class="material-icons">trending_up</span>
+              <h3>Workflow Improvement Opportunities</h3>
+            </div>
+          </div>
+          <div class="trend-card-body">
+            <div class="workflow-improvements-grid">
+              @for (improvement of trendAnalysisData.workflowImprovements; track improvement.area) {
+                <div class="improvement-card" [class]="getPriorityClass(improvement.priority)">
+                  <div class="improvement-header">
+                    <h4>{{ improvement.area }}</h4>
+                    <div class="priority-badge" [class]="getPriorityClass(improvement.priority)">
+                      {{ improvement.priority | titlecase }} Priority
+                    </div>
+                  </div>
+                  <div class="improvement-metrics">
+                    <div class="metric-row">
+                      <span class="metric-label">Current:</span>
+                      <span class="metric-value">{{ improvement.currentMetric }} {{ improvement.area.includes('Time') || improvement.area.includes('Process') ? (improvement.currentMetric > 60 ? 'min' : 'min') : 'units' }}</span>
+                    </div>
+                    <div class="metric-row">
+                      <span class="metric-label">Target:</span>
+                      <span class="metric-value target">{{ improvement.targetMetric }} {{ improvement.area.includes('Time') || improvement.area.includes('Process') ? (improvement.targetMetric > 60 ? 'min' : 'min') : 'units' }}</span>
+                    </div>
+                    <div class="metric-row">
+                      <span class="metric-label">Improvement Potential:</span>
+                      <span class="metric-value improvement">{{ formatPercentage(improvement.improvementPotential) }}</span>
+                    </div>
+                  </div>
+                  <div class="improvement-suggestions">
+                    <h5>Suggested Actions:</h5>
+                    <ul>
+                      @for (suggestion of improvement.suggestions; track suggestion) {
+                        <li>{{ suggestion }}</li>
+                      }
+                    </ul>
+                  </div>
+                  <div class="improvement-impact">
+                    <span class="impact-label">Estimated Impact:</span>
+                    <span class="impact-value">{{ improvement.estimatedImpact }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Doctor Dashboard View -->
     @if (isDoctor) {
       <div class="doctor-dashboard">
