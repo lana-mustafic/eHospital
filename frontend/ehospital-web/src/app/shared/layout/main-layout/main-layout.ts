@@ -90,6 +90,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       icon: 'settings',
       expanded: false,
       items: [
+        { path: '/documents', icon: 'folder', label: 'Document Management', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
         { path: '/notifications', icon: 'notifications', label: 'Notifications', roles: ['Admin', 'Doctor', 'Nurse', 'Patient'] }
       ]
     }

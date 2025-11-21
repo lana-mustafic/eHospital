@@ -1,0 +1,561 @@
+<div class="document-management-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">System</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Document Management</span>
+      </div>
+      <h1 class="page-title">Document Management</h1>
+      <p class="page-description">Upload, organize, and manage documents with electronic signatures and version control</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="openTemplateModal()">
+        <span class="material-icons">description</span>
+        Templates
+      </button>
+      <button class="btn-primary" (click)="openUploadModal()">
+        <span class="material-icons">cloud_upload</span>
+        Upload Documents
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Dashboard -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ documentStats.totalDocuments || 0 }}</div>
+          <div class="stat-label">Total Documents</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ documentStats.pendingSignatures || 0 }}</div>
+          <div class="stat-label">Pending Signatures</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ documentStats.recentUploads || 0 }}</div>
+          <div class="stat-label">Recent Uploads</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ documentStats.expiringDocuments || 0 }}</div>
+          <div class="stat-label">Expiring Soon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-section">
+    <div class="tab-buttons">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'documents'"
+        (click)="setActiveTab('documents')">
+        <span class="material-icons">folder</span>
+        Documents
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'templates'"
+        (click)="setActiveTab('templates')">
+        <span class="material-icons">description</span>
+        Templates
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'signatures'"
+        (click)="setActiveTab('signatures')">
+        <span class="material-icons">draw</span>
+        Signatures
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'analytics'"
+        (click)="setActiveTab('analytics')">
+        <span class="material-icons">analytics</span>
+        Analytics
+      </button>
+    </div>
+  </div>
+
+  <!-- Documents Tab -->
+  <div *ngIf="activeTab === 'documents'" class="tab-content">
+    <!-- Search and Filters -->
+    <div class="search-section">
+      <form [formGroup]="searchForm" class="search-form">
+        <div class="search-row">
+          <div class="search-field">
+            <span class="material-icons">search</span>
+            <input 
+              type="text" 
+              formControlName="searchTerm"
+              placeholder="Search documents..."
+              class="search-input">
+          </div>
+          <div class="filter-field">
+            <select formControlName="category" class="filter-select">
+              <option value="">All Categories</option>
+              <option *ngFor="let category of Object.values(DocumentCategory)" [value]="category">
+                {{ getCategoryDisplayName(category) }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <select formControlName="status" class="filter-select">
+              <option value="">All Statuses</option>
+              <option *ngFor="let status of Object.values(DocumentStatus)" [value]="status">
+                {{ getStatusDisplayName(status) }}
+              </option>
+            </select>
+          </div>
+          <button type="button" class="btn-clear" (click)="clearFilters()">
+            <span class="material-icons">clear</span>
+            Clear
+          </button>
+        </div>
+        
+        <div class="advanced-filters">
+          <div class="filter-field">
+            <label>Date From</label>
+            <input type="date" formControlName="dateFrom" class="filter-input">
+          </div>
+          <div class="filter-field">
+            <label>Date To</label>
+            <input type="date" formControlName="dateTo" class="filter-input">
+          </div>
+          <div class="filter-field">
+            <label>Requires Signature</label>
+            <select formControlName="requiresSignature" class="filter-select">
+              <option value="">All</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>Signature Status</label>
+            <select formControlName="signatureStatus" class="filter-select">
+              <option value="">All</option>
+              <option *ngFor="let status of Object.values(SignatureStatus)" [value]="status">
+                {{ getSignatureStatusDisplayName(status) }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Documents List -->
+    <div class="documents-section">
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading documents...</p>
+      </div>
+
+      <div *ngIf="!isLoading && filteredDocuments.length === 0" class="empty-state">
+        <div class="empty-icon">📄</div>
+        <h3>No Documents Found</h3>
+        <p>Upload your first document or adjust your search filters.</p>
+        <button class="btn-primary" (click)="openUploadModal()">
+          <span class="material-icons">cloud_upload</span>
+          Upload Document
+        </button>
+      </div>
+
+      <div *ngIf="!isLoading && filteredDocuments.length > 0" class="documents-grid">
+        <div *ngFor="let document of filteredDocuments" class="document-card">
+          <div class="document-header">
+            <div class="document-icon">
+              <span class="material-icons">{{ getFileIcon(document.fileType) }}</span>
+            </div>
+            <div class="document-info">
+              <h3 class="document-name">{{ document.name }}</h3>
+              <p class="document-description">{{ document.description }}</p>
+            </div>
+            <div class="document-actions">
+              <button class="action-btn" (click)="viewDocument(document)" title="View">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="action-btn" (click)="downloadDocument(document)" title="Download">
+                <span class="material-icons">download</span>
+              </button>
+              <button class="action-btn" (click)="editDocument(document)" title="Edit">
+                <span class="material-icons">edit</span>
+              </button>
+              <button class="action-btn delete" (click)="deleteDocument(document)" title="Delete">
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="document-metadata">
+            <div class="metadata-row">
+              <span class="metadata-label">Category:</span>
+              <span class="metadata-value">{{ getCategoryDisplayName(document.category) }}</span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Size:</span>
+              <span class="metadata-value">{{ formatFileSize(document.fileSize) }}</span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Version:</span>
+              <span class="metadata-value">v{{ document.version }}</span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Created:</span>
+              <span class="metadata-value">{{ formatDate(document.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="document-status">
+            <div class="status-badges">
+              <span class="status-badge" [class]="getStatusClass(document.status)">
+                {{ getStatusDisplayName(document.status) }}
+              </span>
+              <span *ngIf="document.requiresSignature" 
+                    class="signature-badge" 
+                    [class]="getSignatureStatusClass(document.signatureStatus)">
+                {{ getSignatureStatusDisplayName(document.signatureStatus) }}
+              </span>
+            </div>
+            
+            <div *ngIf="document.requiresSignature && document.signatureStatus === SignatureStatus.PENDING" 
+                 class="signature-action">
+              <button class="btn-signature" (click)="signDocument(document)">
+                <span class="material-icons">draw</span>
+                Sign Document
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="document.tags.length > 0" class="document-tags">
+            <span *ngFor="let tag of document.tags" class="tag">{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Tab -->
+  <div *ngIf="activeTab === 'templates'" class="tab-content">
+    <div class="templates-section">
+      <div class="section-header">
+        <h2>Document Templates</h2>
+        <button class="btn-primary" (click)="router.navigate(['/documents/templates/create'])">
+          <span class="material-icons">add</span>
+          Create Template
+        </button>
+      </div>
+
+      <div class="templates-grid">
+        <div *ngFor="let template of templates" class="template-card">
+          <div class="template-header">
+            <div class="template-icon">
+              <span class="material-icons">description</span>
+            </div>
+            <div class="template-info">
+              <h3>{{ template.name }}</h3>
+              <p>{{ template.description }}</p>
+            </div>
+          </div>
+
+          <div class="template-metadata">
+            <div class="metadata-item">
+              <span class="label">Category:</span>
+              <span class="value">{{ getCategoryDisplayName(template.category) }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">Fields:</span>
+              <span class="value">{{ template.fields.length }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">Created:</span>
+              <span class="value">{{ formatDate(template.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="template-actions">
+            <button class="btn-secondary" (click)="createFromTemplate(template)">
+              <span class="material-icons">add_circle</span>
+              Use Template
+            </button>
+            <button class="btn-outline" (click)="editTemplate(template)">
+              <span class="material-icons">edit</span>
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatures Tab -->
+  <div *ngIf="activeTab === 'signatures'" class="tab-content">
+    <div class="signatures-section">
+      <h2>Pending Signatures</h2>
+      
+      <div class="signatures-list">
+        <div *ngFor="let document of filteredDocuments" class="signature-item">
+          <div *ngIf="document.requiresSignature && document.signatureStatus !== SignatureStatus.COMPLETED">
+            <div class="signature-document">
+              <div class="document-info">
+                <h4>{{ document.name }}</h4>
+                <p>{{ document.description }}</p>
+              </div>
+              <div class="signature-progress">
+                <div class="progress-info">
+                  <span>{{ getCompletedSignaturesCount(document) }} / {{ getTotalSignaturesCount(document) }} signed</span>
+                </div>
+                <div class="signers-list">
+                  <div *ngFor="let signature of document.signatures" class="signer-item">
+                    <span class="signer-name">{{ signature.signerName }}</span>
+                    <span class="signer-status" [class]="getSignatureStatusClass(signature.status)">
+                      {{ getSignatureStatusDisplayName(signature.status) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="signature-actions">
+                <button class="btn-primary" (click)="signDocument(document)">
+                  <span class="material-icons">draw</span>
+                  Sign
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Tab -->
+  <div *ngIf="activeTab === 'analytics'" class="tab-content">
+    <div class="analytics-section">
+      <h2>Document Analytics</h2>
+      
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <h3>Documents by Category</h3>
+          <div class="chart-container">
+            <div *ngFor="let entry of getStatsEntries()" class="chart-item">
+              <span class="chart-label">{{ getCategoryDisplayName(entry[0]) }}</span>
+              <div class="chart-bar">
+                <div class="chart-fill" [style.width.%]="(entry[1] / documentStats.totalDocuments) * 100"></div>
+              </div>
+              <span class="chart-value">{{ entry[1] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <h3>Documents by Status</h3>
+          <div class="chart-container">
+            <div *ngFor="let entry of getStatusStatsEntries()" class="chart-item">
+              <span class="chart-label">{{ getStatusDisplayName(entry[0]) }}</span>
+              <div class="chart-bar">
+                <div class="chart-fill" [style.width.%]="(entry[1] / documentStats.totalDocuments) * 100"></div>
+              </div>
+              <span class="chart-value">{{ entry[1] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div *ngIf="showUploadModal" class="modal-overlay" (click)="closeUploadModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Upload Documents</h2>
+      <button class="modal-close" (click)="closeUploadModal()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="uploadForm" class="upload-form">
+        <!-- File Upload Area -->
+        <div class="file-upload-area" 
+             [class.drag-over]="dragOver"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onFileDrop($event)">
+          <div class="upload-icon">
+            <span class="material-icons">cloud_upload</span>
+          </div>
+          <div class="upload-text">
+            <p>Drag and drop files here or</p>
+            <label class="file-input-label">
+              <input type="file" multiple (change)="onFileSelected($event)" class="file-input">
+              <span class="btn-primary">Choose Files</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Selected Files -->
+        <div *ngIf="selectedFiles.length > 0" class="selected-files">
+          <h4>Selected Files ({{ selectedFiles.length }})</h4>
+          <div *ngFor="let file of selectedFiles" class="file-item">
+            <span class="material-icons">{{ getFileIcon(file.type) }}</span>
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size">{{ formatFileSize(file.size) }}</span>
+          </div>
+        </div>
+
+        <!-- Document Metadata -->
+        <div class="form-section">
+          <h4>Document Information</h4>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label>Document Name</label>
+              <input type="text" formControlName="name" placeholder="Enter document name">
+            </div>
+            <div class="form-field">
+              <label>Category</label>
+              <select formControlName="category">
+                <option *ngFor="let category of Object.values(DocumentCategory)" [value]="category">
+                  {{ getCategoryDisplayName(category) }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Description</label>
+            <textarea formControlName="description" placeholder="Enter document description"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Tags (comma-separated)</label>
+              <input type="text" formControlName="tags" placeholder="tag1, tag2, tag3">
+            </div>
+            <div class="form-field">
+              <label>Visibility</label>
+              <select formControlName="visibility">
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+                <option value="department">Department</option>
+                <option value="patient_only">Patient Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Patient ID (optional)</label>
+              <input type="text" formControlName="patientId" placeholder="Enter patient ID">
+            </div>
+            <div class="form-field">
+              <label>Department ID (optional)</label>
+              <input type="text" formControlName="departmentId" placeholder="Enter department ID">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="requiresSignature">
+              <span>Requires Electronic Signature</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeUploadModal()">Cancel</button>
+      <button class="btn-primary" 
+              [disabled]="selectedFiles.length === 0"
+              (click)="uploadDocuments()">
+        <span class="material-icons">cloud_upload</span>
+        Upload Documents
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Template Modal -->
+<div *ngIf="showTemplateModal" class="modal-overlay" (click)="closeTemplateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Document Templates</h2>
+      <button class="modal-close" (click)="closeTemplateModal()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="templates-list">
+        <div *ngFor="let template of templates" class="template-item">
+          <div class="template-info">
+            <h4>{{ template.name }}</h4>
+            <p>{{ template.description }}</p>
+            <span class="template-category">{{ getCategoryDisplayName(template.category) }}</span>
+          </div>
+          <div class="template-actions">
+            <button class="btn-primary" (click)="createFromTemplate(template)">Use Template</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeTemplateModal()">Close</button>
+      <button class="btn-primary" (click)="router.navigate(['/documents/templates/create'])">
+        Create New Template
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Signature Modal -->
+<div *ngIf="showSignatureModal && selectedDocument" class="modal-overlay" (click)="closeSignatureModal()">
+  <div class="modal-content signature-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Electronic Signature</h2>
+      <button class="modal-close" (click)="closeSignatureModal()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="signature-document-info">
+        <h3>{{ selectedDocument.name }}</h3>
+        <p>{{ selectedDocument.description }}</p>
+      </div>
+
+      <div class="signature-area">
+        <h4>Your Signature</h4>
+        <div class="signature-pad">
+          <canvas width="500" height="200" style="border: 1px solid #ccc;"></canvas>
+        </div>
+        <div class="signature-controls">
+          <button class="btn-secondary">Clear</button>
+          <button class="btn-primary">Save Signature</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeSignatureModal()">Cancel</button>
+      <button class="btn-success">
+        <span class="material-icons">check</span>
+        Sign Document
+      </button>
+    </div>
+  </div>
+</div>

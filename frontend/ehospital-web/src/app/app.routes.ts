@@ -215,6 +215,12 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
         loadComponent: () => import('./features/wizards/appointment-booking-wizard.component').then(m => m.AppointmentBookingWizardComponent)
       },
+      {
+        path: 'documents',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/document-management/document-management.component').then(m => m.DocumentManagementComponent)
+      },
     ],
   },
   {
