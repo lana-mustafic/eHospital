@@ -63,6 +63,190 @@
       </div>
     }
 
+    <!-- Real-time Monitoring Dashboard -->
+    @if (isAdmin || isNurse) {
+      <div class="realtime-monitoring-section">
+        <div class="monitoring-header">
+          <div class="monitoring-title-section">
+            <span class="material-icons">monitor_heart</span>
+            <h2>Real-time Monitoring</h2>
+            <div class="last-updated">
+              <span class="material-icons">schedule</span>
+              <span>Auto-refreshes every 30s</span>
+            </div>
+          </div>
+          <button class="btn-refresh" (click)="refreshRealtimeData()" title="Refresh Now">
+            <span class="material-icons">refresh</span>
+            Refresh
+          </button>
+        </div>
+
+        <!-- Key Metrics Grid -->
+        <div class="realtime-metrics-grid">
+          <!-- ED Patient Count -->
+          <div class="realtime-metric-card ed-patients">
+            <div class="metric-header">
+              <div class="metric-icon emergency">
+                <span class="material-icons">emergency</span>
+              </div>
+              <div class="metric-info">
+                <h3>Emergency Department</h3>
+                <p>Current Patients</p>
+              </div>
+            </div>
+            <div class="metric-value" [class]="getEDStatusClass(realtimeData.edPatientCount)">
+              <span class="value-number">{{ realtimeData.edPatientCount }}</span>
+              <span class="value-label">Patients</span>
+            </div>
+            <div class="metric-status">
+              <app-status-indicator 
+                [status]="realtimeData.edPatientCount <= 10 ? 'normal' : realtimeData.edPatientCount <= 20 ? 'high' : 'urgent'"
+                [label]="realtimeData.edPatientCount <= 10 ? 'Normal' : realtimeData.edPatientCount <= 20 ? 'Busy' : 'Critical'"
+                [showDot]="true">
+              </app-status-indicator>
+            </div>
+          </div>
+
+          <!-- Queue Length -->
+          <div class="realtime-metric-card queue-length">
+            <div class="metric-header">
+              <div class="metric-icon queue">
+                <span class="material-icons">queue</span>
+              </div>
+              <div class="metric-info">
+                <h3>Patient Queue</h3>
+                <p>Waiting Patients</p>
+              </div>
+            </div>
+            <div class="metric-value" [class]="getQueueStatusClass(realtimeData.currentQueueLength)">
+              <span class="value-number">{{ realtimeData.currentQueueLength }}</span>
+              <span class="value-label">Waiting</span>
+            </div>
+            <div class="metric-status">
+              <app-status-indicator 
+                [status]="realtimeData.currentQueueLength <= 5 ? 'normal' : realtimeData.currentQueueLength <= 15 ? 'high' : 'urgent'"
+                [label]="realtimeData.currentQueueLength <= 5 ? 'Low' : realtimeData.currentQueueLength <= 15 ? 'Moderate' : 'High'"
+                [showDot]="true">
+              </app-status-indicator>
+            </div>
+          </div>
+
+          <!-- Available Staff -->
+          <div class="realtime-metric-card staff-count">
+            <div class="metric-header">
+              <div class="metric-icon staff">
+                <span class="material-icons">people</span>
+              </div>
+              <div class="metric-info">
+                <h3>Available Staff</h3>
+                <p>On Duty Now</p>
+              </div>
+            </div>
+            <div class="metric-value" [class]="getStaffStatusClass(realtimeData.availableStaffCount)">
+              <span class="value-number">{{ realtimeData.availableStaffCount }}</span>
+              <span class="value-label">Staff</span>
+            </div>
+            <div class="metric-status">
+              <app-status-indicator 
+                [status]="realtimeData.availableStaffCount >= 30 ? 'normal' : realtimeData.availableStaffCount >= 20 ? 'high' : 'urgent'"
+                [label]="realtimeData.availableStaffCount >= 30 ? 'Optimal' : realtimeData.availableStaffCount >= 20 ? 'Adequate' : 'Low'"
+                [showDot]="true">
+              </app-status-indicator>
+            </div>
+          </div>
+
+          <!-- Operating Rooms -->
+          <div class="realtime-metric-card operating-rooms">
+            <div class="metric-header">
+              <div class="metric-icon or">
+                <span class="material-icons">medical_services</span>
+              </div>
+              <div class="metric-info">
+                <h3>Operating Rooms</h3>
+                <p>Room Status</p>
+              </div>
+            </div>
+            <div class="metric-value" [class]="getORStatusClass(realtimeData.operatingRoomStatus.available, realtimeData.operatingRoomStatus.total)">
+              <span class="value-number">{{ realtimeData.operatingRoomStatus.available }}</span>
+              <span class="value-label">Available</span>
+            </div>
+            <div class="or-breakdown">
+              <div class="or-stat">
+                <span class="or-count occupied">{{ realtimeData.operatingRoomStatus.occupied }}</span>
+                <span class="or-label">In Use</span>
+              </div>
+              <div class="or-stat">
+                <span class="or-count maintenance">{{ realtimeData.operatingRoomStatus.maintenance }}</span>
+                <span class="or-label">Maintenance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equipment Availability -->
+        <div class="equipment-monitoring-section">
+          <div class="section-header">
+            <h3>
+              <span class="material-icons">precision_manufacturing</span>
+              Equipment Availability
+            </h3>
+          </div>
+          <div class="equipment-grid">
+            @for (equipment of getEquipmentEntries(); track equipment[0]) {
+              <div class="equipment-card">
+                <div class="equipment-header">
+                  <div class="equipment-icon" [class]="equipment[0]">
+                    <span class="material-icons">
+                      @switch (equipment[0]) {
+                        @case ('ventilators') { air }
+                        @case ('xrayMachines') { camera }
+                        @case ('ctScanners') { scanner }
+                        @case ('mriMachines') { psychology }
+                        @case ('ecgMachines') { monitor_heart }
+                        @case ('ultrasoundMachines') { waves }
+                        @default { medical_services }
+                      }
+                    </span>
+                  </div>
+                  <div class="equipment-info">
+                    <h4>{{ getEquipmentName(equipment[0]) }}</h4>
+                    <div class="equipment-status" [class]="getEquipmentStatusClass(equipment[1].available, equipment[1].total)">
+                      <span class="available-count">{{ equipment[1].available }}</span>
+                      <span class="total-count">/ {{ equipment[1].total }}</span>
+                      <span class="status-text">Available</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="equipment-breakdown">
+                  <div class="breakdown-bar">
+                    <div class="bar-segment available" [style.width.%]="(equipment[1].available / equipment[1].total) * 100"></div>
+                    <div class="bar-segment in-use" [style.width.%]="(equipment[1].inUse / equipment[1].total) * 100"></div>
+                    <div class="bar-segment maintenance" [style.width.%]="(equipment[1].maintenance / equipment[1].total) * 100"></div>
+                  </div>
+                  <div class="breakdown-legend">
+                    <div class="legend-item">
+                      <div class="legend-color available"></div>
+                      <span>{{ equipment[1].available }} Available</span>
+                    </div>
+                    <div class="legend-item">
+                      <div class="legend-color in-use"></div>
+                      <span>{{ equipment[1].inUse }} In Use</span>
+                    </div>
+                    @if (equipment[1].maintenance > 0) {
+                      <div class="legend-item">
+                        <div class="legend-color maintenance"></div>
+                        <span>{{ equipment[1].maintenance }} Maintenance</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Doctor Dashboard View -->
     @if (isDoctor) {
       <div class="doctor-dashboard">

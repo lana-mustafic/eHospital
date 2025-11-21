@@ -2569,6 +2569,433 @@
   }
 }
 
+  // Real-time Monitoring Section
+  .realtime-monitoring-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+
+    .monitoring-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+
+      .monitoring-title-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .material-icons {
+          font-size: 32px;
+          color: #667eea;
+        }
+
+        h2 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0;
+        }
+
+        .last-updated {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-left: 1rem;
+          padding: 0.5rem 1rem;
+          background: #f0f9ff;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          color: #0369a1;
+
+          .material-icons {
+            font-size: 16px;
+            color: #0369a1;
+          }
+        }
+      }
+
+      .btn-refresh {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .material-icons {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .realtime-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .realtime-metric-card {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 2px solid #e5e7eb;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+      }
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        border-color: #667eea;
+      }
+
+      .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+
+        .metric-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          .material-icons {
+            font-size: 28px;
+            color: white;
+          }
+
+          &.emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+          }
+
+          &.queue {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+          }
+
+          &.staff {
+            background: linear-gradient(135deg, #10b981, #059669);
+          }
+
+          &.or {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          }
+        }
+
+        .metric-info {
+          flex: 1;
+
+          h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 0.25rem 0;
+          }
+
+          p {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0;
+          }
+        }
+      }
+
+      .metric-value {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+
+        .value-number {
+          font-size: 2.5rem;
+          font-weight: 800;
+          line-height: 1;
+          color: #1f2937;
+        }
+
+        .value-label {
+          font-size: 1rem;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        &.status-good .value-number {
+          color: #10b981;
+        }
+
+        &.status-warning .value-number {
+          color: #f59e0b;
+        }
+
+        &.status-critical .value-number {
+          color: #ef4444;
+        }
+      }
+
+      .metric-status {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .or-breakdown {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+
+        .or-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+
+          .or-count {
+            font-size: 1.25rem;
+            font-weight: 700;
+
+            &.occupied {
+              color: #ef4444;
+            }
+
+            &.maintenance {
+              color: #f59e0b;
+            }
+          }
+
+          .or-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+        }
+      }
+    }
+
+    .equipment-monitoring-section {
+      .section-header {
+        margin-bottom: 1.5rem;
+
+        h3 {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0;
+
+          .material-icons {
+            font-size: 28px;
+            color: #667eea;
+          }
+        }
+      }
+
+      .equipment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .equipment-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+          border-color: #667eea;
+        }
+
+        .equipment-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1rem;
+
+          .equipment-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+
+            .material-icons {
+              font-size: 24px;
+              color: white;
+            }
+
+            &.ventilators {
+              background: linear-gradient(135deg, #06b6d4, #0891b2);
+            }
+
+            &.xrayMachines {
+              background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            }
+
+            &.ctScanners {
+              background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+
+            &.mriMachines {
+              background: linear-gradient(135deg, #f59e0b, #d97706);
+            }
+
+            &.ecgMachines {
+              background: linear-gradient(135deg, #10b981, #059669);
+            }
+
+            &.ultrasoundMachines {
+              background: linear-gradient(135deg, #3b82f6, #2563eb);
+            }
+          }
+
+          .equipment-info {
+            flex: 1;
+
+            h4 {
+              font-size: 1rem;
+              font-weight: 600;
+              color: #1f2937;
+              margin: 0 0 0.5rem 0;
+            }
+
+            .equipment-status {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+
+              .available-count {
+                font-size: 1.5rem;
+                font-weight: 700;
+              }
+
+              .total-count {
+                font-size: 1rem;
+                color: #6b7280;
+              }
+
+              .status-text {
+                font-size: 0.875rem;
+                color: #6b7280;
+                margin-left: 0.5rem;
+              }
+
+              &.status-good .available-count {
+                color: #10b981;
+              }
+
+              &.status-warning .available-count {
+                color: #f59e0b;
+              }
+
+              &.status-critical .available-count {
+                color: #ef4444;
+              }
+            }
+          }
+        }
+
+        .equipment-breakdown {
+          .breakdown-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            display: flex;
+
+            .bar-segment {
+              height: 100%;
+              transition: all 0.3s ease;
+
+              &.available {
+                background: #10b981;
+              }
+
+              &.in-use {
+                background: #3b82f6;
+              }
+
+              &.maintenance {
+                background: #f59e0b;
+              }
+            }
+          }
+
+          .breakdown-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+
+            .legend-item {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.875rem;
+              color: #6b7280;
+
+              .legend-color {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+
+                &.available {
+                  background: #10b981;
+                }
+
+                &.in-use {
+                  background: #3b82f6;
+                }
+
+                &.maintenance {
+                  background: #f59e0b;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

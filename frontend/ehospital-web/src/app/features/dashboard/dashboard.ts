@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LineChartComponent } from '../../shared/components/charts/line-chart/line-chart.component';
@@ -18,8 +18,8 @@ import { Doctor } from '../doctors/models/doctor.model';
 import { AuthService } from '../../core/services/auth';
 import { MetricsService } from './services/metrics.service';
 import { MetricsSummary } from './models/metrics.model';
-import { forkJoin, of } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
+import { forkJoin, of, interval, Subscription } from 'rxjs';
+import { catchError, timeout, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
@@ -34,7 +34,7 @@ import { catchError, timeout } from 'rxjs/operators';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   // Patient metrics
   totalPatients = 0;
   activePatients = 0;
@@ -112,6 +112,31 @@ export class Dashboard implements OnInit {
   isLoading = false;
   error: string | null = null;
 
+  // Real-time monitoring data
+  realtimeData = {
+    edPatientCount: 0,
+    currentQueueLength: 0,
+    availableStaffCount: 0,
+    operatingRoomStatus: {
+      total: 0,
+      occupied: 0,
+      available: 0,
+      maintenance: 0
+    },
+    equipmentAvailability: {
+      ventilators: { total: 0, available: 0, inUse: 0, maintenance: 0 },
+      xrayMachines: { total: 0, available: 0, inUse: 0, maintenance: 0 },
+      ctScanners: { total: 0, available: 0, inUse: 0, maintenance: 0 },
+      mriMachines: { total: 0, available: 0, inUse: 0, maintenance: 0 },
+      ecgMachines: { total: 0, available: 0, inUse: 0, maintenance: 0 },
+      ultrasoundMachines: { total: 0, available: 0, inUse: 0, maintenance: 0 }
+    }
+  };
+
+  // Real-time update subscription
+  private realtimeSubscription?: Subscription;
+  private readonly REALTIME_UPDATE_INTERVAL = 30000; // 30 seconds
+
   constructor(
     private patientService: PatientService,
     private doctorService: DoctorService,
@@ -140,6 +165,14 @@ export class Dashboard implements OnInit {
     // Load realistic metrics for admin users
     if (this.isAdmin) {
       this.loadMetrics();
+    }
+    // Start real-time monitoring
+    this.startRealtimeMonitoring();
+  }
+
+  ngOnDestroy() {
+    if (this.realtimeSubscription) {
+      this.realtimeSubscription.unsubscribe();
     }
   }
 
@@ -620,5 +653,130 @@ export class Dashboard implements OnInit {
 
   isOverdueAppointment(appointment: Appointment): boolean {
     return appointment.status === 'Scheduled' && this.isPastAppointment(appointment.appointmentDate, appointment.startTime);
+  }
+
+  // Real-time monitoring methods
+  private startRealtimeMonitoring() {
+    // Initial load
+    this.loadRealtimeData();
+    
+    // Set up periodic updates
+    this.realtimeSubscription = interval(this.REALTIME_UPDATE_INTERVAL)
+      .pipe(
+        switchMap(() => this.loadRealtimeData())
+      )
+      .subscribe();
+  }
+
+  private loadRealtimeData() {
+    // Simulate real-time data loading - in a real app, this would call actual APIs
+    return new Promise<void>((resolve) => {
+      // ED Patient Count (Emergency Department)
+      this.realtimeData.edPatientCount = this.generateRandomCount(5, 25);
+      
+      // Current Queue Length
+      this.realtimeData.currentQueueLength = this.pendingAppointments + this.generateRandomCount(0, 10);
+      
+      // Available Staff Count
+      this.realtimeData.availableStaffCount = this.generateRandomCount(15, 45);
+      
+      // Operating Room Status
+      this.realtimeData.operatingRoomStatus = {
+        total: 8,
+        occupied: this.generateRandomCount(2, 6),
+        available: 0,
+        maintenance: this.generateRandomCount(0, 2)
+      };
+      this.realtimeData.operatingRoomStatus.available = 
+        this.realtimeData.operatingRoomStatus.total - 
+        this.realtimeData.operatingRoomStatus.occupied - 
+        this.realtimeData.operatingRoomStatus.maintenance;
+      
+      // Equipment Availability
+      this.updateEquipmentAvailability();
+      
+      resolve();
+    });
+  }
+
+  private updateEquipmentAvailability() {
+    const equipmentTypes = [
+      { key: 'ventilators', total: 12 },
+      { key: 'xrayMachines', total: 6 },
+      { key: 'ctScanners', total: 3 },
+      { key: 'mriMachines', total: 2 },
+      { key: 'ecgMachines', total: 15 },
+      { key: 'ultrasoundMachines', total: 8 }
+    ];
+
+    equipmentTypes.forEach(equipment => {
+      const maintenance = this.generateRandomCount(0, Math.max(1, Math.floor(equipment.total * 0.2)));
+      const inUse = this.generateRandomCount(0, equipment.total - maintenance);
+      const available = equipment.total - inUse - maintenance;
+      
+      (this.realtimeData.equipmentAvailability as any)[equipment.key] = {
+        total: equipment.total,
+        available,
+        inUse,
+        maintenance
+      };
+    });
+  }
+
+  private generateRandomCount(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Helper methods for real-time monitoring display
+  getEquipmentStatusClass(available: number, total: number): string {
+    const percentage = (available / total) * 100;
+    if (percentage >= 70) return 'status-good';
+    if (percentage >= 40) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getORStatusClass(available: number, total: number): string {
+    const percentage = (available / total) * 100;
+    if (percentage >= 50) return 'status-good';
+    if (percentage >= 25) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getQueueStatusClass(queueLength: number): string {
+    if (queueLength <= 5) return 'status-good';
+    if (queueLength <= 15) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getStaffStatusClass(staffCount: number): string {
+    if (staffCount >= 30) return 'status-good';
+    if (staffCount >= 20) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getEDStatusClass(edCount: number): string {
+    if (edCount <= 10) return 'status-good';
+    if (edCount <= 20) return 'status-warning';
+    return 'status-critical';
+  }
+
+  getEquipmentName(key: string): string {
+    const names: { [key: string]: string } = {
+      ventilators: 'Ventilators',
+      xrayMachines: 'X-Ray Machines',
+      ctScanners: 'CT Scanners',
+      mriMachines: 'MRI Machines',
+      ecgMachines: 'ECG Machines',
+      ultrasoundMachines: 'Ultrasound Machines'
+    };
+    return names[key] || key;
+  }
+
+  refreshRealtimeData() {
+    this.loadRealtimeData();
+  }
+
+  getEquipmentEntries(): Array<[string, any]> {
+    return Object.entries(this.realtimeData.equipmentAvailability);
   }
 }

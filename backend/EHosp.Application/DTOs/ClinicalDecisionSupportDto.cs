@@ -2,19 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EHosp.Application.DTOs;
 
-public class DrugInteractionDto
-{
-    public int Id { get; set; }
-    public int Medication1Id { get; set; }
-    public string Medication1Name { get; set; } = string.Empty;
-    public int Medication2Id { get; set; }
-    public string Medication2Name { get; set; } = string.Empty;
-    public string Severity { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string? Management { get; set; }
-    public string? ClinicalSignificance { get; set; }
-}
-
 public class ClinicalGuidelineDto
 {
     public int Id { get; set; }

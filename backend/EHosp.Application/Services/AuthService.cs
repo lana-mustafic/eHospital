@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using BCrypt.Net;
+using SecurityClaim = System.Security.Claims.Claim;
 
 namespace EHosp.Application.Services
 {
@@ -94,10 +95,10 @@ namespace EHosp.Application.Services
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                new Claim(ClaimTypes.Role, user.Role?.Name ?? "Patient")
+                new SecurityClaim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new SecurityClaim(ClaimTypes.Email, user.Email),
+                new SecurityClaim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+                new SecurityClaim(ClaimTypes.Role, user.Role?.Name ?? "Patient")
             };
 
             var token = new JwtSecurityToken(
