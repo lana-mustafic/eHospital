@@ -1,0 +1,458 @@
+.appointment-booking-wizard {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.wizard-step {
+  min-height: 400px;
+  
+  .step-form {
+    .form-section {
+      h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin-bottom: 0.5rem;
+      }
+      
+      p {
+        color: #64748b;
+        margin-bottom: 2rem;
+      }
+      
+      h4 {
+        font-size: 1.125rem;
+        font-weight: 500;
+        color: #2d3748;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      
+      h5 {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.75rem;
+      }
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+      
+      label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        
+        &:focus {
+          outline: none;
+          border-color: #3182ce;
+          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+        
+        &.invalid {
+          border-color: #e53e3e;
+          box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+        }
+        
+        &::placeholder {
+          color: #9ca3af;
+        }
+      }
+      
+      textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+        font-family: inherit;
+      }
+      
+      select.form-control {
+        cursor: pointer;
+      }
+      
+      .error-message {
+        color: #e53e3e;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        
+        &::before {
+          content: "⚠";
+          font-size: 0.875rem;
+        }
+      }
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      color: #374151;
+      line-height: 1.4;
+      
+      input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        cursor: pointer;
+        margin-top: 0.125rem;
+        flex-shrink: 0;
+      }
+      
+      span {
+        user-select: none;
+      }
+    }
+  }
+}
+
+// Patient Selection Styles
+.patient-selection {
+  .patient-info-card {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    
+    h4 {
+      color: #0369a1;
+      margin-bottom: 1rem;
+      border: none;
+      padding: 0;
+    }
+    
+    .patient-details {
+      .detail-item {
+        margin-bottom: 0.5rem;
+        
+        strong {
+          color: #1e40af;
+          margin-right: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+.new-patient-info {
+  .info-card {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    
+    h4 {
+      color: #d97706;
+      margin-bottom: 1rem;
+      border: none;
+      padding: 0;
+    }
+    
+    p {
+      color: #92400e;
+      margin-bottom: 1rem;
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background: #2c5aa0;
+      }
+    }
+  }
+}
+
+// Doctor Selection Styles
+.doctor-info-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  
+  h4 {
+    color: #166534;
+    margin-bottom: 1rem;
+    border: none;
+    padding: 0;
+  }
+  
+  .doctor-details {
+    .detail-item {
+      margin-bottom: 0.5rem;
+      
+      strong {
+        color: #15803d;
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+.doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  
+  .doctor-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    
+    &:hover {
+      border-color: #3182ce;
+      box-shadow: 0 4px 12px rgba(49, 130, 206, 0.15);
+    }
+    
+    &.selected {
+      border-color: #3182ce;
+      background: #f0f9ff;
+      box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2);
+    }
+    
+    .doctor-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.125rem;
+      margin-bottom: 1rem;
+    }
+    
+    .doctor-info {
+      h5 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin-bottom: 0.5rem;
+      }
+      
+      .specialization {
+        color: #3182ce;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+      
+      .department {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Time Slot Selection Styles
+.time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  
+  .time-slot {
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    font-weight: 500;
+    
+    &:hover {
+      border-color: #3182ce;
+      background: #f0f9ff;
+    }
+    
+    &.selected {
+      border-color: #3182ce;
+      background: #3182ce;
+      color: white;
+    }
+  }
+}
+
+.selected-time-card {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  
+  h4 {
+    color: #d97706;
+    margin-bottom: 1rem;
+    border: none;
+    padding: 0;
+  }
+  
+  .time-details {
+    .detail-item {
+      margin-bottom: 0.5rem;
+      
+      strong {
+        color: #92400e;
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+// Confirmation Styles
+.appointment-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  
+  h4 {
+    color: #1a365d;
+    margin-bottom: 1.5rem;
+    border: none;
+    padding: 0;
+    font-size: 1.25rem;
+  }
+  
+  .summary-section {
+    margin-bottom: 1.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    h5 {
+      color: #4a5568;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #cbd5e0;
+    }
+    
+    .summary-details {
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+        
+        .label {
+          font-weight: 500;
+          color: #6b7280;
+          min-width: 120px;
+        }
+        
+        .value {
+          color: #1f2937;
+          text-align: right;
+          flex: 1;
+        }
+      }
+    }
+  }
+}
+
+.reminder-settings {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  
+  h4 {
+    color: #166534;
+    margin-bottom: 1rem;
+    border: none;
+    padding: 0;
+  }
+}
+
+.confirmation-section {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1.5rem;
+  
+  .checkbox-label {
+    font-weight: 600;
+    color: #991b1b;
+    
+    input[type="checkbox"] {
+      &.invalid {
+        outline: 2px solid #e53e3e;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .appointment-booking-wizard {
+    padding: 1rem;
+  }
+  
+  .doctors-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+  
+  .appointment-summary .summary-details .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .value {
+      text-align: left;
+      margin-top: 0.25rem;
+    }
+  }
+}

@@ -1,0 +1,504 @@
+<div class="bulk-operations-container">
+  <!-- Header -->
+  <div class="bulk-operations-header">
+    <h1>Bulk Operations</h1>
+    <p>Manage large-scale operations efficiently</p>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="bulk-operations-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'dashboard'"
+      (click)="setActiveTab('dashboard')">
+      📊 Dashboard
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'appointments'"
+      (click)="setActiveTab('appointments')">
+      📅 Appointments
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'invoices'"
+      (click)="setActiveTab('invoices')">
+      💰 Invoices
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'notifications'"
+      (click)="setActiveTab('notifications')">
+      📢 Notifications
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'status'"
+      (click)="setActiveTab('status')">
+      🔄 Status Updates
+    </button>
+  </div>
+
+  <!-- Dashboard Tab -->
+  @if (activeTab === 'dashboard') {
+    <div class="tab-content">
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ operationStats.total || 0 }}</div>
+            <div class="stat-label">Total Operations</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ operationStats.running || 0 }}</div>
+            <div class="stat-label">Running</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ operationStats.completed || 0 }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">❌</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ operationStats.failed || 0 }}</div>
+            <div class="stat-label">Failed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operations List -->
+      <div class="operations-section">
+        <h2>Recent Operations</h2>
+        @if (operations.length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>No Operations Yet</h3>
+            <p>Start by creating a bulk operation using the tabs above.</p>
+          </div>
+        } @else {
+          <div class="operations-list">
+            @for (operation of operations; track operation.id) {
+              <div class="operation-card" [class]="getOperationStatusClass(operation.status)">
+                <div class="operation-header">
+                  <div class="operation-info">
+                    <span class="operation-icon">{{ getOperationIcon(operation.type) }}</span>
+                    <div class="operation-details">
+                      <h3>{{ operation.title }}</h3>
+                      <p>{{ operation.description }}</p>
+                    </div>
+                  </div>
+                  <div class="operation-actions">
+                    @if (operation.status === 'running') {
+                      <button class="btn-cancel" (click)="cancelOperation(operation.id)">Cancel</button>
+                    }
+                    @if (operation.status !== 'running') {
+                      <button class="btn-delete" (click)="deleteOperation(operation.id)">Delete</button>
+                    }
+                  </div>
+                </div>
+
+                <div class="operation-progress">
+                  <div class="progress-info">
+                    <span>{{ operation.processedItems }}/{{ operation.totalItems }} items</span>
+                    <span>{{ operation.progress }}%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="operation.progress"></div>
+                  </div>
+                </div>
+
+                <div class="operation-meta">
+                  <div class="operation-status">
+                    <span class="status-badge" [class]="getOperationStatusClass(operation.status)">
+                      {{ operation.status | titlecase }}
+                    </span>
+                  </div>
+                  <div class="operation-timing">
+                    <span>Started: {{ operation.createdAt | date:'short' }}</span>
+                    @if (operation.completedAt) {
+                      <span>Duration: {{ formatDuration(operation.createdAt, operation.completedAt) }}</span>
+                    }
+                  </div>
+                </div>
+
+                @if (operation.errors && operation.errors.length > 0) {
+                  <div class="operation-errors">
+                    <h4>Errors:</h4>
+                    @for (error of operation.errors; track $index) {
+                      <div class="error-item">{{ error }}</div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Bulk Appointments Tab -->
+  @if (activeTab === 'appointments') {
+    <div class="tab-content">
+      <div class="form-section">
+        <h2>Bulk Appointment Scheduling</h2>
+        <p>Schedule appointments for multiple patients at once</p>
+
+        <form [formGroup]="appointmentForm" (ngSubmit)="submitBulkAppointments()" class="bulk-form">
+          <!-- Patient Selection -->
+          <div class="form-group">
+            <label>Select Patients</label>
+            <div class="selection-controls">
+              <button type="button" class="btn-secondary" (click)="selectAllPatients()">Select All</button>
+              <span>{{ appointmentForm.get('patientIds')?.value?.length || 0 }} patients selected</span>
+            </div>
+            <div class="patient-grid">
+              @for (patient of mockPatients; track patient.id) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="patient.id"
+                    [checked]="(appointmentForm.get('patientIds')?.value || []).includes(patient.id)"
+                    (change)="onPatientCheckboxChange($event, patient.id, 'appointment')">
+                  <span>{{ patient.name }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Doctor Selection -->
+          <div class="form-group">
+            <label for="doctorId">Select Doctor</label>
+            <select formControlName="doctorId" id="doctorId" class="form-control">
+              <option value="">Choose a doctor...</option>
+              @for (doctor of mockDoctors; track doctor.id) {
+                <option [value]="doctor.id">{{ doctor.name }} - {{ doctor.department }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Appointment Details -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentType">Appointment Type</label>
+              <select formControlName="appointmentType" id="appointmentType" class="form-control">
+                <option value="">Choose type...</option>
+                @for (type of getAppointmentTypes(); track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="department">Department</label>
+              <select formControlName="department" id="department" class="form-control">
+                <option value="">Choose department...</option>
+                @for (dept of getDepartments(); track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="startDate">Start Date</label>
+              <input type="date" formControlName="startDate" id="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="endDate">End Date</label>
+              <input type="date" formControlName="endDate" id="endDate" class="form-control">
+            </div>
+          </div>
+
+          <!-- Time Slots -->
+          <div class="form-group">
+            <label>Available Time Slots</label>
+            <div class="time-slots-grid">
+              @for (slot of getAvailableTimeSlots(); track slot) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="slot"
+                    [checked]="(appointmentForm.get('timeSlots')?.value || []).includes(slot)"
+                    (change)="onTimeSlotCheckboxChange($event, slot)">
+                  <span>{{ slot }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Duration and Notes -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="duration">Duration (minutes)</label>
+              <input type="number" formControlName="duration" id="duration" class="form-control" min="15" step="15">
+            </div>
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea formControlName="notes" id="notes" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!appointmentForm.valid">
+              Schedule Appointments
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Bulk Invoices Tab -->
+  @if (activeTab === 'invoices') {
+    <div class="tab-content">
+      <div class="form-section">
+        <h2>Batch Invoice Generation</h2>
+        <p>Generate invoices for multiple patients</p>
+
+        <form [formGroup]="invoiceForm" (ngSubmit)="submitBulkInvoices()" class="bulk-form">
+          <!-- Patient Selection -->
+          <div class="form-group">
+            <label>Select Patients</label>
+            <div class="selection-controls">
+              <button type="button" class="btn-secondary" (click)="selectAllPatients()">Select All</button>
+              <span>{{ invoiceForm.get('patientIds')?.value?.length || 0 }} patients selected</span>
+            </div>
+            <div class="patient-grid">
+              @for (patient of mockPatients; track patient.id) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="patient.id"
+                    [checked]="(invoiceForm.get('patientIds')?.value || []).includes(patient.id)"
+                    (change)="onPatientCheckboxChange($event, patient.id, 'invoice')">
+                  <span>{{ patient.name }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Invoice Details -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="serviceType">Service Type</label>
+              <select formControlName="serviceType" id="serviceType" class="form-control">
+                <option value="">Choose service...</option>
+                @for (service of getServiceTypes(); track service) {
+                  <option [value]="service">{{ service }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="amount">Amount ($)</label>
+              <input type="number" formControlName="amount" id="amount" class="form-control" min="0" step="0.01">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea formControlName="description" id="description" class="form-control" rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dueDate">Due Date</label>
+              <input type="date" formControlName="dueDate" id="dueDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="taxRate">Tax Rate (%)</label>
+              <input type="number" formControlName="taxRate" id="taxRate" class="form-control" min="0" max="100" step="0.1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="discountRate">Discount Rate (%) - Optional</label>
+            <input type="number" formControlName="discountRate" id="discountRate" class="form-control" min="0" max="100" step="0.1">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!invoiceForm.valid">
+              Generate Invoices
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Mass Notifications Tab -->
+  @if (activeTab === 'notifications') {
+    <div class="tab-content">
+      <div class="form-section">
+        <h2>Mass Notifications</h2>
+        <p>Send notifications to multiple recipients</p>
+
+        <form [formGroup]="notificationForm" (ngSubmit)="submitBulkNotifications()" class="bulk-form">
+          <!-- Recipient Selection -->
+          <div class="form-group">
+            <label for="recipientType">Recipient Type</label>
+            <select formControlName="recipientType" id="recipientType" class="form-control">
+              <option value="patient">Patients</option>
+              <option value="staff">Staff</option>
+              <option value="doctor">Doctors</option>
+              <option value="all">All Users</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Select Recipients</label>
+            <div class="selection-controls">
+              <button type="button" class="btn-secondary" (click)="selectAllPatients()">Select All</button>
+              <span>{{ notificationForm.get('recipientIds')?.value?.length || 0 }} recipients selected</span>
+            </div>
+            <div class="patient-grid">
+              @for (patient of mockPatients; track patient.id) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="patient.id"
+                    [checked]="(notificationForm.get('recipientIds')?.value || []).includes(patient.id)"
+                    (change)="onPatientCheckboxChange($event, patient.id, 'notification')">
+                  <span>{{ patient.name }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Notification Content -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input type="text" formControlName="title" id="title" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="type">Type</label>
+              <select formControlName="type" id="type" class="form-control">
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="success">Success</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea formControlName="message" id="message" class="form-control" rows="4"></textarea>
+          </div>
+
+          <!-- Delivery Channels -->
+          <div class="form-group">
+            <label>Delivery Channels</label>
+            <div class="channels-grid">
+              @for (channel of getNotificationChannels(); track channel) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="channel"
+                    [checked]="(notificationForm.get('channels')?.value || []).includes(channel)"
+                    (change)="onChannelCheckboxChange($event, channel)">
+                  <span>{{ channel | titlecase }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="scheduledAt">Schedule For (Optional)</label>
+            <input type="datetime-local" formControlName="scheduledAt" id="scheduledAt" class="form-control">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!notificationForm.valid">
+              Send Notifications
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Bulk Status Updates Tab -->
+  @if (activeTab === 'status') {
+    <div class="tab-content">
+      <div class="form-section">
+        <h2>Bulk Status Updates</h2>
+        <p>Update status for multiple entities at once</p>
+
+        <form [formGroup]="statusUpdateForm" (ngSubmit)="submitBulkStatusUpdates()" class="bulk-form">
+          <!-- Entity Type Selection -->
+          <div class="form-group">
+            <label for="entityType">Entity Type</label>
+            <select formControlName="entityType" id="entityType" class="form-control">
+              <option value="appointment">Appointments</option>
+              <option value="patient">Patients</option>
+              <option value="prescription">Prescriptions</option>
+              <option value="invoice">Invoices</option>
+            </select>
+          </div>
+
+          <!-- Entity Selection -->
+          <div class="form-group">
+            <label>Select Items</label>
+            <div class="selection-controls">
+              <button type="button" class="btn-secondary" (click)="selectAllAppointments()">Select All</button>
+              <span>{{ statusUpdateForm.get('entityIds')?.value?.length || 0 }} items selected</span>
+            </div>
+            <div class="entity-grid">
+              @for (appointment of mockAppointments; track appointment.id) {
+                <label class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    [value]="appointment.id"
+                    [checked]="(statusUpdateForm.get('entityIds')?.value || []).includes(appointment.id)"
+                    (change)="onEntityCheckboxChange($event, appointment.id)">
+                  <span>{{ appointment.patientName }} - {{ appointment.doctorName }} ({{ appointment.date | date:'short' }})</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- New Status -->
+          <div class="form-group">
+            <label for="newStatus">New Status</label>
+            <select formControlName="newStatus" id="newStatus" class="form-control">
+              <option value="">Choose status...</option>
+              @for (status of getEntityStatuses(statusUpdateForm.get('entityType')?.value || 'appointment'); track status) {
+                <option [value]="status">{{ status | titlecase }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Reason and Notifications -->
+          <div class="form-group">
+            <label for="reason">Reason (Optional)</label>
+            <textarea formControlName="reason" id="reason" class="form-control" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-item">
+              <input type="checkbox" formControlName="notifyUsers">
+              <span>Notify affected users</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!statusUpdateForm.valid">
+              Update Status
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

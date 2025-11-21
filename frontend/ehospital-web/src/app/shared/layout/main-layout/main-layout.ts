@@ -67,7 +67,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { path: '/pharmacy', icon: 'local_pharmacy', label: 'Pharmacy', roles: ['Admin', 'Nurse'] },
         { path: '/medications', icon: 'medication', label: 'Medication Inventory', roles: ['Admin'] },
         { path: '/invoices', icon: 'receipt', label: 'Billing & Finance', roles: ['Admin', 'Receptionist'] },
-        { path: '/insurance', icon: 'verified_user', label: 'Insurance & Claims', roles: ['Admin', 'Receptionist'] }
+        { path: '/insurance', icon: 'verified_user', label: 'Insurance & Claims', roles: ['Admin', 'Receptionist'] },
+        { path: '/bulk-operations', icon: 'batch_prediction', label: 'Bulk Operations', roles: ['Admin', 'Nurse', 'Receptionist'] },
+        { path: '/wizards/patient-registration', icon: 'person_add', label: 'Patient Registration Wizard', roles: ['Admin', 'Nurse', 'Receptionist'] },
+        { path: '/wizards/appointment-booking', icon: 'event_available', label: 'Appointment Booking Wizard', roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] }
       ]
     },
     {

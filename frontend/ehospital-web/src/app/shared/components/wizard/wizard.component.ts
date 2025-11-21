@@ -1,13 +1,12 @@
-import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, ContentChildren, QueryList, AfterContentInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface WizardStep {
   id: string;
   title: string;
   description?: string;
-  isValid?: boolean;
-  isCompleted?: boolean;
-  isOptional?: boolean;
+  isValid: boolean;
+  isCompleted: boolean;
   template?: TemplateRef<any>;
 }
 
@@ -18,42 +17,15 @@ export interface WizardStep {
   templateUrl: './wizard.component.html',
   styleUrls: ['./wizard.component.scss']
 })
-export class WizardComponent implements OnInit, AfterContentInit {
+export class WizardComponent {
   @Input() steps: WizardStep[] = [];
-  @Input() currentStepIndex: number = 0;
-  @Input() showProgressBar: boolean = true;
-  @Input() showStepNumbers: boolean = true;
-  @Input() allowStepNavigation: boolean = false;
-  @Input() showCancelButton: boolean = true;
-  @Input() showBackButton: boolean = true;
-  @Input() showNextButton: boolean = true;
-  @Input() showFinishButton: boolean = true;
-  @Input() nextButtonText: string = 'Next';
-  @Input() backButtonText: string = 'Back';
-  @Input() finishButtonText: string = 'Finish';
-  @Input() cancelButtonText: string = 'Cancel';
-
-  @Output() stepChanged = new EventEmitter<{ previousStep: number; currentStep: number }>();
-  @Output() wizardCompleted = new EventEmitter<void>();
+  @Input() showProgress = true;
+  @Input() allowStepNavigation = true;
+  @Output() wizardCompleted = new EventEmitter<any>();
   @Output() wizardCancelled = new EventEmitter<void>();
-  @Output() stepValidation = new EventEmitter<{ stepIndex: number; isValid: boolean }>();
+  @Output() stepChanged = new EventEmitter<{ currentStep: number; step: WizardStep }>();
 
-  @ContentChildren(TemplateRef) stepTemplates!: QueryList<TemplateRef<any>>;
-
-  ngOnInit() {
-    this.validateCurrentStep();
-  }
-
-  ngAfterContentInit() {
-    // Associate templates with steps if provided
-    if (this.stepTemplates && this.stepTemplates.length > 0) {
-      this.stepTemplates.forEach((template, index) => {
-        if (this.steps[index]) {
-          this.steps[index].template = template;
-        }
-      });
-    }
-  }
+  currentStepIndex = 0;
 
   get currentStep(): WizardStep | null {
     return this.steps[this.currentStepIndex] || null;
@@ -69,106 +41,87 @@ export class WizardComponent implements OnInit, AfterContentInit {
 
   get progressPercentage(): number {
     if (this.steps.length === 0) return 0;
-    return ((this.currentStepIndex + 1) / this.steps.length) * 100;
+    return Math.round(((this.currentStepIndex + 1) / this.steps.length) * 100);
   }
 
-  get completedStepsCount(): number {
-    return this.steps.filter(step => step.isCompleted).length;
+  goToStep(index: number): void {
+    if (!this.allowStepNavigation) return;
+    
+    if (index >= 0 && index < this.steps.length) {
+      // Check if we can navigate to this step (all previous steps should be completed)
+      const canNavigate = this.steps.slice(0, index).every(step => step.isCompleted);
+      
+      if (canNavigate || index < this.currentStepIndex) {
+        this.currentStepIndex = index;
+        this.stepChanged.emit({ 
+          currentStep: this.currentStepIndex, 
+          step: this.currentStep! 
+        });
+      }
+    }
   }
 
   nextStep(): void {
-    if (this.canGoNext()) {
-      const previousStep = this.currentStepIndex;
-      this.markStepAsCompleted(this.currentStepIndex);
+    if (this.currentStepIndex < this.steps.length - 1 && this.currentStep?.isValid) {
+      this.steps[this.currentStepIndex].isCompleted = true;
       this.currentStepIndex++;
-      this.validateCurrentStep();
-      this.stepChanged.emit({ previousStep, currentStep: this.currentStepIndex });
+      this.stepChanged.emit({ 
+        currentStep: this.currentStepIndex, 
+        step: this.currentStep! 
+      });
     }
   }
 
-  previousStep(): void {
-    if (this.canGoBack()) {
-      const previousStep = this.currentStepIndex;
+  prevStep(): void {
+    if (this.currentStepIndex > 0) {
       this.currentStepIndex--;
-      this.validateCurrentStep();
-      this.stepChanged.emit({ previousStep, currentStep: this.currentStepIndex });
+      this.stepChanged.emit({ 
+        currentStep: this.currentStepIndex, 
+        step: this.currentStep! 
+      });
     }
   }
 
-  goToStep(stepIndex: number): void {
-    if (this.allowStepNavigation && stepIndex >= 0 && stepIndex < this.steps.length) {
-      const previousStep = this.currentStepIndex;
-      this.currentStepIndex = stepIndex;
-      this.validateCurrentStep();
-      this.stepChanged.emit({ previousStep, currentStep: this.currentStepIndex });
+  finishWizard(): void {
+    if (this.currentStep?.isValid) {
+      this.steps[this.currentStepIndex].isCompleted = true;
+      this.wizardCompleted.emit(this.getWizardData());
     }
   }
 
-  finish(): void {
-    if (this.canFinish()) {
-      this.markStepAsCompleted(this.currentStepIndex);
-      this.wizardCompleted.emit();
-    }
-  }
-
-  cancel(): void {
+  cancelWizard(): void {
     this.wizardCancelled.emit();
   }
 
-  canGoNext(): boolean {
-    const currentStep = this.currentStep;
-    return !this.isLastStep && (currentStep?.isValid !== false);
+  private getWizardData(): any {
+    return {
+      steps: this.steps,
+      completedSteps: this.steps.filter(step => step.isCompleted).length,
+      totalSteps: this.steps.length
+    };
   }
 
-  canGoBack(): boolean {
-    return !this.isFirstStep;
+  getStepStatusClass(step: WizardStep, index: number): string {
+    if (step.isCompleted) return 'completed';
+    if (index === this.currentStepIndex) return 'active';
+    if (index < this.currentStepIndex) return 'visited';
+    return 'pending';
   }
 
-  canFinish(): boolean {
-    const currentStep = this.currentStep;
-    return this.isLastStep && (currentStep?.isValid !== false);
-  }
-
-  private markStepAsCompleted(stepIndex: number): void {
-    if (this.steps[stepIndex]) {
-      this.steps[stepIndex].isCompleted = true;
-    }
-  }
-
-  private validateCurrentStep(): void {
-    const currentStep = this.currentStep;
-    if (currentStep) {
-      this.stepValidation.emit({ stepIndex: this.currentStepIndex, isValid: currentStep.isValid !== false });
-    }
-  }
-
-  getStepClass(step: WizardStep, index: number): string {
-    const classes = ['wizard-step'];
+  canNavigateToStep(index: number): boolean {
+    if (!this.allowStepNavigation) return false;
     
-    if (index === this.currentStepIndex) {
-      classes.push('current');
-    } else if (step.isCompleted) {
-      classes.push('completed');
-    } else if (index < this.currentStepIndex) {
-      classes.push('previous');
-    } else {
-      classes.push('upcoming');
-    }
-
-    if (step.isValid === false) {
-      classes.push('invalid');
-    }
-
-    if (step.isOptional) {
-      classes.push('optional');
-    }
-
-    return classes.join(' ');
+    // Can always go back to previous steps
+    if (index < this.currentStepIndex) return true;
+    
+    // Can go to next step if current is valid
+    if (index === this.currentStepIndex + 1 && this.currentStep?.isValid) return true;
+    
+    // Can go to any completed step
+    return this.steps[index]?.isCompleted || false;
   }
 
-  updateStepValidity(stepIndex: number, isValid: boolean): void {
-    if (this.steps[stepIndex]) {
-      this.steps[stepIndex].isValid = isValid;
-    }
+  trackByStepId(index: number, step: WizardStep): string {
+    return step.id;
   }
 }

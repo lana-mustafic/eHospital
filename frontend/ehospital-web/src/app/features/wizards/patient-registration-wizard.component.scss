@@ -1,227 +1,156 @@
 .patient-registration-wizard {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
 
-  .step-content {
-    .wizard-form {
-      .form-section {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: #f8fafc;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
-
-        h3 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0 0 1.5rem 0;
-          padding-bottom: 0.75rem;
-          border-bottom: 2px solid #e5e7eb;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-
-          &::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 2px;
-          }
-        }
-
-        .form-row {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 1.5rem;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-
-          .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-
-            &.full-width {
-              grid-column: 1 / -1;
-            }
-
-            label {
-              font-weight: 600;
-              color: #374151;
-              font-size: 0.9375rem;
-              display: flex;
-              align-items: center;
-              gap: 0.25rem;
-
-              &::after {
-                content: '*';
-                color: #ef4444;
-                font-weight: 700;
-                margin-left: 0.25rem;
-              }
-
-              // Remove asterisk for optional fields
-              &:not([for$="firstName"]):not([for$="lastName"]):not([for$="dateOfBirth"]):not([for$="gender"]):not([for$="email"]):not([for$="phoneNumber"]):not([for$="street"]):not([for$="city"]):not([for$="state"]):not([for$="zipCode"]):not([for$="country"]):not([for$="emergencyName"]):not([for$="relationship"]):not([for$="emergencyPhone"])::after {
-                display: none;
-              }
-            }
-
-            .form-control {
-              padding: 0.75rem 1rem;
-              border: 2px solid #e5e7eb;
-              border-radius: 8px;
-              font-size: 0.9375rem;
-              transition: all 0.3s ease;
-              background: white;
-
-              &:focus {
-                outline: none;
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-              }
-
-              &.invalid {
-                border-color: #ef4444;
-                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-              }
-
-              &::placeholder {
-                color: #9ca3af;
-              }
-            }
-
-            textarea.form-control {
-              resize: vertical;
-              min-height: 80px;
-              font-family: inherit;
-            }
-
-            select.form-control {
-              cursor: pointer;
-            }
-
-            .error-message {
-              color: #ef4444;
-              font-size: 0.8125rem;
-              font-weight: 500;
-              display: flex;
-              align-items: center;
-              gap: 0.25rem;
-
-              &::before {
-                content: '⚠';
-                font-size: 0.75rem;
-              }
-            }
-
-            // Checkbox styling
-            .checkbox-label {
-              display: flex;
-              align-items: center;
-              gap: 0.75rem;
-              cursor: pointer;
-              padding: 1rem;
-              background: white;
-              border: 2px solid #e5e7eb;
-              border-radius: 8px;
-              transition: all 0.3s ease;
-
-              &:hover {
-                border-color: #667eea;
-                background: #f8fafc;
-              }
-
-              .checkbox-input {
-                width: 20px;
-                height: 20px;
-                accent-color: #667eea;
-                cursor: pointer;
-              }
-
-              .checkbox-text {
-                font-weight: 600;
-                color: #374151;
-                font-size: 1rem;
-              }
-
-              &::after {
-                display: none;
-              }
-            }
-          }
-        }
+.wizard-step {
+  min-height: 400px;
+  
+  .step-form {
+    .form-section {
+      h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin-bottom: 0.5rem;
       }
-
-      // Info box styling
-      .info-box {
-        display: flex;
-        gap: 1rem;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #eff6ff, #dbeafe);
-        border: 1px solid #bfdbfe;
-        border-radius: 12px;
-        margin-top: 1rem;
-
-        .info-icon {
-          flex-shrink: 0;
-          width: 40px;
-          height: 40px;
-          background: #3b82f6;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          .material-icons {
-            font-size: 20px;
-          }
-        }
-
-        .info-content {
-          flex: 1;
-
-          h4 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #1e40af;
-            margin: 0 0 0.5rem 0;
-          }
-
-          p {
-            color: #1e40af;
-            margin: 0;
-            line-height: 1.5;
-            font-size: 0.9375rem;
-          }
+      
+      p {
+        color: #64748b;
+        margin-bottom: 2rem;
+      }
+      
+      h4 {
+        font-size: 1.125rem;
+        font-weight: 500;
+        color: #2d3748;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+      
+      &.three-columns {
+        grid-template-columns: 1fr 1fr 1fr;
+        
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
         }
       }
     }
-  }
-}
-
-// Responsive design
-@media (max-width: 768px) {
-  .patient-registration-wizard {
-    margin: 1rem;
-    padding: 0;
-
-    .step-content {
-      .wizard-form {
-        .form-section {
-          padding: 1rem;
-
-          .form-row {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-          }
+    
+    .form-group {
+      margin-bottom: 1rem;
+      
+      label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        
+        &:focus {
+          outline: none;
+          border-color: #3182ce;
+          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
         }
+        
+        &.invalid {
+          border-color: #e53e3e;
+          box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+        }
+        
+        &::placeholder {
+          color: #9ca3af;
+        }
+      }
+      
+      textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+        font-family: inherit;
+      }
+      
+      select.form-control {
+        cursor: pointer;
+        
+        option {
+          padding: 0.5rem;
+        }
+      }
+      
+      .error-message {
+        color: #e53e3e;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        
+        &::before {
+          content: "⚠";
+          font-size: 0.875rem;
+        }
+      }
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      color: #374151;
+      
+      input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        cursor: pointer;
+      }
+      
+      span {
+        user-select: none;
+      }
+    }
+    
+    .address-section {
+      background: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-top: 1rem;
+    }
+    
+    .insurance-details {
+      background: #f0f9ff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #bae6fd;
+      margin-top: 1rem;
+      
+      .form-row:last-child {
+        margin-bottom: 0;
       }
     }
   }
@@ -232,45 +161,63 @@
   .form-control {
     &:valid:not(:placeholder-shown) {
       border-color: #10b981;
+      
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      }
     }
+  }
+}
 
-    &:invalid:not(:placeholder-shown):not(:focus) {
-      border-color: #ef4444;
+// Loading states
+.form-control:disabled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+// Custom styling for specific form elements
+input[type="date"].form-control {
+  position: relative;
+  
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 640px) {
+  .patient-registration-wizard {
+    padding: 1rem;
+  }
+  
+  .wizard-step .step-form .form-section {
+    h3 {
+      font-size: 1.25rem;
     }
-  }
-}
-
-// Loading state
-.wizard-form {
-  &.loading {
-    opacity: 0.7;
-    pointer-events: none;
-  }
-}
-
-// Step-specific styling
-.step-content {
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+    
+    .form-group .form-control {
+      padding: 0.625rem;
+      font-size: 0.875rem;
+    }
   }
 }
 
 // Print styles
 @media print {
   .patient-registration-wizard {
-    .wizard-form {
-      .form-section {
-        break-inside: avoid;
-        page-break-inside: avoid;
+    .wizard-step .step-form .form-section {
+      .form-control {
+        border: none;
+        border-bottom: 1px solid #000;
+        border-radius: 0;
+        padding: 0.25rem 0;
+        background: transparent;
+      }
+      
+      .error-message {
+        display: none;
       }
     }
   }

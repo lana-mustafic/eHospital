@@ -197,6 +197,24 @@ export const routes: Routes = [
         data: { roles: ['Admin', 'Doctor', 'Nurse'] },
         loadComponent: () => import('./features/clinical-decision-support/clinical-decision-support').then(m => m.ClinicalDecisionSupportComponent)
       },
+      {
+        path: 'bulk-operations',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/bulk-operations/bulk-operations.component').then(m => m.BulkOperationsComponent)
+      },
+      {
+        path: 'wizards/patient-registration',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/wizards/patient-registration-wizard.component').then(m => m.PatientRegistrationWizardComponent)
+      },
+      {
+        path: 'wizards/appointment-booking',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Receptionist'] },
+        loadComponent: () => import('./features/wizards/appointment-booking-wizard.component').then(m => m.AppointmentBookingWizardComponent)
+      },
     ],
   },
   {

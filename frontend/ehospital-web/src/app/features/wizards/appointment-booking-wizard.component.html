@@ -1,0 +1,419 @@
+<div class="appointment-booking-wizard">
+  <app-wizard 
+    [steps]="wizardSteps"
+    [showProgress]="true"
+    [allowStepNavigation]="true"
+    (wizardCompleted)="onWizardCompleted($event)"
+    (wizardCancelled)="onWizardCancelled()"
+    (stepChanged)="onStepChanged($event)">
+    
+    <!-- Step 1: Patient Selection -->
+    <div *ngIf="currentStep === 0" class="wizard-step">
+      <form [formGroup]="patientSelectionForm" class="step-form">
+        <div class="form-section">
+          <h3>Select Patient</h3>
+          <p>Choose the patient for this appointment or register a new patient.</p>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                formControlName="isNewPatient">
+              <span>This is a new patient</span>
+            </label>
+          </div>
+          
+          <div *ngIf="!patientSelectionForm.get('isNewPatient')?.value" class="patient-selection">
+            <div class="form-group">
+              <label for="patientId">Select Patient *</label>
+              <select 
+                id="patientId"
+                formControlName="patientId"
+                class="form-control"
+                [class.invalid]="isFieldInvalid(patientSelectionForm, 'patientId')">
+                <option value="">Choose a patient...</option>
+                <option *ngFor="let patient of patients" [value]="patient.id">
+                  {{ formatPatientName(patient) }} - {{ patient.email }}
+                </option>
+              </select>
+              <div class="error-message" *ngIf="isFieldInvalid(patientSelectionForm, 'patientId')">
+                {{ getFieldError(patientSelectionForm, 'patientId') }}
+              </div>
+            </div>
+            
+            <!-- Selected Patient Info -->
+            <div *ngIf="selectedPatient" class="patient-info-card">
+              <h4>Selected Patient</h4>
+              <div class="patient-details">
+                <div class="detail-item">
+                  <strong>Name:</strong> {{ formatPatientName(selectedPatient) }}
+                </div>
+                <div class="detail-item">
+                  <strong>Email:</strong> {{ selectedPatient.email }}
+                </div>
+                <div class="detail-item">
+                  <strong>Phone:</strong> {{ selectedPatient.phone }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="patientSelectionForm.get('isNewPatient')?.value" class="new-patient-info">
+            <div class="info-card">
+              <h4>New Patient Registration</h4>
+              <p>For new patients, please complete the patient registration process first before booking an appointment.</p>
+              <button type="button" class="btn btn-primary" (click)="router.navigate(['/wizards/patient-registration'])">
+                Register New Patient
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 2: Appointment Details -->
+    <div *ngIf="currentStep === 1" class="wizard-step">
+      <form [formGroup]="appointmentDetailsForm" class="step-form">
+        <div class="form-section">
+          <h3>Appointment Details</h3>
+          <p>Specify the type and details of the appointment.</p>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentType">Appointment Type *</label>
+              <select 
+                id="appointmentType"
+                formControlName="appointmentType"
+                class="form-control"
+                [class.invalid]="isFieldInvalid(appointmentDetailsForm, 'appointmentType')">
+                <option value="">Select type...</option>
+                <option *ngFor="let type of getAppointmentTypes()" [value]="type">
+                  {{ type }}
+                </option>
+              </select>
+              <div class="error-message" *ngIf="isFieldInvalid(appointmentDetailsForm, 'appointmentType')">
+                {{ getFieldError(appointmentDetailsForm, 'appointmentType') }}
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="department">Department *</label>
+              <select 
+                id="department"
+                formControlName="department"
+                class="form-control"
+                [class.invalid]="isFieldInvalid(appointmentDetailsForm, 'department')">
+                <option value="">Select department...</option>
+                <option *ngFor="let dept of getDepartments()" [value]="dept">
+                  {{ dept }}
+                </option>
+              </select>
+              <div class="error-message" *ngIf="isFieldInvalid(appointmentDetailsForm, 'department')">
+                {{ getFieldError(appointmentDetailsForm, 'department') }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="priority">Priority *</label>
+              <select 
+                id="priority"
+                formControlName="priority"
+                class="form-control">
+                <option *ngFor="let priority of getPriorityOptions()" [value]="priority">
+                  {{ priority }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="duration">Duration (minutes) *</label>
+              <input 
+                type="number" 
+                id="duration"
+                formControlName="duration"
+                class="form-control"
+                min="15"
+                step="15"
+                [class.invalid]="isFieldInvalid(appointmentDetailsForm, 'duration')">
+              <div class="error-message" *ngIf="isFieldInvalid(appointmentDetailsForm, 'duration')">
+                {{ getFieldError(appointmentDetailsForm, 'duration') }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="reason">Reason for Visit *</label>
+            <textarea 
+              id="reason"
+              formControlName="reason"
+              class="form-control"
+              rows="3"
+              placeholder="Please describe the reason for this appointment..."
+              [class.invalid]="isFieldInvalid(appointmentDetailsForm, 'reason')"></textarea>
+            <div class="error-message" *ngIf="isFieldInvalid(appointmentDetailsForm, 'reason')">
+              {{ getFieldError(appointmentDetailsForm, 'reason') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="notes">Additional Notes</label>
+            <textarea 
+              id="notes"
+              formControlName="notes"
+              class="form-control"
+              rows="2"
+              placeholder="Any additional notes or special instructions..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 3: Doctor Selection -->
+    <div *ngIf="currentStep === 2" class="wizard-step">
+      <form [formGroup]="doctorSelectionForm" class="step-form">
+        <div class="form-section">
+          <h3>Select Doctor</h3>
+          <p>Choose a healthcare provider from the {{ appointmentDetailsForm.get('department')?.value }} department.</p>
+          
+          <div class="form-group">
+            <label for="doctorId">Available Doctors *</label>
+            <select 
+              id="doctorId"
+              formControlName="doctorId"
+              class="form-control"
+              [class.invalid]="isFieldInvalid(doctorSelectionForm, 'doctorId')">
+              <option value="">Select a doctor...</option>
+              <option *ngFor="let doctor of getFilteredDoctors()" [value]="doctor.id">
+                {{ formatDoctorName(doctor) }} - {{ doctor.specialization }}
+              </option>
+            </select>
+            <div class="error-message" *ngIf="isFieldInvalid(doctorSelectionForm, 'doctorId')">
+              {{ getFieldError(doctorSelectionForm, 'doctorId') }}
+            </div>
+          </div>
+          
+          <!-- Selected Doctor Info -->
+          <div *ngIf="selectedDoctor" class="doctor-info-card">
+            <h4>Selected Doctor</h4>
+            <div class="doctor-details">
+              <div class="detail-item">
+                <strong>Name:</strong> {{ formatDoctorName(selectedDoctor) }}
+              </div>
+              <div class="detail-item">
+                <strong>Specialization:</strong> {{ selectedDoctor.specialization }}
+              </div>
+              <div class="detail-item">
+                <strong>Department:</strong> {{ selectedDoctor.department }}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Doctor List -->
+          <div class="doctors-grid">
+            <div 
+              *ngFor="let doctor of getFilteredDoctors()" 
+              class="doctor-card"
+              [class.selected]="selectedDoctor?.id === doctor.id"
+              (click)="doctorSelectionForm.patchValue({doctorId: doctor.id})">
+              <div class="doctor-avatar">
+                {{ doctor.firstName.charAt(0) }}{{ doctor.lastName.charAt(0) }}
+              </div>
+              <div class="doctor-info">
+                <h5>{{ formatDoctorName(doctor) }}</h5>
+                <p class="specialization">{{ doctor.specialization }}</p>
+                <p class="department">{{ doctor.department }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 4: Time Slot Selection -->
+    <div *ngIf="currentStep === 3" class="wizard-step">
+      <form [formGroup]="timeSlotSelectionForm" class="step-form">
+        <div class="form-section">
+          <h3>Select Date & Time</h3>
+          <p>Choose your preferred appointment date and time slot.</p>
+          
+          <div class="form-group">
+            <label for="appointmentDate">Appointment Date *</label>
+            <input 
+              type="date" 
+              id="appointmentDate"
+              formControlName="appointmentDate"
+              class="form-control"
+              [min]="getMinDate()"
+              [class.invalid]="isFieldInvalid(timeSlotSelectionForm, 'appointmentDate')">
+            <div class="error-message" *ngIf="isFieldInvalid(timeSlotSelectionForm, 'appointmentDate')">
+              {{ getFieldError(timeSlotSelectionForm, 'appointmentDate') }}
+            </div>
+          </div>
+          
+          <div class="form-group" *ngIf="timeSlotSelectionForm.get('appointmentDate')?.value">
+            <label>Available Time Slots *</label>
+            <div class="time-slots-grid">
+              <div 
+                *ngFor="let slot of getAvailableTimeSlots()" 
+                class="time-slot"
+                [class.selected]="timeSlotSelectionForm.get('startTime')?.value === slot.time"
+                (click)="timeSlotSelectionForm.patchValue({startTime: slot.time})">
+                {{ slot.time }}
+              </div>
+            </div>
+            <div class="error-message" *ngIf="isFieldInvalid(timeSlotSelectionForm, 'startTime')">
+              Please select a time slot
+            </div>
+          </div>
+          
+          <!-- Selected Time Info -->
+          <div *ngIf="timeSlotSelectionForm.get('appointmentDate')?.value && timeSlotSelectionForm.get('startTime')?.value" 
+               class="selected-time-card">
+            <h4>Selected Appointment Time</h4>
+            <div class="time-details">
+              <div class="detail-item">
+                <strong>Date & Time:</strong> 
+                {{ formatDateTime(timeSlotSelectionForm.get('appointmentDate')?.value, timeSlotSelectionForm.get('startTime')?.value) }}
+              </div>
+              <div class="detail-item">
+                <strong>Duration:</strong> {{ appointmentDetailsForm.get('duration')?.value }} minutes
+              </div>
+              <div class="detail-item">
+                <strong>End Time:</strong> {{ calculateEndTime() }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 5: Confirmation -->
+    <div *ngIf="currentStep === 4" class="wizard-step">
+      <form [formGroup]="confirmationForm" class="step-form">
+        <div class="form-section">
+          <h3>Confirm Appointment</h3>
+          <p>Please review the appointment details and confirm your booking.</p>
+          
+          <!-- Appointment Summary -->
+          <div class="appointment-summary">
+            <h4>Appointment Summary</h4>
+            
+            <div class="summary-section">
+              <h5>Patient Information</h5>
+              <div class="summary-details" *ngIf="selectedPatient">
+                <div class="detail-row">
+                  <span class="label">Patient:</span>
+                  <span class="value">{{ formatPatientName(selectedPatient) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Contact:</span>
+                  <span class="value">{{ selectedPatient.email }} | {{ selectedPatient.phone }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="summary-section">
+              <h5>Appointment Details</h5>
+              <div class="summary-details">
+                <div class="detail-row">
+                  <span class="label">Type:</span>
+                  <span class="value">{{ appointmentDetailsForm.get('appointmentType')?.value }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Department:</span>
+                  <span class="value">{{ appointmentDetailsForm.get('department')?.value }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Priority:</span>
+                  <span class="value">{{ appointmentDetailsForm.get('priority')?.value }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Duration:</span>
+                  <span class="value">{{ appointmentDetailsForm.get('duration')?.value }} minutes</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Reason:</span>
+                  <span class="value">{{ appointmentDetailsForm.get('reason')?.value }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="summary-section">
+              <h5>Healthcare Provider</h5>
+              <div class="summary-details" *ngIf="selectedDoctor">
+                <div class="detail-row">
+                  <span class="label">Doctor:</span>
+                  <span class="value">{{ formatDoctorName(selectedDoctor) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Specialization:</span>
+                  <span class="value">{{ selectedDoctor.specialization }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="summary-section">
+              <h5>Schedule</h5>
+              <div class="summary-details">
+                <div class="detail-row">
+                  <span class="label">Date & Time:</span>
+                  <span class="value">
+                    {{ formatDateTime(timeSlotSelectionForm.get('appointmentDate')?.value, timeSlotSelectionForm.get('startTime')?.value) }}
+                  </span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">End Time:</span>
+                  <span class="value">{{ calculateEndTime() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Reminder Settings -->
+          <div class="reminder-settings">
+            <h4>Reminder Settings</h4>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  formControlName="sendReminder">
+                <span>Send appointment reminder</span>
+              </label>
+            </div>
+            
+            <div *ngIf="confirmationForm.get('sendReminder')?.value" class="form-group">
+              <label for="reminderMethod">Reminder Method</label>
+              <select 
+                id="reminderMethod"
+                formControlName="reminderMethod"
+                class="form-control">
+                <option *ngFor="let method of getReminderMethods()" [value]="method">
+                  {{ method | titlecase }}
+                </option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Confirmation -->
+          <div class="confirmation-section">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  formControlName="confirmBooking"
+                  [class.invalid]="isFieldInvalid(confirmationForm, 'confirmBooking')">
+                <span>I confirm that all the information above is correct and I want to book this appointment *</span>
+              </label>
+              <div class="error-message" *ngIf="isFieldInvalid(confirmationForm, 'confirmBooking')">
+                You must confirm the booking to proceed
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </app-wizard>
+</div>
