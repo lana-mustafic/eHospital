@@ -1,0 +1,126 @@
+<div class="wizard-container">
+  <!-- Wizard Header -->
+  <div class="wizard-header">
+    <div class="wizard-title">
+      <h2>{{ currentStep?.title || 'Wizard' }}</h2>
+      @if (currentStep?.description) {
+        <p class="wizard-description">{{ currentStep.description }}</p>
+      }
+    </div>
+    
+    @if (showProgressBar) {
+      <div class="wizard-progress">
+        <div class="progress-info">
+          <span class="step-counter">Step {{ currentStepIndex + 1 }} of {{ steps.length }}</span>
+          <span class="progress-percentage">{{ progressPercentage.toFixed(0) }}% Complete</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Step Navigation -->
+  <div class="wizard-steps-nav">
+    @for (step of steps; track step.id; let i = $index) {
+      <div 
+        class="step-nav-item"
+        [class]="getStepClass(step, i)"
+        [class.clickable]="allowStepNavigation"
+        (click)="allowStepNavigation ? goToStep(i) : null">
+        
+        <div class="step-indicator">
+          @if (step.isCompleted) {
+            <span class="material-icons">check</span>
+          } @else if (step.isValid === false) {
+            <span class="material-icons">error</span>
+          } @else if (showStepNumbers) {
+            <span class="step-number">{{ i + 1 }}</span>
+          } @else {
+            <div class="step-dot"></div>
+          }
+        </div>
+        
+        <div class="step-info">
+          <div class="step-title">{{ step.title }}</div>
+          @if (step.isOptional) {
+            <div class="step-optional">Optional</div>
+          }
+        </div>
+        
+        @if (i < steps.length - 1) {
+          <div class="step-connector"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Step Content -->
+  <div class="wizard-content">
+    @if (currentStep?.template) {
+      <ng-container [ngTemplateOutlet]="currentStep.template"></ng-container>
+    } @else {
+      <div class="default-step-content">
+        <h3>{{ currentStep?.title }}</h3>
+        @if (currentStep?.description) {
+          <p>{{ currentStep.description }}</p>
+        }
+        <p>Step content goes here...</p>
+      </div>
+    }
+  </div>
+
+  <!-- Wizard Actions -->
+  <div class="wizard-actions">
+    <div class="action-group left">
+      @if (showCancelButton) {
+        <button 
+          type="button" 
+          class="btn btn-cancel"
+          (click)="cancel()">
+          <span class="material-icons">close</span>
+          {{ cancelButtonText }}
+        </button>
+      }
+    </div>
+
+    <div class="action-group right">
+      @if (showBackButton && !isFirstStep) {
+        <button 
+          type="button" 
+          class="btn btn-back"
+          [disabled]="!canGoBack()"
+          (click)="previousStep()">
+          <span class="material-icons">arrow_back</span>
+          {{ backButtonText }}
+        </button>
+      }
+
+      @if (showNextButton && !isLastStep) {
+        <button 
+          type="button" 
+          class="btn btn-next"
+          [disabled]="!canGoNext()"
+          (click)="nextStep()">
+          {{ nextButtonText }}
+          <span class="material-icons">arrow_forward</span>
+        </button>
+      }
+
+      @if (showFinishButton && isLastStep) {
+        <button 
+          type="button" 
+          class="btn btn-finish"
+          [disabled]="!canFinish()"
+          (click)="finish()">
+          <span class="material-icons">check</span>
+          {{ finishButtonText }}
+        </button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Step Templates Content Projection -->
+<ng-content></ng-content>

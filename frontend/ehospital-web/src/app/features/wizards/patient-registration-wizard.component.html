@@ -1,0 +1,603 @@
+<div class="patient-registration-wizard">
+  <app-wizard
+    [steps]="wizardSteps"
+    [currentStepIndex]="currentStepIndex"
+    [showProgressBar]="true"
+    [showStepNumbers]="true"
+    [allowStepNavigation]="false"
+    [showCancelButton]="true"
+    [showBackButton]="true"
+    [showNextButton]="true"
+    [showFinishButton]="true"
+    nextButtonText="Continue"
+    finishButtonText="Complete Registration"
+    (stepChanged)="onStepChanged($event)"
+    (wizardCompleted)="onWizardCompleted()"
+    (wizardCancelled)="onWizardCancelled()">
+
+    <!-- Step 1: Personal Information -->
+    <ng-template>
+      <div class="step-content">
+        <form [formGroup]="personalInfoForm" class="wizard-form">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  formControlName="firstName"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(personalInfoForm, 'firstName')"
+                  placeholder="Enter first name">
+                <div class="error-message" *ngIf="isFieldInvalid(personalInfoForm, 'firstName')">
+                  {{ getFieldError(personalInfoForm, 'firstName') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="middleName">Middle Name</label>
+                <input
+                  type="text"
+                  id="middleName"
+                  formControlName="middleName"
+                  class="form-control"
+                  placeholder="Enter middle name (optional)">
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  formControlName="lastName"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(personalInfoForm, 'lastName')"
+                  placeholder="Enter last name">
+                <div class="error-message" *ngIf="isFieldInvalid(personalInfoForm, 'lastName')">
+                  {{ getFieldError(personalInfoForm, 'lastName') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="dateOfBirth">Date of Birth *</label>
+                <input
+                  type="date"
+                  id="dateOfBirth"
+                  formControlName="dateOfBirth"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(personalInfoForm, 'dateOfBirth')">
+                <div class="error-message" *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')">
+                  {{ getFieldError(personalInfoForm, 'dateOfBirth') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="gender">Gender *</label>
+                <select
+                  id="gender"
+                  formControlName="gender"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(personalInfoForm, 'gender')">
+                  <option value="">Select gender</option>
+                  <option *ngFor="let option of genderOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <div class="error-message" *ngIf="isFieldInvalid(personalInfoForm, 'gender')">
+                  {{ getFieldError(personalInfoForm, 'gender') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="ssn">Social Security Number</label>
+                <input
+                  type="text"
+                  id="ssn"
+                  formControlName="ssn"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(personalInfoForm, 'ssn')"
+                  placeholder="XXX-XX-XXXX"
+                  maxlength="11"
+                  (input)="formatSSN($event)">
+                <div class="error-message" *ngIf="isFieldInvalid(personalInfoForm, 'ssn')">
+                  {{ getFieldError(personalInfoForm, 'ssn') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Additional Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="maritalStatus">Marital Status</label>
+                <select id="maritalStatus" formControlName="maritalStatus" class="form-control">
+                  <option value="">Select status</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                  <option value="separated">Separated</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="occupation">Occupation</label>
+                <input
+                  type="text"
+                  id="occupation"
+                  formControlName="occupation"
+                  class="form-control"
+                  placeholder="Enter occupation">
+              </div>
+              <div class="form-group">
+                <label for="preferredLanguage">Preferred Language</label>
+                <select id="preferredLanguage" formControlName="preferredLanguage" class="form-control">
+                  <option value="English">English</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="French">French</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+
+    <!-- Step 2: Contact Information -->
+    <ng-template>
+      <div class="step-content">
+        <form [formGroup]="contactInfoForm" class="wizard-form">
+          <div class="form-section">
+            <h3>Contact Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input
+                  type="email"
+                  id="email"
+                  formControlName="email"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm, 'email')"
+                  placeholder="Enter email address">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm, 'email')">
+                  {{ getFieldError(contactInfoForm, 'email') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="phoneNumber">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  formControlName="phoneNumber"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm, 'phoneNumber')"
+                  placeholder="(XXX) XXX-XXXX"
+                  maxlength="14"
+                  (input)="formatPhoneNumber($event)">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm, 'phoneNumber')">
+                  {{ getFieldError(contactInfoForm, 'phoneNumber') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="alternatePhone">Alternate Phone</label>
+                <input
+                  type="tel"
+                  id="alternatePhone"
+                  formControlName="alternatePhone"
+                  class="form-control"
+                  placeholder="(XXX) XXX-XXXX"
+                  maxlength="14"
+                  (input)="formatPhoneNumber($event)">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" formGroupName="address">
+            <h3>Address Information</h3>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="street">Street Address *</label>
+                <input
+                  type="text"
+                  id="street"
+                  formControlName="street"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm.get('address')!, 'street')"
+                  placeholder="Enter street address">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm.get('address')!, 'street')">
+                  Street address is required
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City *</label>
+                <input
+                  type="text"
+                  id="city"
+                  formControlName="city"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm.get('address')!, 'city')"
+                  placeholder="Enter city">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm.get('address')!, 'city')">
+                  City is required
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="state">State *</label>
+                <input
+                  type="text"
+                  id="state"
+                  formControlName="state"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm.get('address')!, 'state')"
+                  placeholder="Enter state">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm.get('address')!, 'state')">
+                  State is required
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="zipCode">ZIP Code *</label>
+                <input
+                  type="text"
+                  id="zipCode"
+                  formControlName="zipCode"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm.get('address')!, 'zipCode')"
+                  placeholder="XXXXX or XXXXX-XXXX">
+                <div class="error-message" *ngIf="isFieldInvalid(contactInfoForm.get('address')!, 'zipCode')">
+                  Valid ZIP code is required
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="country">Country *</label>
+                <select
+                  id="country"
+                  formControlName="country"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(contactInfoForm.get('address')!, 'country')">
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+
+    <!-- Step 3: Medical Information -->
+    <ng-template>
+      <div class="step-content">
+        <form [formGroup]="medicalInfoForm" class="wizard-form">
+          <div class="form-section">
+            <h3>Basic Medical Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bloodType">Blood Type</label>
+                <select id="bloodType" formControlName="bloodType" class="form-control">
+                  <option value="">Select blood type</option>
+                  <option *ngFor="let option of bloodTypeOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="smokingStatus">Smoking Status</label>
+                <select id="smokingStatus" formControlName="smokingStatus" class="form-control">
+                  <option value="never">Never</option>
+                  <option value="former">Former smoker</option>
+                  <option value="current">Current smoker</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="alcoholConsumption">Alcohol Consumption</label>
+                <select id="alcoholConsumption" formControlName="alcoholConsumption" class="form-control">
+                  <option value="never">Never</option>
+                  <option value="occasional">Occasional</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="heavy">Heavy</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Medical History</h3>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="allergies">Known Allergies</label>
+                <textarea
+                  id="allergies"
+                  formControlName="allergies"
+                  class="form-control"
+                  rows="3"
+                  placeholder="List any known allergies (medications, food, environmental, etc.)"></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="currentMedications">Current Medications</label>
+                <textarea
+                  id="currentMedications"
+                  formControlName="currentMedications"
+                  class="form-control"
+                  rows="3"
+                  placeholder="List current medications with dosages"></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="medicalHistory">Medical History</label>
+                <textarea
+                  id="medicalHistory"
+                  formControlName="medicalHistory"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Previous illnesses, hospitalizations, treatments"></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="chronicConditions">Chronic Conditions</label>
+                <textarea
+                  id="chronicConditions"
+                  formControlName="chronicConditions"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Ongoing medical conditions (diabetes, hypertension, etc.)"></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="surgicalHistory">Surgical History</label>
+                <textarea
+                  id="surgicalHistory"
+                  formControlName="surgicalHistory"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Previous surgeries and dates"></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="familyMedicalHistory">Family Medical History</label>
+                <textarea
+                  id="familyMedicalHistory"
+                  formControlName="familyMedicalHistory"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Significant family medical history"></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+
+    <!-- Step 4: Emergency Contact -->
+    <ng-template>
+      <div class="step-content">
+        <form [formGroup]="emergencyContactForm" class="wizard-form">
+          <div class="form-section">
+            <h3>Emergency Contact Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="emergencyName">Full Name *</label>
+                <input
+                  type="text"
+                  id="emergencyName"
+                  formControlName="name"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(emergencyContactForm, 'name')"
+                  placeholder="Enter full name">
+                <div class="error-message" *ngIf="isFieldInvalid(emergencyContactForm, 'name')">
+                  {{ getFieldError(emergencyContactForm, 'name') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="relationship">Relationship *</label>
+                <select
+                  id="relationship"
+                  formControlName="relationship"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(emergencyContactForm, 'relationship')">
+                  <option value="">Select relationship</option>
+                  <option *ngFor="let option of relationshipOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <div class="error-message" *ngIf="isFieldInvalid(emergencyContactForm, 'relationship')">
+                  {{ getFieldError(emergencyContactForm, 'relationship') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="emergencyPhone">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="emergencyPhone"
+                  formControlName="phoneNumber"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(emergencyContactForm, 'phoneNumber')"
+                  placeholder="(XXX) XXX-XXXX"
+                  maxlength="14"
+                  (input)="formatPhoneNumber($event)">
+                <div class="error-message" *ngIf="isFieldInvalid(emergencyContactForm, 'phoneNumber')">
+                  {{ getFieldError(emergencyContactForm, 'phoneNumber') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="emergencyAlternatePhone">Alternate Phone</label>
+                <input
+                  type="tel"
+                  id="emergencyAlternatePhone"
+                  formControlName="alternatePhone"
+                  class="form-control"
+                  placeholder="(XXX) XXX-XXXX"
+                  maxlength="14"
+                  (input)="formatPhoneNumber($event)">
+              </div>
+              <div class="form-group">
+                <label for="emergencyEmail">Email Address</label>
+                <input
+                  type="email"
+                  id="emergencyEmail"
+                  formControlName="email"
+                  class="form-control"
+                  [class.invalid]="isFieldInvalid(emergencyContactForm, 'email')"
+                  placeholder="Enter email address">
+                <div class="error-message" *ngIf="isFieldInvalid(emergencyContactForm, 'email')">
+                  {{ getFieldError(emergencyContactForm, 'email') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="emergencyAddress">Address</label>
+                <textarea
+                  id="emergencyAddress"
+                  formControlName="address"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Enter complete address"></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+
+    <!-- Step 5: Insurance Information -->
+    <ng-template>
+      <div class="step-content">
+        <form [formGroup]="insuranceInfoForm" class="wizard-form">
+          <div class="form-section">
+            <h3>Insurance Coverage</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    formControlName="hasInsurance"
+                    class="checkbox-input">
+                  <span class="checkbox-text">I have health insurance</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" *ngIf="insuranceInfoForm.get('hasInsurance')?.value" formGroupName="primaryInsurance">
+            <h3>Primary Insurance</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="primaryProvider">Insurance Provider</label>
+                <input
+                  type="text"
+                  id="primaryProvider"
+                  formControlName="provider"
+                  class="form-control"
+                  placeholder="Enter insurance company name">
+              </div>
+              <div class="form-group">
+                <label for="primaryPolicy">Policy Number</label>
+                <input
+                  type="text"
+                  id="primaryPolicy"
+                  formControlName="policyNumber"
+                  class="form-control"
+                  placeholder="Enter policy number">
+              </div>
+              <div class="form-group">
+                <label for="primaryGroup">Group Number</label>
+                <input
+                  type="text"
+                  id="primaryGroup"
+                  formControlName="groupNumber"
+                  class="form-control"
+                  placeholder="Enter group number">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="primarySubscriber">Subscriber Name</label>
+                <input
+                  type="text"
+                  id="primarySubscriber"
+                  formControlName="subscriberName"
+                  class="form-control"
+                  placeholder="Enter subscriber name">
+              </div>
+              <div class="form-group">
+                <label for="primarySubscriberDOB">Subscriber Date of Birth</label>
+                <input
+                  type="date"
+                  id="primarySubscriberDOB"
+                  formControlName="subscriberDOB"
+                  class="form-control">
+              </div>
+              <div class="form-group">
+                <label for="primaryRelationship">Relationship to Subscriber</label>
+                <select id="primaryRelationship" formControlName="relationshipToSubscriber" class="form-control">
+                  <option value="self">Self</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="child">Child</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" *ngIf="insuranceInfoForm.get('hasInsurance')?.value" formGroupName="secondaryInsurance">
+            <h3>Secondary Insurance (Optional)</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="secondaryProvider">Insurance Provider</label>
+                <input
+                  type="text"
+                  id="secondaryProvider"
+                  formControlName="provider"
+                  class="form-control"
+                  placeholder="Enter insurance company name">
+              </div>
+              <div class="form-group">
+                <label for="secondaryPolicy">Policy Number</label>
+                <input
+                  type="text"
+                  id="secondaryPolicy"
+                  formControlName="policyNumber"
+                  class="form-control"
+                  placeholder="Enter policy number">
+              </div>
+              <div class="form-group">
+                <label for="secondaryGroup">Group Number</label>
+                <input
+                  type="text"
+                  id="secondaryGroup"
+                  formControlName="groupNumber"
+                  class="form-control"
+                  placeholder="Enter group number">
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box" *ngIf="!insuranceInfoForm.get('hasInsurance')?.value">
+            <div class="info-icon">
+              <span class="material-icons">info</span>
+            </div>
+            <div class="info-content">
+              <h4>No Insurance</h4>
+              <p>If you don't have insurance, our financial counselors can help you explore payment options and assistance programs. Please speak with our registration staff for more information.</p>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+
+  </app-wizard>
+</div>
