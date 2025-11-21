@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PatientService } from './services/patient.service';
 import { CreatePatientRequest, Patient, UpdatePatientRequest } from './models/patient.model';
@@ -45,7 +45,8 @@ export class PatientsComponent implements OnInit {
     private patientService: PatientService,
     private fb: FormBuilder,
     private toastService: ToastService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private router: Router
   ) {
     this.patientForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -237,6 +238,10 @@ export class PatientsComponent implements OnInit {
     if (!dateString) return '—';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  openPatientRegistrationWizard() {
+    this.router.navigate(['/wizards/patient-registration']);
   }
 
   openAddModal() {

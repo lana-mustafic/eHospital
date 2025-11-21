@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AppointmentService } from './services/appointment.service';
 import { Appointment, CreateAppointmentRequest, UpdateAppointmentStatusRequest } from './models/appointment.model';
@@ -58,7 +59,8 @@ export class AppointmentsComponent implements OnInit {
     private toastService: ToastService,
     private doctorScheduleService: DoctorScheduleService,
     private exportService: ExportService,
-    private queueService: QueueService
+    private queueService: QueueService,
+    private router: Router
   ) {
     this.appointmentForm = this.fb.group({
       patientId: ['', [Validators.required]],
@@ -395,6 +397,10 @@ export class AppointmentsComponent implements OnInit {
   }
   getTodayDate(): string {
     return new Date().toISOString().split('T')[0];
+  }
+
+  openAppointmentBookingWizard() {
+    this.router.navigate(['/wizards/appointment-booking']);
   }
 
   openAddModal() {

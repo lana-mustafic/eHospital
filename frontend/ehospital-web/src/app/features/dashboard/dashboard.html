@@ -27,16 +27,28 @@
       </div>
       <div class="header-actions">
         @if (isNurse) {
+          <button class="btn-secondary" [routerLink]="['/wizards/patient-registration']">
+            <span class="material-icons">person_add</span>
+            Register Patient
+          </button>
           <button class="btn-primary" [routerLink]="['/queues']">
             <span class="material-icons">queue</span>
             View Queue
           </button>
         } @else if (isReceptionist) {
-          <button class="btn-primary" [routerLink]="['/appointments']">
-            <span class="material-icons">add</span>
-            Schedule Appointment
+          <button class="btn-secondary" [routerLink]="['/wizards/patient-registration']">
+            <span class="material-icons">person_add</span>
+            Register Patient
+          </button>
+          <button class="btn-primary" [routerLink]="['/wizards/appointment-booking']">
+            <span class="material-icons">event_available</span>
+            Book Appointment
           </button>
         } @else {
+          <button class="btn-secondary" [routerLink]="['/wizards/appointment-booking']">
+            <span class="material-icons">event_available</span>
+            Book Appointment
+          </button>
           <button class="btn-primary" [routerLink]="['/appointments']">
             <span class="material-icons">add</span>
             New Appointment
