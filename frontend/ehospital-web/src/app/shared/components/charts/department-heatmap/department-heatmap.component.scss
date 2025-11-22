@@ -1,0 +1,75 @@
+@use 'styles/colors' as *;
+
+.heatmap-container {
+  width: 100%;
+  padding: 1.5rem;
+  background: $color-background-white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px $shadow-sm;
+}
+
+.chart-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 1rem 0;
+}
+
+.heatmap-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.heatmap {
+  width: 100%;
+  min-height: 400px;
+  overflow: visible;
+}
+
+.axis-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: $color-text-secondary;
+}
+
+.axis-tick {
+  font-size: 11px;
+  fill: $color-text-muted;
+}
+
+.heatmap-cell {
+  transition: opacity 0.2s, transform 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1 !important;
+    transform: translateY(-2px);
+  }
+}
+
+.cell-value {
+  font-size: 11px;
+  font-weight: 600;
+  fill: $color-text;
+  pointer-events: none;
+}
+
+.cell-label {
+  font-size: 10px;
+  fill: $color-text-secondary;
+  pointer-events: none;
+}
+
+.legend {
+  .legend-title {
+    font-size: 11px;
+    font-weight: 600;
+    fill: $color-text;
+  }
+
+  .legend-label {
+    font-size: 10px;
+    fill: $color-text-secondary;
+  }
+}
+

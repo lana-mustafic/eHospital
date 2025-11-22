@@ -1669,7 +1669,7 @@
               [data]="appointmentTrendData"
               [width]="600"
               [height]="250"
-              lineColor="#667eea"
+              lineColor="#14b8a6"
             ></app-line-chart>
           </div>
 
@@ -1679,10 +1679,72 @@
               [data]="monthlyAppointmentData"
               [width]="600"
               [height]="250"
-              defaultColor="#667eea"
+              defaultColor="#14b8a6"
             ></app-bar-chart>
           </div>
         </div>
+
+        <!-- Advanced Visualizations Section -->
+        @if (isAdmin || isNurse) {
+          <div class="visualizations-section">
+            <h2 class="section-title">Advanced Visualizations</h2>
+            
+            <div class="visualizations-grid">
+              <!-- Patient Flow Diagram -->
+              <div class="viz-card">
+                <app-patient-flow-diagram
+                  [nodes]="patientFlowNodes"
+                  [connections]="patientFlowConnections"
+                  [width]="800"
+                  [height]="400"
+                  title="Patient Flow Diagram">
+                </app-patient-flow-diagram>
+              </div>
+
+              <!-- Department Utilization Heatmap -->
+              <div class="viz-card">
+                <app-department-heatmap
+                  [data]="departmentHeatmapData"
+                  [width]="700"
+                  [height]="400"
+                  title="Department Utilization Heatmap">
+                </app-department-heatmap>
+              </div>
+
+              <!-- Revenue Breakdown Pie Chart -->
+              <div class="viz-card">
+                <app-revenue-pie-chart
+                  [data]="revenueData"
+                  [width]="300"
+                  [height]="300"
+                  title="Revenue Breakdown"
+                  [showLegend]="true">
+                </app-revenue-pie-chart>
+              </div>
+
+              <!-- Appointment Distribution -->
+              <div class="viz-card">
+                <app-appointment-distribution
+                  [data]="appointmentDistributionData"
+                  [width]="600"
+                  [height]="300"
+                  title="Appointment Distribution by Time"
+                  chartType="bar">
+                </app-appointment-distribution>
+              </div>
+
+              <!-- Bed Occupancy Trends -->
+              <div class="viz-card full-width">
+                <app-bed-occupancy-trends
+                  [data]="bedOccupancyData"
+                  [width]="900"
+                  [height]="400"
+                  title="Bed Occupancy Trends (Last 30 Days)">
+                </app-bed-occupancy-trends>
+              </div>
+            </div>
+          </div>
+        }
 
         <!-- Realistic Metrics Section -->
         @if (showMetrics && metricsSummary) {

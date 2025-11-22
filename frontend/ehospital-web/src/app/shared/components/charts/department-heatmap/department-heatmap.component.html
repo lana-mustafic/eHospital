@@ -1,0 +1,93 @@
+<div class="heatmap-container">
+  @if (title) {
+    <h3 class="chart-title">{{ title }}</h3>
+  }
+  <div class="heatmap-wrapper">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="heatmap">
+      <!-- Y-axis label -->
+      <text
+        x="75"
+        y="300"
+        text-anchor="middle"
+        class="axis-label"
+        transform="rotate(-90 75 300)"
+      >
+        Utilization %
+      </text>
+
+      <!-- Y-axis scale -->
+      <g class="y-axis">
+        @for (tick of [0, 25, 50, 75, 100]; track tick) {
+          <line
+            [attr.x1]="150"
+            [attr.y1]="60 + (100 - tick) * 2.8"
+            [attr.x2]="width - 100"
+            [attr.y2]="60 + (100 - tick) * 2.8"
+            stroke="#e5e7eb"
+            stroke-width="1"
+            stroke-dasharray="2,2"
+          />
+          <text
+            x="145"
+            [attr.y]="60 + (100 - tick) * 2.8 + 4"
+            text-anchor="end"
+            class="axis-tick"
+          >
+            {{ tick }}%
+          </text>
+        }
+      </g>
+
+      <!-- Heatmap cells -->
+      <g class="heatmap-cells">
+        @for (item of data; track item.department; let i = $index) {
+          <g [attr.transform]="'translate(' + getCellX(i) + ',' + getCellY() + ')'">
+            <rect
+              [attr.width]="cellWidth - 4"
+              [attr.height]="(item.utilization / 100) * (height - 120)"
+              [attr.fill]="getCellColor(item.utilization)"
+              [attr.opacity]="0.7 + getIntensity(item.utilization) * 0.3"
+              rx="4"
+              class="heatmap-cell"
+              [attr.data-department]="item.department"
+              [attr.data-utilization]="item.utilization"
+            />
+            <text
+              [attr.x]="cellWidth / 2"
+              [attr.y]="(item.utilization / 100) * (height - 120) + 20"
+              text-anchor="middle"
+              class="cell-value"
+            >
+              {{ item.utilization.toFixed(0) }}%
+            </text>
+            <text
+              [attr.x]="cellWidth / 2"
+              [attr.y]="height - 40"
+              text-anchor="middle"
+              class="cell-label"
+              [attr.transform]="getLabelTransform(cellWidth / 2, height - 40)"
+            >
+              {{ item.department }}
+            </text>
+          </g>
+        }
+      </g>
+
+      <!-- Legend -->
+      <g class="legend" [attr.transform]="'translate(' + (width - 80) + ', 60)'">
+        <text x="0" y="-10" class="legend-title">Utilization</text>
+        <rect x="0" y="0" width="16" height="16" fill="#d1fae5" rx="2" />
+        <text x="20" y="12" class="legend-label">0-25%</text>
+        <rect x="0" y="20" width="16" height="16" fill="#14b8a6" rx="2" />
+        <text x="20" y="32" class="legend-label">25-50%</text>
+        <rect x="0" y="40" width="16" height="16" fill="#fbbf24" rx="2" />
+        <text x="20" y="52" class="legend-label">50-75%</text>
+        <rect x="0" y="60" width="16" height="16" fill="#f59e0b" rx="2" />
+        <text x="20" y="72" class="legend-label">75-90%</text>
+        <rect x="0" y="80" width="16" height="16" fill="#dc2626" rx="2" />
+        <text x="20" y="92" class="legend-label">90-100%</text>
+      </g>
+    </svg>
+  </div>
+</div>
+

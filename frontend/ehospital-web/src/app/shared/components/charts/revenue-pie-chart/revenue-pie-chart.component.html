@@ -1,0 +1,52 @@
+<div class="revenue-pie-container">
+  @if (title) {
+    <h3 class="chart-title">{{ title }}</h3>
+  }
+  <div class="pie-chart-wrapper">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="revenue-pie">
+      <!-- Pie segments -->
+      <g class="segments">
+        @for (segment of segments; track segment.category) {
+          <path
+            [attr.d]="segment.path"
+            [attr.fill]="segment.color"
+            class="pie-segment"
+            [attr.data-category]="segment.category"
+          />
+        }
+      </g>
+
+      <!-- Center text -->
+      <text
+        [attr.x]="centerX"
+        [attr.y]="centerY - 10"
+        text-anchor="middle"
+        class="center-total"
+      >
+        {{ formatCurrency(total) }}
+      </text>
+      <text
+        [attr.x]="centerX"
+        [attr.y]="centerY + 10"
+        text-anchor="middle"
+        class="center-label"
+      >
+        Total Revenue
+      </text>
+    </svg>
+
+    @if (showLegend) {
+      <div class="chart-legend">
+        @for (segment of segments; track segment.category) {
+          <div class="legend-item">
+            <span class="legend-color" [style.background-color]="segment.color"></span>
+            <span class="legend-label">{{ segment.category }}</span>
+            <span class="legend-value">{{ formatCurrency(segment.amount) }}</span>
+            <span class="legend-percentage">({{ segment.percentage.toFixed(1) }}%)</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+

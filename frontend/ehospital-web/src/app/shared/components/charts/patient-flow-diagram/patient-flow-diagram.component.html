@@ -1,0 +1,62 @@
+<div class="flow-diagram-container">
+  @if (title) {
+    <h3 class="chart-title">{{ title }}</h3>
+  }
+  <div class="flow-diagram-wrapper">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="flow-diagram">
+      <!-- Connection paths -->
+      <g class="connections">
+        @for (conn of connectionPaths; track conn.from + conn.to) {
+          <path
+            [attr.d]="conn.path"
+            [attr.stroke-width]="getConnectionWidth(conn.value)"
+            stroke="#14b8a6"
+            fill="none"
+            opacity="0.4"
+            class="connection-path"
+          />
+          <text
+            [attr.x]="(getNodePosition(conn.from).x + getNodePosition(conn.to).x) / 2"
+            [attr.y]="(getNodePosition(conn.from).y + getNodePosition(conn.to).y) / 2 - 5"
+            text-anchor="middle"
+            class="connection-label"
+          >
+            {{ conn.value }}
+          </text>
+        }
+      </g>
+
+      <!-- Nodes -->
+      <g class="nodes">
+        @for (node of nodes; track node.id) {
+          <g [attr.transform]="'translate(' + getNodePosition(node.id).x + ',' + (getNodePosition(node.id).y - 40) + ')'">
+            <rect
+              width="120"
+              height="80"
+              rx="8"
+              [attr.fill]="getNodeColor(node)"
+              class="flow-node"
+            />
+            <text
+              x="60"
+              y="35"
+              text-anchor="middle"
+              class="node-label"
+            >
+              {{ node.label }}
+            </text>
+            <text
+              x="60"
+              y="55"
+              text-anchor="middle"
+              class="node-value"
+            >
+              {{ node.value }}
+            </text>
+          </g>
+        }
+      </g>
+    </svg>
+  </div>
+</div>
+

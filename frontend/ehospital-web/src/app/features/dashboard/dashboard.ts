@@ -4,6 +4,11 @@ import { RouterLink } from '@angular/router';
 import { LineChartComponent } from '../../shared/components/charts/line-chart/line-chart.component';
 import { BarChartComponent } from '../../shared/components/charts/bar-chart/bar-chart.component';
 import { StatusIndicatorComponent } from '../../shared/components/status-indicator/status-indicator';
+import { PatientFlowDiagramComponent, FlowNode, FlowConnection } from '../../shared/components/charts/patient-flow-diagram/patient-flow-diagram.component';
+import { DepartmentHeatmapComponent, HeatmapData } from '../../shared/components/charts/department-heatmap/department-heatmap.component';
+import { RevenuePieChartComponent, RevenueData } from '../../shared/components/charts/revenue-pie-chart/revenue-pie-chart.component';
+import { AppointmentDistributionComponent, DistributionData } from '../../shared/components/charts/appointment-distribution/appointment-distribution.component';
+import { BedOccupancyTrendsComponent, OccupancyData } from '../../shared/components/charts/bed-occupancy-trends/bed-occupancy-trends.component';
 import { PatientService } from '../patients/services/patient.service';
 import { DoctorService } from '../doctors/services/doctor.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
@@ -29,7 +34,12 @@ import { catchError, timeout, switchMap } from 'rxjs/operators';
     RouterLink,
     LineChartComponent,
     BarChartComponent,
-    StatusIndicatorComponent
+    StatusIndicatorComponent,
+    PatientFlowDiagramComponent,
+    DepartmentHeatmapComponent,
+    RevenuePieChartComponent,
+    AppointmentDistributionComponent,
+    BedOccupancyTrendsComponent
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
@@ -86,6 +96,14 @@ export class Dashboard implements OnInit, OnDestroy {
   // Chart data
   appointmentTrendData: Array<{ label: string; value: number }> = [];
   monthlyAppointmentData: Array<{ label: string; value: number; color?: string }> = [];
+  
+  // New visualization data
+  patientFlowNodes: FlowNode[] = [];
+  patientFlowConnections: FlowConnection[] = [];
+  departmentHeatmapData: HeatmapData[] = [];
+  revenueData: RevenueData[] = [];
+  appointmentDistributionData: DistributionData[] = [];
+  bedOccupancyData: OccupancyData[] = [];
   
   // Realistic Metrics
   metricsSummary?: MetricsSummary;
@@ -504,6 +522,13 @@ export class Dashboard implements OnInit, OnDestroy {
         // Calculate chart data
         this.calculateAppointmentTrends(appointments);
         this.calculateMonthlyAppointments(appointments);
+        
+        // Calculate new visualization data
+        this.calculatePatientFlowData();
+        this.calculateDepartmentHeatmapData();
+        this.calculateRevenueData();
+        this.calculateAppointmentDistributionData(appointments);
+        this.calculateBedOccupancyData();
 
         this.isLoading = false;
       },
@@ -631,6 +656,84 @@ export class Dashboard implements OnInit, OnDestroy {
     }
     
     this.monthlyAppointmentData = monthlyData;
+  }
+
+  private calculatePatientFlowData(): void {
+    this.patientFlowNodes = [
+      { id: 'registration', label: 'Registration', value: this.totalPatients, color: '#14b8a6' },
+      { id: 'triage', label: 'Triage', value: Math.floor(this.totalPatients * 0.85), color: '#0ea5e9' },
+      { id: 'consultation', label: 'Consultation', value: Math.floor(this.totalPatients * 0.70), color: '#22c55e' },
+      { id: 'treatment', label: 'Treatment', value: Math.floor(this.totalPatients * 0.60), color: '#f59e0b' },
+      { id: 'discharge', label: 'Discharge', value: Math.floor(this.totalPatients * 0.55), color: '#10b981' }
+    ];
+
+    this.patientFlowConnections = [
+      { from: 'registration', to: 'triage', value: Math.floor(this.totalPatients * 0.85) },
+      { from: 'triage', to: 'consultation', value: Math.floor(this.totalPatients * 0.70) },
+      { from: 'consultation', to: 'treatment', value: Math.floor(this.totalPatients * 0.60) },
+      { from: 'treatment', to: 'discharge', value: Math.floor(this.totalPatients * 0.55) }
+    ];
+  }
+
+  private calculateDepartmentHeatmapData(): void {
+    // Sample department utilization data
+    this.departmentHeatmapData = [
+      { department: 'Emergency', utilization: 92, capacity: 50, current: 46 },
+      { department: 'Cardiology', utilization: 75, capacity: 30, current: 23 },
+      { department: 'Pediatrics', utilization: 68, capacity: 40, current: 27 },
+      { department: 'Orthopedics', utilization: 55, capacity: 25, current: 14 },
+      { department: 'Neurology', utilization: 45, capacity: 20, current: 9 },
+      { department: 'Oncology', utilization: 38, capacity: 15, current: 6 }
+    ];
+  }
+
+  private calculateRevenueData(): void {
+    // Sample revenue breakdown
+    this.revenueData = [
+      { category: 'Consultations', amount: 125000, color: '#14b8a6' },
+      { category: 'Procedures', amount: 98000, color: '#0ea5e9' },
+      { category: 'Lab Tests', amount: 75000, color: '#22c55e' },
+      { category: 'Imaging', amount: 62000, color: '#f59e0b' },
+      { category: 'Pharmacy', amount: 45000, color: '#ef4444' },
+      { category: 'Other', amount: 28000, color: '#8b5cf6' }
+    ];
+  }
+
+  private calculateAppointmentDistributionData(appointments: Appointment[]): void {
+    const distribution: { [key: string]: number } = {};
+    if (Array.isArray(appointments)) {
+      appointments.forEach(apt => {
+        const hour = parseInt(apt.startTime?.split(':')[0] || '9');
+        const timeSlot = hour < 12 ? 'Morning (8-12)' : hour < 17 ? 'Afternoon (12-17)' : 'Evening (17-20)';
+        distribution[timeSlot] = (distribution[timeSlot] || 0) + 1;
+      });
+    }
+
+    this.appointmentDistributionData = [
+      { label: 'Morning (8-12)', value: distribution['Morning (8-12)'] || 0, color: '#14b8a6' },
+      { label: 'Afternoon (12-17)', value: distribution['Afternoon (12-17)'] || 0, color: '#0ea5e9' },
+      { label: 'Evening (17-20)', value: distribution['Evening (17-20)'] || 0, color: '#f59e0b' }
+    ];
+  }
+
+  private calculateBedOccupancyData(): void {
+    // Generate 30 days of bed occupancy data
+    const today = new Date();
+    this.bedOccupancyData = [];
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const occupied = Math.floor(Math.random() * 80) + 60; // 60-140 beds
+      const available = Math.floor(Math.random() * 40) + 20; // 20-60 beds
+      
+      this.bedOccupancyData.push({
+        date: date.toISOString().split('T')[0],
+        occupied,
+        available,
+        total: occupied + available
+      });
+    }
   }
 
   private generateAlerts(): void {

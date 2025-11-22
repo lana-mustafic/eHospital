@@ -1,0 +1,123 @@
+<div class="occupancy-trends-container">
+  @if (title) {
+    <h3 class="chart-title">{{ title }}</h3>
+  }
+  <div class="chart-wrapper">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="occupancy-chart">
+      <!-- Y-axis label -->
+      <text
+        x="40"
+        y="175"
+        text-anchor="middle"
+        class="axis-label"
+        transform="rotate(-90 40 175)"
+      >
+        Number of Beds
+      </text>
+
+      <!-- Grid lines -->
+      <g class="grid-lines">
+        @for (line of gridLines; track line.y) {
+          <line
+            [attr.x1]="padding.left"
+            [attr.y1]="line.y"
+            [attr.x2]="padding.left + chartWidth"
+            [attr.y2]="line.y"
+            stroke="#e5e7eb"
+            stroke-width="1"
+            stroke-dasharray="2,2"
+          />
+          <text
+            [attr.x]="padding.left - 10"
+            [attr.y]="line.y + 4"
+            text-anchor="end"
+            class="grid-label"
+          >
+            {{ line.value }}
+          </text>
+        }
+      </g>
+
+      <!-- Occupied area (filled) -->
+      <polygon
+        [attr.points]="occupiedPoints + ' ' + (padding.left + chartWidth) + ',' + (padding.top + chartHeight) + ' ' + padding.left + ',' + (padding.top + chartHeight)"
+        fill="#ef4444"
+        opacity="0.6"
+        class="occupied-area"
+      />
+
+      <!-- Available area (filled) -->
+      <polygon
+        [attr.points]="availablePoints + ' ' + occupiedPoints.split(' ').reverse().join(' ')"
+        fill="#22c55e"
+        opacity="0.6"
+        class="available-area"
+      />
+
+      <!-- Occupied line -->
+      <polyline
+        [attr.points]="occupiedPoints"
+        fill="none"
+        stroke="#dc2626"
+        stroke-width="2"
+        class="occupied-line"
+      />
+
+      <!-- Total line -->
+      <polyline
+        [attr.points]="availablePoints"
+        fill="none"
+        stroke="#16a34a"
+        stroke-width="2"
+        class="available-line"
+      />
+
+      <!-- Data points -->
+      <g class="data-points">
+        @for (item of data; track item.date; let i = $index) {
+          <circle
+            [attr.cx]="getDataPointX(i)"
+            [attr.cy]="getDataPointY(item.occupied, true, i)"
+            r="4"
+            fill="#dc2626"
+            class="data-point"
+          />
+          <circle
+            [attr.cx]="getDataPointX(i)"
+            [attr.cy]="getDataPointY(item.available, false, i)"
+            r="4"
+            fill="#16a34a"
+            class="data-point"
+          />
+        }
+      </g>
+
+      <!-- X-axis labels -->
+      <g class="x-axis-labels">
+        @for (item of data; track item.date; let i = $index) {
+          <text
+            [attr.x]="getDataPointX(i)"
+            [attr.y]="height - 20"
+            text-anchor="middle"
+            class="x-label"
+          >
+            {{ formatDate(item.date) }}
+          </text>
+        }
+      </g>
+    </svg>
+
+    <!-- Legend -->
+    <div class="chart-legend">
+      <div class="legend-item">
+        <span class="legend-color occupied"></span>
+        <span class="legend-label">Occupied</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color available"></span>
+        <span class="legend-label">Available</span>
+      </div>
+    </div>
+  </div>
+</div>
+
