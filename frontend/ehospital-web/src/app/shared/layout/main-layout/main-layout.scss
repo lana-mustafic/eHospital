@@ -1,19 +1,21 @@
+@use 'styles/colors' as *;
+
 .main-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background-color: #f5f5f5;
+  background-color: $color-background;
 }
 
 // Sidebar Styles
 .sidebar {
   width: 300px;
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(180deg, $primary-800 0%, $primary-900 100%);
   color: white;
   display: flex;
   flex-direction: column;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 20px $shadow-lg;
   position: relative;
   z-index: 100;
 
@@ -63,12 +65,12 @@
       .logo-icon {
         width: 44px;
         height: 44px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: $gradient-primary;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px $shadow-primary;
         transition: transform 0.2s;
 
         &:hover {
@@ -241,10 +243,10 @@
           }
 
           &.active {
-            background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.15) 100%);
+            background: linear-gradient(90deg, rgba(20, 184, 166, 0.2) 0%, rgba(13, 148, 136, 0.15) 100%);
             color: white;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 2px 8px $shadow-primary;
             padding-left: 1rem;
 
             &::before {
@@ -255,13 +257,13 @@
               transform: translateY(-50%);
               width: 4px;
               height: 70%;
-              background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+              background: $gradient-primary;
               border-radius: 0 4px 4px 0;
               opacity: 1;
             }
 
             .material-icons {
-              color: #a5b4fc;
+              color: $primary-300;
             }
           }
 
@@ -309,14 +311,14 @@
 
 // Header Styles
 .header {
-  background: white;
+  background: $color-background-white;
   padding: 1.25rem 2rem;
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
   gap: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px $shadow-sm, 0 1px 2px $shadow-sm;
+  border-bottom: 1px solid $color-border;
   z-index: 10;
   min-height: 80px;
   backdrop-filter: blur(10px);
@@ -337,7 +339,7 @@
       font-size: 1.5rem;
       font-weight: 600;
       margin: 0;
-      color: #1f2937;
+      color: $color-text;
     }
 
     .header-time {
@@ -345,7 +347,7 @@
       align-items: center;
       gap: 0.5rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: $color-text-secondary;
 
       .material-icons {
         font-size: 18px;
@@ -361,20 +363,20 @@
       position: relative;
       display: flex;
       align-items: center;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
+      background: $color-background-light;
+      border: 1px solid $color-border;
       border-radius: 8px;
       padding: 0.5rem 1rem;
       transition: all 0.2s;
 
       &:focus-within {
-        background: white;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background: $color-background-white;
+        border-color: $color-primary;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
       }
 
       .material-icons:first-child {
-        color: #9ca3af;
+        color: $color-text-muted;
         font-size: 20px;
         margin-right: 0.5rem;
       }
@@ -385,17 +387,17 @@
         background: transparent;
         outline: none;
         font-size: 0.875rem;
-        color: #1f2937;
+        color: $color-text;
 
         &::placeholder {
-          color: #9ca3af;
+          color: $color-text-muted;
         }
       }
 
       .search-btn {
         background: transparent;
         border: none;
-        color: #667eea;
+        color: $color-primary;
         cursor: pointer;
         padding: 0.25rem;
         display: flex;
@@ -405,7 +407,7 @@
         transition: background 0.2s;
 
         &:hover {
-          background: #f3f4f6;
+          background: $gray-100;
         }
 
         .material-icons {
@@ -418,10 +420,10 @@
         top: calc(100% + 0.5rem);
         left: 0;
         right: 0;
-        background: white;
-        border: 1px solid #e5e7eb;
+        background: $color-background-white;
+        border: 1px solid $color-border;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px $shadow-md;
         z-index: 1000;
         overflow: hidden;
 
@@ -432,15 +434,15 @@
           padding: 0.75rem 1rem;
           cursor: pointer;
           transition: background 0.2s;
-          color: #374151;
+          color: $color-text;
 
           &:hover {
-            background: #f9fafb;
+            background: $color-background-light;
           }
 
           .material-icons {
             font-size: 20px;
-            color: #667eea;
+            color: $color-primary;
           }
 
           span:not(.material-icons) {
@@ -467,9 +469,9 @@
 
       .header-btn {
         position: relative;
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        color: #6b7280;
+        background: $color-background-light;
+        border: 1px solid $color-border;
+        color: $color-text-secondary;
         padding: 0.625rem;
         border-radius: 10px;
         cursor: pointer;
@@ -481,11 +483,11 @@
         height: 40px;
 
         &:hover {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: $gradient-primary;
           border-color: transparent;
           color: white;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 4px 12px $shadow-primary;
         }
 
         &.has-notifications {
@@ -500,7 +502,7 @@
           position: absolute;
           top: -6px;
           right: -6px;
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          background: linear-gradient(135deg, $color-critical 0%, $color-critical-dark 100%);
           color: white;
           border-radius: 12px;
           min-width: 20px;
@@ -511,7 +513,7 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+          box-shadow: 0 2px 6px $shadow-critical;
           z-index: 1;
           border: 2px solid white;
         }
@@ -523,26 +525,26 @@
       align-items: center;
       gap: 1rem;
       padding: 0.5rem 1rem;
-      background: #f9fafb;
+      background: $color-background-light;
       border-radius: 12px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid $color-border;
 
       .user-info {
         display: flex;
         flex-direction: column;
         line-height: 1.3;
         padding-right: 0.75rem;
-        border-right: 1px solid #e5e7eb;
+        border-right: 1px solid $color-border;
 
         .user-name {
-          color: #1f2937;
+          color: $color-text;
           font-weight: 600;
           font-size: 0.9375rem;
         }
 
         .user-role {
           font-size: 0.8125rem;
-          color: #6b7280;
+          color: $color-text-secondary;
           text-transform: capitalize;
         }
       }
@@ -550,7 +552,7 @@
       .logout-btn {
         background: transparent;
         border: none;
-        color: #6b7280;
+        color: $color-text-secondary;
         padding: 0.5rem;
         border-radius: 8px;
         cursor: pointer;
@@ -562,8 +564,8 @@
         height: 36px;
 
         &:hover {
-          background-color: #fee2e2;
-          color: #dc2626;
+          background-color: $critical-50;
+          color: $color-critical-dark;
           transform: scale(1.05);
         }
 
@@ -580,7 +582,7 @@
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  background-color: #f5f5f5;
+  background-color: $color-background;
 }
 
 // Responsive Design
@@ -618,10 +620,10 @@
 
 @keyframes pulse-notification {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+    box-shadow: 0 0 0 8px rgba(20, 184, 166, 0);
   }
 }
 

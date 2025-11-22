@@ -1,0 +1,165 @@
+/**
+ * Professional Medical Color Scheme
+ * 
+ * Primary: Medical Blue/Teal (trust, cleanliness)
+ * Critical/Urgent: Red
+ * Success/Completed: Green
+ * Warnings: Yellow/Amber
+ * Backgrounds: Neutral Grays
+ */
+
+// Primary Colors - Medical Blue/Teal
+$primary-50: #f0fdfa;
+$primary-100: #ccfbf1;
+$primary-200: #99f6e4;
+$primary-300: #5eead4;
+$primary-400: #2dd4bf;
+$primary-500: #14b8a6;  // Main primary color (teal)
+$primary-600: #0d9488;  // Primary dark
+$primary-700: #0f766e;
+$primary-800: #115e59;
+$primary-900: #134e4a;
+
+// Alternative Primary - Medical Blue
+$primary-blue-50: #f0f9ff;
+$primary-blue-100: #e0f2fe;
+$primary-blue-200: #bae6fd;
+$primary-blue-300: #7dd3fc;
+$primary-blue-400: #38bdf8;
+$primary-blue-500: #0ea5e9;  // Alternative primary (sky blue)
+$primary-blue-600: #0284c7;
+$primary-blue-700: #0369a1;
+$primary-blue-800: #075985;
+$primary-blue-900: #0c4a6e;
+
+// Critical/Urgent - Red
+$critical-50: #fef2f2;
+$critical-100: #fee2e2;
+$critical-200: #fecaca;
+$critical-300: #fca5a5;
+$critical-400: #f87171;
+$critical-500: #ef4444;  // Main critical color
+$critical-600: #dc2626;  // Critical dark
+$critical-700: #b91c1c;
+$critical-800: #991b1b;
+$critical-900: #7f1d1d;
+
+// Success/Completed - Green
+$success-50: #f0fdf4;
+$success-100: #dcfce7;
+$success-200: #bbf7d0;
+$success-300: #86efac;
+$success-400: #4ade80;
+$success-500: #22c55e;  // Main success color
+$success-600: #16a34a;  // Success dark
+$success-700: #15803d;
+$success-800: #166534;
+$success-900: #14532d;
+
+// Warnings - Yellow/Amber
+$warning-50: #fffbeb;
+$warning-100: #fef3c7;
+$warning-200: #fde68a;
+$warning-300: #fcd34d;
+$warning-400: #fbbf24;
+$warning-500: #f59e0b;  // Main warning color
+$warning-600: #d97706;  // Warning dark
+$warning-700: #b45309;
+$warning-800: #92400e;
+$warning-900: #78350f;
+
+// Neutral Grays - Backgrounds
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+// Semantic Color Mappings
+$color-primary: $primary-500;
+$color-primary-dark: $primary-600;
+$color-primary-light: $primary-400;
+$color-primary-bg: $primary-50;
+
+$color-critical: $critical-500;
+$color-critical-dark: $critical-600;
+$color-critical-bg: $critical-50;
+
+$color-success: $success-500;
+$color-success-dark: $success-600;
+$color-success-bg: $success-50;
+
+$color-warning: $warning-500;
+$color-warning-dark: $warning-600;
+$color-warning-bg: $warning-50;
+
+$color-background: $gray-50;
+$color-background-light: $gray-100;
+$color-background-white: #ffffff;
+$color-border: $gray-200;
+$color-border-light: $gray-100;
+$color-text: $gray-800;
+$color-text-secondary: $gray-600;
+$color-text-muted: $gray-500;
+$color-text-light: $gray-400;
+
+// Status Colors
+$status-scheduled: $warning-500;
+$status-scheduled-bg: $warning-50;
+$status-scheduled-text: $warning-800;
+
+$status-overdue: $critical-500;
+$status-overdue-bg: $critical-50;
+$status-overdue-text: $critical-800;
+
+$status-completed: $success-500;
+$status-completed-bg: $success-50;
+$status-completed-text: $success-800;
+
+$status-checkedin: $primary-500;
+$status-checkedin-bg: $primary-50;
+$status-checkedin-text: $primary-800;
+
+$status-cancelled: $gray-500;
+$status-cancelled-bg: $gray-100;
+$status-cancelled-text: $gray-700;
+
+$status-noshow: $gray-500;
+$status-noshow-bg: $gray-100;
+$status-noshow-text: $gray-700;
+
+// Button Colors
+$button-primary-bg: $primary-500;
+$button-primary-hover: $primary-600;
+$button-primary-text: #ffffff;
+
+$button-secondary-bg: $color-background-white;
+$button-secondary-border: $color-border;
+$button-secondary-text: $color-text;
+$button-secondary-hover-bg: $gray-50;
+
+$button-danger-bg: $critical-500;
+$button-danger-hover: $critical-600;
+$button-danger-text: #ffffff;
+
+$button-success-bg: $success-500;
+$button-success-hover: $success-600;
+$button-success-text: #ffffff;
+
+// Gradient Colors
+$gradient-primary: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
+$gradient-primary-blue: linear-gradient(135deg, $primary-blue-500 0%, $primary-600 100%);
+
+// Shadow Colors
+$shadow-sm: rgba(0, 0, 0, 0.05);
+$shadow-md: rgba(0, 0, 0, 0.1);
+$shadow-lg: rgba(0, 0, 0, 0.15);
+$shadow-xl: rgba(0, 0, 0, 0.2);
+$shadow-primary: rgba(20, 184, 166, 0.2);
+$shadow-critical: rgba(239, 68, 68, 0.2);
+
