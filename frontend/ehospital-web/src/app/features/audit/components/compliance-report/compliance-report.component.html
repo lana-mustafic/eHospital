@@ -1,0 +1,226 @@
+<div class="compliance-report">
+  <div class="page-header">
+    <div>
+      <h1>Compliance Report</h1>
+      <p class="subtitle">Generate comprehensive audit reports for compliance and regulatory requirements</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" [disabled]="!report">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
+      <button class="btn-secondary" (click)="exportToPDF()" [disabled]="!report">
+        <span class="material-icons">picture_as_pdf</span>
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Date Range Selector -->
+  <div class="date-range-section">
+    <div class="date-range-header">
+      <h3>Report Period</h3>
+    </div>
+    <div class="date-range-controls">
+      <div class="date-input-group">
+        <label>Start Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="startDate" 
+          class="form-control"
+        />
+      </div>
+      <div class="date-input-group">
+        <label>End Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="endDate" 
+          class="form-control"
+        />
+      </div>
+      <button class="btn-primary" (click)="generateReport()" [disabled]="isLoading">
+        <span class="material-icons">refresh</span>
+        Generate Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Content -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Generating compliance report...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>{{ error }}</p>
+    </div>
+  } @else if (report) {
+    <div class="report-content">
+      <!-- Report Header -->
+      <div class="report-header">
+        <h2>Compliance Audit Report</h2>
+        <p class="report-period">
+          {{ report.reportPeriod.startDate | date:'longDate' }} - 
+          {{ report.reportPeriod.endDate | date:'longDate' }}
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="card-icon">
+            <span class="material-icons">description</span>
+          </div>
+          <div class="card-content">
+            <h3>{{ report.totalAuditEntries | number }}</h3>
+            <p>Total Audit Entries</p>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon access">
+            <span class="material-icons">visibility</span>
+          </div>
+          <div class="card-content">
+            <h3>{{ report.accessLogs.totalAccesses | number }}</h3>
+            <p>Total Accesses</p>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon modify">
+            <span class="material-icons">edit</span>
+          </div>
+          <div class="card-content">
+            <h3>{{ report.modificationLogs.totalModifications | number }}</h3>
+            <p>Total Modifications</p>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon critical">
+            <span class="material-icons">warning</span>
+          </div>
+          <div class="card-content">
+            <h3>{{ report.criticalActions.length | number }}</h3>
+            <p>Critical Actions</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access Logs Section -->
+      <div class="report-section">
+        <h3>Access Logs</h3>
+        <div class="section-content">
+          <div class="stat-row">
+            <span class="stat-label">Unique Users:</span>
+            <span class="stat-value">{{ report.accessLogs.uniqueUsers }}</span>
+          </div>
+          <div class="chart-container">
+            <h4>Accesses by Role</h4>
+            <div class="bar-chart">
+              @for (entry of getEntries(report.accessLogs.accessesByRole); track entry[0]) {
+                <div class="bar-item">
+                  <div class="bar-label">{{ entry[0] }}</div>
+                  <div class="bar-wrapper">
+                    <div 
+                      class="bar" 
+                      [style.width.%]="getPercentage(entry[1], report.accessLogs.totalAccesses)">
+                    </div>
+                    <span class="bar-value">{{ entry[1] }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modification Logs Section -->
+      <div class="report-section">
+        <h3>Modification Logs</h3>
+        <div class="section-content">
+          <div class="chart-container">
+            <h4>Modifications by Entity Type</h4>
+            <div class="bar-chart">
+              @for (entry of getEntries(report.modificationLogs.modificationsByEntity); track entry[0]) {
+                <div class="bar-item">
+                  <div class="bar-label">{{ entry[0] }}</div>
+                  <div class="bar-wrapper">
+                    <div 
+                      class="bar modify" 
+                      [style.width.%]="getPercentage(entry[1], report.modificationLogs.totalModifications)">
+                    </div>
+                    <span class="bar-value">{{ entry[1] }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Integrity Section -->
+      <div class="report-section">
+        <h3>Data Integrity</h3>
+        <div class="section-content">
+          <div class="integrity-grid">
+            <div class="integrity-item">
+              <span class="material-icons">delete</span>
+              <div>
+                <h4>{{ report.dataIntegrity.deletedRecords }}</h4>
+                <p>Deleted Records</p>
+              </div>
+            </div>
+            <div class="integrity-item">
+              <span class="material-icons">restore</span>
+              <div>
+                <h4>{{ report.dataIntegrity.restoredRecords }}</h4>
+                <p>Restored Records</p>
+              </div>
+            </div>
+            <div class="integrity-item">
+              <span class="material-icons">error</span>
+              <div>
+                <h4>{{ report.dataIntegrity.failedOperations }}</h4>
+                <p>Failed Operations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical Actions Section -->
+      @if (report.criticalActions.length > 0) {
+        <div class="report-section">
+          <h3>Critical Actions</h3>
+          <div class="section-content">
+            <div class="critical-actions-list">
+              @for (action of report.criticalActions.slice(0, 20); track action.id) {
+                <div class="critical-action-item">
+                  <div class="action-header">
+                    <span class="action-badge" [ngClass]="'action-' + action.action.toLowerCase()">
+                      {{ action.action }}
+                    </span>
+                    <span class="timestamp">{{ action.timestampUtc | date:'short' }}</span>
+                  </div>
+                  <div class="action-details">
+                    <span class="entity-type">{{ action.entityType }}</span>
+                    <span class="entity-id">ID: {{ action.entityId }}</span>
+                    <span class="actor">User: {{ action.actorUserId }} ({{ action.actorRole }})</span>
+                  </div>
+                  @if (action.details) {
+                    <p class="action-description">{{ action.details }}</p>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

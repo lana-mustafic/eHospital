@@ -1,16 +1,44 @@
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border: 1px solid #e5e7eb;
-}
-.table th, .table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
-.empty, .loading {
-  color: #6b7280;
-  text-align: center;
-}
+@use 'styles/colors' as *;
 
+.audit {
+  .audit-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid $color-border;
+    margin-bottom: 2rem;
+    padding: 0 2rem;
+
+    .tab-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: $color-text-secondary;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+
+      .material-icons {
+        font-size: 20px;
+      }
+
+      &:hover {
+        color: $color-primary;
+        background: $color-background-light;
+      }
+
+      &.active {
+        color: $color-primary;
+        border-bottom-color: $color-primary;
+        background: $color-background-light;
+      }
+    }
+  }
+
+  // Content is handled by child components
+}

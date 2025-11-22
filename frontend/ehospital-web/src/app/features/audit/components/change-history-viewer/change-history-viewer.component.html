@@ -1,0 +1,73 @@
+<div class="change-history-viewer">
+  @if (showTitle) {
+    <div class="viewer-header">
+      <h3>Change History</h3>
+      <p class="subtitle">Track all modifications to this record</p>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading change history...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <span class="material-icons">error_outline</span>
+      <p>{{ error }}</p>
+    </div>
+  } @else if (auditLogs.length === 0) {
+    <div class="empty-container">
+      <span class="material-icons">history</span>
+      <p>No change history available for this record</p>
+    </div>
+  } @else {
+    <div class="history-timeline">
+      @for (log of auditLogs; track log.id) {
+        <div class="timeline-item" [ngClass]="'action-' + getActionColor(log.action)">
+          <div class="timeline-marker">
+            <span class="material-icons">{{ getActionIcon(log.action) }}</span>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <div class="action-info">
+                <span class="action-badge" [ngClass]="'action-' + getActionColor(log.action)">
+                  {{ log.action }}
+                </span>
+                <span class="timestamp">{{ log.timestampUtc | date:'short' }}</span>
+              </div>
+              <div class="actor-info">
+                <span class="actor-role">{{ log.actorRole }}</span>
+                <span class="actor-id">User ID: {{ log.actorUserId }}</span>
+              </div>
+            </div>
+            
+            @if (log.action === 'Update' || log.action === 'Modify') {
+              <div class="changes-section">
+                @for (change of auditService.parseChangeHistory(log.details); track $index) {
+                  <div class="change-item">
+                    <div class="change-field">
+                      <strong>{{ change.field }}:</strong>
+                    </div>
+                    <div class="change-values">
+                      <span class="old-value">{{ change.oldValue || '(empty)' }}</span>
+                      <span class="material-icons">arrow_forward</span>
+                      <span class="new-value">{{ change.newValue || '(empty)' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (log.details && !log.details.includes('->')) {
+              <div class="details-section">
+                <p class="details-text">{{ log.details }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

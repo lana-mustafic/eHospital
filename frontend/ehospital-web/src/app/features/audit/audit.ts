@@ -1,26 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuditLog, AuditService } from './services/audit.service';
+import { AuditTrailComponent } from './components/audit-trail/audit-trail.component';
+import { ComplianceReportComponent } from './components/compliance-report/compliance-report.component';
 
 @Component({
   selector: 'app-audit',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AuditTrailComponent, ComplianceReportComponent],
   templateUrl: './audit.html',
   styleUrls: ['./audit.scss']
 })
-export class AuditComponent implements OnInit {
-  logs: AuditLog[] = [];
-  isLoading = false;
+export class AuditComponent {
+  activeTab: 'trail' | 'compliance' = 'trail';
 
-  constructor(private auditService: AuditService) {}
-
-  ngOnInit(): void {
-    this.isLoading = true;
-    this.auditService.getAll().subscribe({
-      next: (data) => { this.logs = data; this.isLoading = false; },
-      error: () => { this.isLoading = false; }
-    });
+  setTab(tab: 'trail' | 'compliance'): void {
+    this.activeTab = tab;
   }
 }
 

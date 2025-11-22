@@ -1,0 +1,174 @@
+<div class="audit-trail">
+  <div class="page-header">
+    <div>
+      <h1>Audit Trail</h1>
+      <p class="subtitle">Track all system activities and user actions</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h3>Filters</h3>
+      <button class="btn-link" (click)="clearFilters()">Clear All</button>
+    </div>
+
+    <div class="filters-grid">
+      <!-- Date Range -->
+      <div class="filter-group">
+        <label>Start Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="startDate" 
+          (change)="onFilterChange()"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>End Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="endDate" 
+          (change)="onFilterChange()"
+          class="form-control"
+        />
+      </div>
+
+      <!-- Role Filter -->
+      <div class="filter-group">
+        <label>Role</label>
+        <select 
+          [(ngModel)]="filters.actorRole" 
+          (change)="onFilterChange()"
+          class="form-control"
+        >
+          <option value="">All Roles</option>
+          @for (role of availableRoles; track role) {
+            <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Action Filter -->
+      <div class="filter-group">
+        <label>Action</label>
+        <select 
+          [(ngModel)]="filters.action" 
+          (change)="onFilterChange()"
+          class="form-control"
+        >
+          <option value="">All Actions</option>
+          @for (action of availableActions; track action) {
+            <option [value]="action">{{ action }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Entity Type Filter -->
+      <div class="filter-group">
+        <label>Entity Type</label>
+        <select 
+          [(ngModel)]="filters.entityType" 
+          (change)="onFilterChange()"
+          class="form-control"
+        >
+          <option value="">All Entities</option>
+          @for (entityType of availableEntityTypes; track entityType) {
+            <option [value]="entityType">{{ entityType }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Entity ID Filter -->
+      <div class="filter-group">
+        <label>Entity ID</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filters.entityId" 
+          (input)="onFilterChange()"
+          placeholder="Enter entity ID"
+          class="form-control"
+        />
+      </div>
+
+      <!-- User ID Filter -->
+      <div class="filter-group">
+        <label>User ID</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filters.actorUserId" 
+          (input)="onFilterChange()"
+          placeholder="Enter user ID"
+          class="form-control"
+        />
+      </div>
+
+      <!-- Search -->
+      <div class="filter-group filter-group-full">
+        <label>Search</label>
+        <div class="search-input-wrapper">
+          <span class="material-icons">search</span>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="onSearchChange()"
+            placeholder="Search in details, user, entity..."
+            class="form-control search-input"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section">
+    @if (isLoading) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading audit logs...</p>
+      </div>
+    } @else if (error) {
+      <div class="error-container">
+        <span class="material-icons">error_outline</span>
+        <p>{{ error }}</p>
+      </div>
+    } @else {
+      <div class="results-header">
+        <p class="results-count">{{ filteredLogs.length }} audit log(s) found</p>
+      </div>
+
+      <app-data-table
+        [data]="filteredLogs"
+        [columns]="tableColumns"
+        [sortable]="true"
+        [exportable]="true"
+        [printable]="true"
+        [columnCustomizable]="true"
+      >
+        <ng-template #cellTemplate let-row let-column="column">
+          @if (column.key === 'timestampUtc') {
+            <span class="timestamp">{{ row.timestampUtc | date:'short' }}</span>
+          } @else if (column.key === 'action') {
+            <span class="action-badge" [ngClass]="getActionClass(row.action)">
+              {{ row.action }}
+            </span>
+          } @else if (column.key === 'actorRole') {
+            <span class="role-badge">{{ row.actorRole }}</span>
+          } @else if (column.key === 'details') {
+            <span class="details-text" [title]="row.details">{{ row.details }}</span>
+          } @else {
+            {{ row[column.key] }}
+          }
+        </ng-template>
+      </app-data-table>
+    }
+  </div>
+</div>
+

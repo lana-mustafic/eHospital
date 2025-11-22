@@ -1,0 +1,294 @@
+@use 'styles/colors' as *;
+
+.change-history-viewer {
+  .viewer-header {
+    margin-bottom: 1.5rem;
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: $color-text;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .subtitle {
+      color: $color-text-secondary;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  .loading-container,
+  .error-container,
+  .empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid $color-border;
+      border-top-color: $color-primary;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    .material-icons {
+      font-size: 48px;
+      color: $color-text-muted;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: $color-text-secondary;
+      margin: 0;
+    }
+  }
+
+  .history-timeline {
+    position: relative;
+    padding-left: 2rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 1rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: $color-border;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+      padding-left: 2rem;
+
+      .timeline-marker {
+        position: absolute;
+        left: -1.5rem;
+        top: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $color-background-white;
+        border: 2px solid $color-border;
+        z-index: 1;
+
+        .material-icons {
+          font-size: 16px;
+        }
+      }
+
+      &.action-success .timeline-marker {
+        border-color: $color-success;
+        background: $color-success-bg;
+
+        .material-icons {
+          color: $color-success-dark;
+        }
+      }
+
+      &.action-primary .timeline-marker {
+        border-color: $color-primary;
+        background: $primary-100;
+
+        .material-icons {
+          color: $primary-700;
+        }
+      }
+
+      &.action-danger .timeline-marker {
+        border-color: $color-critical;
+        background: $critical-100;
+
+        .material-icons {
+          color: $critical-700;
+        }
+      }
+
+      &.action-info .timeline-marker {
+        border-color: $gray-400;
+        background: $gray-100;
+
+        .material-icons {
+          color: $gray-700;
+        }
+      }
+
+      &.action-warning .timeline-marker {
+        border-color: $color-warning;
+        background: $warning-100;
+
+        .material-icons {
+          color: $warning-700;
+        }
+      }
+
+      .timeline-content {
+        background: $color-background-white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px $shadow-sm;
+
+        .timeline-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+
+          .action-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+          }
+
+          .actor-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+
+            .actor-role {
+              font-size: 0.875rem;
+              font-weight: 600;
+              color: $color-primary;
+            }
+
+            .actor-id {
+              font-size: 0.75rem;
+              color: $color-text-secondary;
+            }
+          }
+
+          .timestamp {
+            font-size: 0.875rem;
+            color: $color-text-secondary;
+            font-family: 'Courier New', monospace;
+          }
+        }
+
+        .changes-section {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid $color-border;
+
+          .change-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: $color-background-light;
+            border-radius: 6px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .change-field {
+              font-size: 0.875rem;
+              color: $color-text;
+            }
+
+            .change-values {
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+              flex-wrap: wrap;
+
+              .old-value {
+                padding: 0.25rem 0.75rem;
+                background: $critical-100;
+                color: $critical-700;
+                border-radius: 4px;
+                font-size: 0.8125rem;
+                font-family: 'Courier New', monospace;
+              }
+
+              .material-icons {
+                font-size: 18px;
+                color: $color-text-muted;
+              }
+
+              .new-value {
+                padding: 0.25rem 0.75rem;
+                background: $color-success-bg;
+                color: $color-success-dark;
+                border-radius: 4px;
+                font-size: 0.8125rem;
+                font-family: 'Courier New', monospace;
+              }
+            }
+          }
+        }
+
+        .details-section {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid $color-border;
+
+          .details-text {
+            font-size: 0.875rem;
+            color: $color-text-secondary;
+            margin: 0;
+            line-height: 1.5;
+          }
+        }
+      }
+    }
+  }
+
+  .action-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &.action-success {
+      background: $color-success-bg;
+      color: $color-success-dark;
+    }
+
+    &.action-primary {
+      background: $primary-100;
+      color: $primary-700;
+    }
+
+    &.action-danger {
+      background: $critical-100;
+      color: $critical-700;
+    }
+
+    &.action-info {
+      background: $gray-100;
+      color: $gray-700;
+    }
+
+    &.action-warning {
+      background: $warning-100;
+      color: $warning-700;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
