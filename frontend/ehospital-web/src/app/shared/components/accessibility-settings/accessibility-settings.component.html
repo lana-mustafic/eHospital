@@ -1,0 +1,128 @@
+<div class="accessibility-settings" [attr.aria-expanded]="isOpen">
+  <button
+    class="accessibility-toggle"
+    (click)="togglePanel()"
+    (keydown)="handleKeyDown($event)"
+    [attr.aria-label]="'accessibility.settings' | translate"
+    [attr.aria-expanded]="isOpen"
+    type="button"
+  >
+    <span class="material-icons" aria-hidden="true">accessibility</span>
+    <span class="sr-only">{{ 'accessibility.settings' | translate }}</span>
+  </button>
+
+  @if (isOpen) {
+    <div class="accessibility-panel" role="dialog" aria-labelledby="accessibility-title" (keydown)="handleKeyDown($event)">
+      <div class="panel-header">
+        <h2 id="accessibility-title">{{ 'accessibility.title' | translate }}</h2>
+        <button
+          class="close-button"
+          (click)="togglePanel()"
+          [attr.aria-label]="'common.close' | translate"
+          type="button"
+        >
+          <span class="material-icons" aria-hidden="true">close</span>
+          <span class="sr-only">{{ 'common.close' | translate }}</span>
+        </button>
+      </div>
+
+      <div class="panel-content">
+        <!-- High Contrast Toggle -->
+        <div class="setting-item">
+          <label class="setting-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="highContrast"
+              (change)="onHighContrastChange($any($event.target).checked)"
+              [attr.aria-describedby]="'high-contrast-desc'"
+            />
+            <span>{{ 'accessibility.highContrast' | translate }}</span>
+          </label>
+          <p id="high-contrast-desc" class="setting-description">
+            {{ 'accessibility.highContrastDesc' | translate }}
+          </p>
+        </div>
+
+        <!-- Font Size Adjustment -->
+        <div class="setting-item">
+          <label class="setting-label" for="font-size-select">
+            {{ 'accessibility.fontSize' | translate }}
+          </label>
+          <select
+            id="font-size-select"
+            [(ngModel)]="fontSize"
+            (change)="onFontSizeChange(fontSize)"
+            [attr.aria-describedby]="'font-size-desc'"
+          >
+            <option value="small">{{ 'accessibility.fontSizeSmall' | translate }}</option>
+            <option value="medium">{{ 'accessibility.fontSizeMedium' | translate }}</option>
+            <option value="large">{{ 'accessibility.fontSizeLarge' | translate }}</option>
+            <option value="xlarge">{{ 'accessibility.fontSizeXLarge' | translate }}</option>
+          </select>
+          <p id="font-size-desc" class="setting-description">
+            {{ 'accessibility.fontSizeDesc' | translate }}
+          </p>
+        </div>
+
+        <!-- Reduced Motion Toggle -->
+        <div class="setting-item">
+          <label class="setting-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="reducedMotion"
+              (change)="onReducedMotionChange($any($event.target).checked)"
+              [attr.aria-describedby]="'reduced-motion-desc'"
+            />
+            <span>{{ 'accessibility.reducedMotion' | translate }}</span>
+          </label>
+          <p id="reduced-motion-desc" class="setting-description">
+            {{ 'accessibility.reducedMotionDesc' | translate }}
+          </p>
+        </div>
+
+        <!-- Screen Reader Announcements Toggle -->
+        <div class="setting-item">
+          <label class="setting-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="screenReaderAnnouncements"
+              (change)="onScreenReaderAnnouncementsChange($any($event.target).checked)"
+              [attr.aria-describedby]="'announcements-desc'"
+            />
+            <span>{{ 'accessibility.screenReaderAnnouncements' | translate }}</span>
+          </label>
+          <p id="announcements-desc" class="setting-description">
+            {{ 'accessibility.screenReaderAnnouncementsDesc' | translate }}
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Screen Reader Announcements -->
+<div
+  class="sr-only"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  [attr.aria-label]="'accessibility.announcements' | translate"
+>
+  @if (announcements$ | async; as announcement) {
+    {{ announcement }}
+  }
+</div>
+
+<!-- Screen Reader Announcements -->
+<div
+  class="sr-only"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  [attr.aria-label]="'accessibility.announcements' | translate"
+>
+  @if (accessibilityService.getAnnouncements() | async; as announcement) {
+    {{ announcement }}
+  }
+</div>
+

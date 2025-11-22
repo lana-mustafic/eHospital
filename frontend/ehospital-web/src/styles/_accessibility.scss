@@ -1,0 +1,199 @@
+@use 'styles/colors' as *;
+
+// Skip link for keyboard navigation
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  z-index: 10000;
+  border-radius: 0 0 4px 0;
+  font-weight: 600;
+
+  &:focus {
+    top: 0;
+    outline: 3px solid var(--color-primary-light);
+    outline-offset: 2px;
+  }
+}
+
+// Focus visible styles for keyboard navigation
+*:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// High contrast mode
+:root.high-contrast {
+  --color-primary: #000000;
+  --color-primary-dark: #000000;
+  --color-primary-light: #ffffff;
+  --color-text: #000000;
+  --color-text-secondary: #000000;
+  --color-background: #ffffff;
+  --color-background-light: #ffffff;
+  --color-background-dark: #f0f0f0;
+  --color-border: #000000;
+  --color-success: #000000;
+  --color-warning: #000000;
+  --color-error: #000000;
+  --color-info: #000000;
+
+  * {
+    border-color: #000000 !important;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border: 2px solid #000000 !important;
+  }
+
+  button:focus,
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 3px solid #000000 !important;
+    outline-offset: 2px !important;
+  }
+}
+
+// Font size adjustments
+:root.font-small {
+  font-size: 14px;
+
+  body {
+    font-size: 14px;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+  h5 { font-size: 1rem; }
+  h6 { font-size: 0.875rem; }
+}
+
+:root.font-medium {
+  font-size: 16px;
+
+  body {
+    font-size: 16px;
+  }
+
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+}
+
+:root.font-large {
+  font-size: 18px;
+
+  body {
+    font-size: 18px;
+  }
+
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.75rem; }
+  h4 { font-size: 1.5rem; }
+  h5 { font-size: 1.25rem; }
+  h6 { font-size: 1.125rem; }
+}
+
+:root.font-xlarge {
+  font-size: 20px;
+
+  body {
+    font-size: 20px;
+  }
+
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 2.25rem; }
+  h3 { font-size: 2rem; }
+  h4 { font-size: 1.75rem; }
+  h5 { font-size: 1.5rem; }
+  h6 { font-size: 1.25rem; }
+}
+
+// Reduced motion
+:root.reduced-motion,
+:root.reduced-motion *,
+:root.reduced-motion *::before,
+:root.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+// Screen reader only class
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Focus management
+.focus-trap {
+  &:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ARIA live regions
+[role="status"],
+[role="alert"],
+[aria-live] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Keyboard navigation improvements
+button,
+a,
+input,
+select,
+textarea,
+[tabindex]:not([tabindex="-1"]) {
+  &:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+// Ensure interactive elements are keyboard accessible
+[role="button"] {
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+

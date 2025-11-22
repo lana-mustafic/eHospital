@@ -8,11 +8,13 @@ import { NotificationService } from '../../../features/notifications/services/no
 import { NotificationCenterComponent } from '../../components/notification-center/notification-center';
 import { LanguageSelectorComponent } from '../../components/language-selector/language-selector.component';
 import { TranslationService } from '../../../core/services/translation.service';
+import { AccessibilitySettingsComponent } from '../../components/accessibility-settings/accessibility-settings.component';
+import { AccessibilityService } from '../../../core/services/accessibility.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent, LanguageSelectorComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent, LanguageSelectorComponent, AccessibilitySettingsComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss']
 })
@@ -111,10 +113,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private notificationService: NotificationService,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private accessibilityService: AccessibilityService
   ) {}
 
   ngOnInit() {
+    // Initialize accessibility features
+    this.initializeAccessibility();
+    
     // Start with empty menu until user is loaded
     this.visibleMenuSections = [];
     
@@ -404,6 +410,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   closeNotificationCenter(): void {
     this.showNotificationCenter = false;
+  }
+
+  private initializeAccessibility(): void {
+    // Add skip link to main content
+    const skipLink = this.accessibilityService.createSkipLink('main-content', 'Skip to main content');
+    document.body.insertBefore(skipLink, document.body.firstChild);
+
+    // Apply initial accessibility settings
+    const settings = this.accessibilityService.getCurrentSettings();
+    // Settings are automatically applied by the service
   }
 }
 

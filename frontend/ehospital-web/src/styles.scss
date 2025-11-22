@@ -9,6 +9,9 @@
 // Import touch-friendly button styles
 @use 'styles/buttons' as *;
 
+// Import accessibility styles
+@use 'styles/accessibility' as *;
+
 * {
   margin: 0;
   padding: 0;

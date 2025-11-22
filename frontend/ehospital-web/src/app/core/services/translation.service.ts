@@ -171,6 +171,25 @@ export class TranslationService {
         action: 'Action',
         entity: 'Entity',
         details: 'Details'
+      },
+      accessibility: {
+        title: 'Accessibility Settings',
+        settings: 'Accessibility Settings',
+        highContrast: 'High Contrast Mode',
+        highContrastDesc: 'Increase contrast for better visibility',
+        fontSize: 'Font Size',
+        fontSizeSmall: 'Small',
+        fontSizeMedium: 'Medium',
+        fontSizeLarge: 'Large',
+        fontSizeXLarge: 'Extra Large',
+        fontSizeDesc: 'Adjust the text size for better readability',
+        reducedMotion: 'Reduce Motion',
+        reducedMotionDesc: 'Minimize animations and transitions',
+        screenReaderAnnouncements: 'Screen Reader Announcements',
+        screenReaderAnnouncementsDesc: 'Enable announcements for screen readers',
+        announcements: 'Screen reader announcements',
+        skipToContent: 'Skip to main content',
+        keyboardShortcuts: 'Keyboard Shortcuts'
       }
     };
   }
@@ -238,6 +257,25 @@ export class TranslationService {
         action: 'Acción',
         entity: 'Entidad',
         details: 'Detalles'
+      },
+      accessibility: {
+        title: 'Configuración de Accesibilidad',
+        settings: 'Configuración de Accesibilidad',
+        highContrast: 'Modo de Alto Contraste',
+        highContrastDesc: 'Aumentar el contraste para mejor visibilidad',
+        fontSize: 'Tamaño de Fuente',
+        fontSizeSmall: 'Pequeño',
+        fontSizeMedium: 'Mediano',
+        fontSizeLarge: 'Grande',
+        fontSizeXLarge: 'Extra Grande',
+        fontSizeDesc: 'Ajustar el tamaño del texto para mejor legibilidad',
+        reducedMotion: 'Reducir Movimiento',
+        reducedMotionDesc: 'Minimizar animaciones y transiciones',
+        screenReaderAnnouncements: 'Anuncios de Lector de Pantalla',
+        screenReaderAnnouncementsDesc: 'Habilitar anuncios para lectores de pantalla',
+        announcements: 'Anuncios de lector de pantalla',
+        skipToContent: 'Saltar al contenido principal',
+        keyboardShortcuts: 'Atajos de Teclado'
       }
     };
   }
@@ -370,6 +408,25 @@ export class TranslationService {
         action: 'الإجراء',
         entity: 'الكيان',
         details: 'التفاصيل'
+      },
+      accessibility: {
+        title: 'إعدادات إمكانية الوصول',
+        settings: 'إعدادات إمكانية الوصول',
+        highContrast: 'وضع التباين العالي',
+        highContrastDesc: 'زيادة التباين لتحسين الرؤية',
+        fontSize: 'حجم الخط',
+        fontSizeSmall: 'صغير',
+        fontSizeMedium: 'متوسط',
+        fontSizeLarge: 'كبير',
+        fontSizeXLarge: 'كبير جداً',
+        fontSizeDesc: 'تعديل حجم النص لتحسين القراءة',
+        reducedMotion: 'تقليل الحركة',
+        reducedMotionDesc: 'تقليل الرسوم المتحركة والانتقالات',
+        screenReaderAnnouncements: 'إعلانات قارئ الشاشة',
+        screenReaderAnnouncementsDesc: 'تفعيل الإعلانات لقارئات الشاشة',
+        announcements: 'إعلانات قارئ الشاشة',
+        skipToContent: 'تخطي إلى المحتوى الرئيسي',
+        keyboardShortcuts: 'اختصارات لوحة المفاتيح'
       }
     };
   }
@@ -568,6 +625,25 @@ export class TranslationService {
         action: 'アクション',
         entity: 'エンティティ',
         details: '詳細'
+      },
+      accessibility: {
+        title: 'アクセシビリティ設定',
+        settings: 'アクセシビリティ設定',
+        highContrast: '高コントラストモード',
+        highContrastDesc: '視認性向上のためコントラストを上げる',
+        fontSize: 'フォントサイズ',
+        fontSizeSmall: '小',
+        fontSizeMedium: '中',
+        fontSizeLarge: '大',
+        fontSizeXLarge: '特大',
+        fontSizeDesc: '可読性向上のためテキストサイズを調整',
+        reducedMotion: 'モーション削減',
+        reducedMotionDesc: 'アニメーションとトランジションを最小化',
+        screenReaderAnnouncements: 'スクリーンリーダーアナウンス',
+        screenReaderAnnouncementsDesc: 'スクリーンリーダー用アナウンスを有効化',
+        announcements: 'スクリーンリーダーアナウンス',
+        skipToContent: 'メインコンテンツにスキップ',
+        keyboardShortcuts: 'キーボードショートカット'
       }
     };
   }

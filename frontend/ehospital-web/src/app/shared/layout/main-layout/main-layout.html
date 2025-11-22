@@ -8,16 +8,22 @@
   </div>
 
   <!-- Sidebar -->
-  <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
+  <aside class="sidebar" [class.collapsed]="!isSidebarOpen" role="navigation" [attr.aria-label]="'Navigation'">
     <div class="sidebar-header">
       <div class="logo-container" *ngIf="isSidebarOpen">
-        <div class="logo-icon">
+        <div class="logo-icon" aria-hidden="true">
           <span class="material-icons">local_hospital</span>
         </div>
         <h2 class="logo">eHospital</h2>
       </div>
-      <button class="toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
-        <span class="material-icons">{{ isSidebarOpen ? 'menu_open' : 'menu' }}</span>
+      <button 
+        class="toggle-btn" 
+        (click)="toggleSidebar()" 
+        [attr.aria-label]="isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'"
+        [attr.aria-expanded]="isSidebarOpen"
+        type="button"
+      >
+        <span class="material-icons" aria-hidden="true">{{ isSidebarOpen ? 'menu_open' : 'menu' }}</span>
       </button>
     </div>
     
@@ -37,18 +43,20 @@
             {{ section.expanded ? 'expand_less' : 'expand_more' }}
           </span>
         </button>
-        <div class="section-items" *ngIf="section.expanded && isSidebarOpen">
-          <a 
-            *ngFor="let item of section.items; trackBy: trackByItemPath" 
-            [routerLink]="item.path" 
-            routerLinkActive="active"
-            class="nav-item"
-            [title]="!isSidebarOpen ? item.label : ''"
-          >
-            <span class="material-icons">{{ item.icon }}</span>
-            <span class="nav-label" *ngIf="isSidebarOpen">{{ item.label }}</span>
-          </a>
-        </div>
+        <ul class="section-items" *ngIf="section.expanded && isSidebarOpen" role="menu">
+          <li *ngFor="let item of section.items; trackBy: trackByItemPath" role="menuitem">
+            <a 
+              [routerLink]="item.path" 
+              routerLinkActive="active"
+              class="nav-item"
+              [attr.aria-label]="item.label"
+              [title]="!isSidebarOpen ? item.label : ''"
+            >
+              <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+              <span class="nav-label" *ngIf="isSidebarOpen">{{ item.label }}</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
   </aside>
@@ -138,9 +146,12 @@
     </header>
 
     <!-- Page Content -->
-    <main class="content-area">
+    <main class="content-area" id="main-content" tabindex="-1">
       <router-outlet></router-outlet>
     </main>
   </div>
+
+  <!-- Accessibility Settings -->
+  <app-accessibility-settings></app-accessibility-settings>
 </div>
 
