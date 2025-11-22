@@ -1,0 +1,32 @@
+<div class="language-selector">
+  <button 
+    class="language-button" 
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen"
+    aria-label="Select language">
+    <span class="language-flag">{{ getCurrentLanguage().flag }}</span>
+    <span class="language-name">{{ getCurrentLanguage().nativeName }}</span>
+    <span class="material-icons dropdown-icon" [class.open]="isOpen">keyboard_arrow_down</span>
+  </button>
+
+  @if (isOpen) {
+    <div class="language-dropdown">
+      @for (lang of languages; track lang.code) {
+        <button 
+          class="language-option"
+          [class.active]="lang.code === currentLanguage"
+          (click)="selectLanguage(lang.code)">
+          <span class="language-flag">{{ lang.flag }}</span>
+          <div class="language-info">
+            <span class="language-name">{{ lang.nativeName }}</span>
+            <span class="language-name-en">{{ lang.name }}</span>
+          </div>
+          @if (lang.code === currentLanguage) {
+            <span class="material-icons check-icon">check</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>
+

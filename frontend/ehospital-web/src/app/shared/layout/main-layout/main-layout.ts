@@ -6,11 +6,13 @@ import { filter, map, Subscription } from 'rxjs';
 import { AuthService, User } from '../../../core/services/auth';
 import { NotificationService } from '../../../features/notifications/services/notification.service';
 import { NotificationCenterComponent } from '../../components/notification-center/notification-center';
+import { LanguageSelectorComponent } from '../../components/language-selector/language-selector.component';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent, LanguageSelectorComponent],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss']
 })
@@ -108,7 +110,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private translationService: TranslationService
   ) {}
 
   ngOnInit() {
