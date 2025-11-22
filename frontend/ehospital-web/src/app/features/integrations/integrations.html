@@ -1,0 +1,411 @@
+<div class="integrations-page">
+  <div class="page-header">
+    <h1>{{ 'integrations.title' | translate }}</h1>
+    <p class="page-subtitle">{{ 'integrations.subtitle' | translate }}</p>
+  </div>
+
+  @if (isLoading && integrations.length === 0) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>{{ 'common.loading' | translate }}</p>
+    </div>
+  } @else {
+    <div class="integrations-grid">
+      <!-- Lab System Integration -->
+      <div class="integration-card">
+        <div class="card-header">
+          <div class="icon-wrapper lab-icon">
+            <span class="material-icons">science</span>
+          </div>
+          <div class="card-title">
+            <h3>{{ 'integrations.labSystem' | translate }}</h3>
+            <p>{{ 'integrations.labSystemDesc' | translate }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (getIntegrationByType(IntegrationType.LAB_SYSTEM); as labIntegration) {
+            <div class="integration-status">
+              <span class="status-badge" [class]="getStatusClass(labIntegration.status)">
+                {{ labIntegration.status }}
+              </span>
+              <span class="status-text" [class.enabled]="labIntegration.enabled">
+                {{ labIntegration.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="integration-info">
+              <p><strong>{{ 'integrations.name' | translate }}:</strong> {{ labIntegration.name }}</p>
+              @if (labIntegration.lastSync) {
+                <p><strong>{{ 'integrations.lastSync' | translate }}:</strong> {{ labIntegration.lastSync | date:'short' }}</p>
+              }
+            </div>
+            <div class="card-actions">
+              <button class="btn-secondary" (click)="openConfigModal(IntegrationType.LAB_SYSTEM)">
+                <span class="material-icons">settings</span>
+                {{ 'common.edit' | translate }}
+              </button>
+              <button 
+                class="btn-toggle" 
+                [class.active]="labIntegration.enabled"
+                (click)="toggleIntegration(labIntegration)">
+                <span class="material-icons">{{ labIntegration.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="no-config">
+              <p>{{ 'integrations.notConfigured' | translate }}</p>
+              <button class="btn-primary" (click)="openConfigModal(IntegrationType.LAB_SYSTEM)">
+                <span class="material-icons">add</span>
+                {{ 'integrations.configure' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Insurance Portal Integration -->
+      <div class="integration-card">
+        <div class="card-header">
+          <div class="icon-wrapper insurance-icon">
+            <span class="material-icons">shield</span>
+          </div>
+          <div class="card-title">
+            <h3>{{ 'integrations.insurancePortal' | translate }}</h3>
+            <p>{{ 'integrations.insurancePortalDesc' | translate }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (getIntegrationByType(IntegrationType.INSURANCE_PORTAL); as insuranceIntegration) {
+            <div class="integration-status">
+              <span class="status-badge" [class]="getStatusClass(insuranceIntegration.status)">
+                {{ insuranceIntegration.status }}
+              </span>
+              <span class="status-text" [class.enabled]="insuranceIntegration.enabled">
+                {{ insuranceIntegration.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="integration-info">
+              <p><strong>{{ 'integrations.name' | translate }}:</strong> {{ insuranceIntegration.name }}</p>
+            </div>
+            <div class="card-actions">
+              <button class="btn-secondary" (click)="openConfigModal(IntegrationType.INSURANCE_PORTAL)">
+                <span class="material-icons">settings</span>
+                {{ 'common.edit' | translate }}
+              </button>
+              <button 
+                class="btn-toggle" 
+                [class.active]="insuranceIntegration.enabled"
+                (click)="toggleIntegration(insuranceIntegration)">
+                <span class="material-icons">{{ insuranceIntegration.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="no-config">
+              <p>{{ 'integrations.notConfigured' | translate }}</p>
+              <button class="btn-primary" (click)="openConfigModal(IntegrationType.INSURANCE_PORTAL)">
+                <span class="material-icons">add</span>
+                {{ 'integrations.configure' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Payment Gateway Integration -->
+      <div class="integration-card">
+        <div class="card-header">
+          <div class="icon-wrapper payment-icon">
+            <span class="material-icons">payment</span>
+          </div>
+          <div class="card-title">
+            <h3>{{ 'integrations.paymentGateway' | translate }}</h3>
+            <p>{{ 'integrations.paymentGatewayDesc' | translate }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (getIntegrationByType(IntegrationType.PAYMENT_GATEWAY); as paymentIntegration) {
+            <div class="integration-status">
+              <span class="status-badge" [class]="getStatusClass(paymentIntegration.status)">
+                {{ paymentIntegration.status }}
+              </span>
+              <span class="status-text" [class.enabled]="paymentIntegration.enabled">
+                {{ paymentIntegration.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="integration-info">
+              <p><strong>{{ 'integrations.name' | translate }}:</strong> {{ paymentIntegration.name }}</p>
+              @if (paymentIntegration.settings['provider']) {
+                <p><strong>{{ 'integrations.provider' | translate }}:</strong> {{ paymentIntegration.settings['provider'] }}</p>
+              }
+            </div>
+            <div class="card-actions">
+              <button class="btn-secondary" (click)="openConfigModal(IntegrationType.PAYMENT_GATEWAY)">
+                <span class="material-icons">settings</span>
+                {{ 'common.edit' | translate }}
+              </button>
+              <button 
+                class="btn-toggle" 
+                [class.active]="paymentIntegration.enabled"
+                (click)="toggleIntegration(paymentIntegration)">
+                <span class="material-icons">{{ paymentIntegration.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="no-config">
+              <p>{{ 'integrations.notConfigured' | translate }}</p>
+              <button class="btn-primary" (click)="openConfigModal(IntegrationType.PAYMENT_GATEWAY)">
+                <span class="material-icons">add</span>
+                {{ 'integrations.configure' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Email Service Integration -->
+      <div class="integration-card">
+        <div class="card-header">
+          <div class="icon-wrapper email-icon">
+            <span class="material-icons">email</span>
+          </div>
+          <div class="card-title">
+            <h3>{{ 'integrations.emailService' | translate }}</h3>
+            <p>{{ 'integrations.emailServiceDesc' | translate }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (getIntegrationByType(IntegrationType.EMAIL_SERVICE); as emailIntegration) {
+            <div class="integration-status">
+              <span class="status-badge" [class]="getStatusClass(emailIntegration.status)">
+                {{ emailIntegration.status }}
+              </span>
+              <span class="status-text" [class.enabled]="emailIntegration.enabled">
+                {{ emailIntegration.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="integration-info">
+              <p><strong>{{ 'integrations.name' | translate }}:</strong> {{ emailIntegration.name }}</p>
+            </div>
+            <div class="card-actions">
+              <button class="btn-secondary" (click)="openConfigModal(IntegrationType.EMAIL_SERVICE)">
+                <span class="material-icons">settings</span>
+                {{ 'common.edit' | translate }}
+              </button>
+              <button 
+                class="btn-toggle" 
+                [class.active]="emailIntegration.enabled"
+                (click)="toggleIntegration(emailIntegration)">
+                <span class="material-icons">{{ emailIntegration.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="no-config">
+              <p>{{ 'integrations.notConfigured' | translate }}</p>
+              <button class="btn-primary" (click)="openConfigModal(IntegrationType.EMAIL_SERVICE)">
+                <span class="material-icons">add</span>
+                {{ 'integrations.configure' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- SMS Service Integration -->
+      <div class="integration-card">
+        <div class="card-header">
+          <div class="icon-wrapper sms-icon">
+            <span class="material-icons">sms</span>
+          </div>
+          <div class="card-title">
+            <h3>{{ 'integrations.smsService' | translate }}</h3>
+            <p>{{ 'integrations.smsServiceDesc' | translate }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (getIntegrationByType(IntegrationType.SMS_SERVICE); as smsIntegration) {
+            <div class="integration-status">
+              <span class="status-badge" [class]="getStatusClass(smsIntegration.status)">
+                {{ smsIntegration.status }}
+              </span>
+              <span class="status-text" [class.enabled]="smsIntegration.enabled">
+                {{ smsIntegration.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="integration-info">
+              <p><strong>{{ 'integrations.name' | translate }}:</strong> {{ smsIntegration.name }}</p>
+            </div>
+            <div class="card-actions">
+              <button class="btn-secondary" (click)="openConfigModal(IntegrationType.SMS_SERVICE)">
+                <span class="material-icons">settings</span>
+                {{ 'common.edit' | translate }}
+              </button>
+              <button 
+                class="btn-toggle" 
+                [class.active]="smsIntegration.enabled"
+                (click)="toggleIntegration(smsIntegration)">
+                <span class="material-icons">{{ smsIntegration.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="no-config">
+              <p>{{ 'integrations.notConfigured' | translate }}</p>
+              <button class="btn-primary" (click)="openConfigModal(IntegrationType.SMS_SERVICE)">
+                <span class="material-icons">add</span>
+                {{ 'integrations.configure' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Configuration Modal -->
+  @if (showConfigModal && selectedIntegration) {
+    <div class="modal-overlay" (click)="closeConfigModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ 'integrations.configure' | translate }}: {{ getIntegrationTypeLabel(selectedIntegration.type) }}</h2>
+          <button class="close-btn" (click)="closeConfigModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <form [formGroup]="configForm" (ngSubmit)="saveConfiguration()" class="modal-body">
+          <!-- Common Fields -->
+          <div class="form-group">
+            <label for="name">{{ 'integrations.name' | translate }} *</label>
+            <input type="text" id="name" formControlName="name" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" formControlName="enabled" />
+              {{ 'integrations.enabled' | translate }}
+            </label>
+          </div>
+
+          <!-- Type-specific fields -->
+          @if (selectedIntegration.type === IntegrationType.LAB_SYSTEM) {
+            <div class="form-section">
+              <h3>{{ 'integrations.labSystemSettings' | translate }}</h3>
+              <div class="form-group">
+                <label for="endpoint">{{ 'integrations.endpoint' | translate }} *</label>
+                <input type="url" id="endpoint" formControlName="settings.endpoint" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="protocol">{{ 'integrations.protocol' | translate }} *</label>
+                <select id="protocol" formControlName="settings.protocol" class="form-control">
+                  <option value="HL7">HL7</option>
+                  <option value="FHIR">FHIR</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fhirVersion">{{ 'integrations.fhirVersion' | translate }}</label>
+                <select id="fhirVersion" formControlName="settings.fhirVersion" class="form-control">
+                  <option value="R4">FHIR R4</option>
+                  <option value="STU3">FHIR STU3</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="facilityId">{{ 'integrations.facilityId' | translate }} *</label>
+                <input type="text" id="facilityId" formControlName="settings.facilityId" class="form-control" />
+              </div>
+            </div>
+          }
+
+          @if (selectedIntegration.type === IntegrationType.PAYMENT_GATEWAY) {
+            <div class="form-section">
+              <h3>{{ 'integrations.paymentGatewaySettings' | translate }}</h3>
+              <div class="form-group">
+                <label for="provider">{{ 'integrations.provider' | translate }} *</label>
+                <select id="provider" formControlName="settings.provider" class="form-control">
+                  <option [value]="PaymentProvider.STRIPE">Stripe</option>
+                  <option [value]="PaymentProvider.PAYPAL">PayPal</option>
+                  <option [value]="PaymentProvider.SQUARE">Square</option>
+                  <option [value]="PaymentProvider.AUTHORIZE_NET">Authorize.Net</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="apiKey">{{ 'integrations.apiKey' | translate }} *</label>
+                <input type="password" id="apiKey" formControlName="settings.apiKey" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="environment">{{ 'integrations.environment' | translate }} *</label>
+                <select id="environment" formControlName="settings.environment" class="form-control">
+                  <option value="sandbox">Sandbox</option>
+                  <option value="production">Production</option>
+                </select>
+              </div>
+            </div>
+          }
+
+          @if (selectedIntegration.type === IntegrationType.EMAIL_SERVICE) {
+            <div class="form-section">
+              <h3>{{ 'integrations.emailServiceSettings' | translate }}</h3>
+              <div class="form-group">
+                <label for="emailProvider">{{ 'integrations.provider' | translate }} *</label>
+                <select id="emailProvider" formControlName="settings.provider" class="form-control">
+                  <option [value]="EmailProvider.SENDGRID">SendGrid</option>
+                  <option [value]="EmailProvider.MAILGUN">Mailgun</option>
+                  <option [value]="EmailProvider.AWS_SES">AWS SES</option>
+                  <option [value]="EmailProvider.SMTP">SMTP</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="emailApiKey">{{ 'integrations.apiKey' | translate }} *</label>
+                <input type="password" id="emailApiKey" formControlName="settings.apiKey" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="fromEmail">{{ 'integrations.fromEmail' | translate }} *</label>
+                <input type="email" id="fromEmail" formControlName="settings.fromEmail" class="form-control" />
+              </div>
+            </div>
+          }
+
+          @if (selectedIntegration.type === IntegrationType.SMS_SERVICE) {
+            <div class="form-section">
+              <h3>{{ 'integrations.smsServiceSettings' | translate }}</h3>
+              <div class="form-group">
+                <label for="smsProvider">{{ 'integrations.provider' | translate }} *</label>
+                <select id="smsProvider" formControlName="settings.provider" class="form-control">
+                  <option [value]="SMSProvider.TWILIO">Twilio</option>
+                  <option [value]="SMSProvider.AWS_SNS">AWS SNS</option>
+                  <option [value]="SMSProvider.NEXMO">Nexmo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="smsApiKey">{{ 'integrations.apiKey' | translate }} *</label>
+                <input type="password" id="smsApiKey" formControlName="settings.apiKey" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="fromNumber">{{ 'integrations.fromNumber' | translate }} *</label>
+                <input type="tel" id="fromNumber" formControlName="settings.fromNumber" class="form-control" />
+              </div>
+            </div>
+          }
+
+          <!-- Test Connection Result -->
+          @if (testResult) {
+            <div class="test-result" [class.success]="testResult.success" [class.error]="!testResult.success">
+              <span class="material-icons">{{ testResult.success ? 'check_circle' : 'error' }}</span>
+              <span>{{ testResult.message }}</span>
+            </div>
+          }
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="testConnection()" [disabled]="!selectedIntegration.id || isLoading">
+              {{ 'integrations.testConnection' | translate }}
+            </button>
+            <button type="button" class="btn-secondary" (click)="closeConfigModal()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="configForm.invalid || isLoading">
+              {{ 'common.save' | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

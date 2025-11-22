@@ -86,7 +86,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { path: '/schedules', icon: 'schedule', label: 'Staff Schedules', roles: ['Admin', 'Doctor'] },
         { path: '/departments', icon: 'business', label: 'Departments', roles: ['Admin'] },
         { path: '/reports', icon: 'assessment', label: 'Reports & Analytics', roles: ['Admin'] },
-        { path: '/audit', icon: 'history', label: 'Audit Trail', roles: ['Admin'] }
+        { path: '/audit', icon: 'history', label: 'Audit Trail', roles: ['Admin'] },
+        { path: '/integrations', icon: 'link', label: 'Integrations', roles: ['Admin'] }
       ]
     },
     {
