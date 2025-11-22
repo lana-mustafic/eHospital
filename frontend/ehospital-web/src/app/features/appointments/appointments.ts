@@ -16,11 +16,12 @@ import { TableSkeletonComponent } from '../../shared/components/table-skeleton/t
 import { ExportService } from '../../core/services/export.service';
 import { QueueService } from '../queues/services/queue.service';
 import { CreateQueueRequest } from '../queues/models/queue.model';
+import { DataTableComponent, TableColumn, SortConfig } from '../../shared/components/data-table/data-table.component';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TableSkeletonComponent, DataTableComponent],
   templateUrl: './appointments.html',
   styleUrls: ['./appointments.scss']
 })
@@ -49,6 +50,11 @@ export class AppointmentsComponent implements OnInit {
   scheduleValidationMessage = '';
   availabilityCheckInProgress = false;
   isTimeSlotAvailable = false;
+
+  // Data table configuration
+  tableColumns: TableColumn[] = [];
+  selectedAppointments: Appointment[] = [];
+  useDataTable: boolean = true; // Toggle to use new data table or old table
 
   constructor(
     private appointmentService: AppointmentService,
@@ -200,9 +206,99 @@ export class AppointmentsComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.initializeTableColumns();
     this.loadAppointments();
     this.loadPatients();
     this.loadDoctors();
+  }
+
+  initializeTableColumns() {
+    this.tableColumns = [
+      {
+        key: 'appointmentDate',
+        label: 'Date & Time',
+        sortable: true,
+        visible: true,
+        width: '180px'
+      },
+      {
+        key: 'patientName',
+        label: 'Patient Name',
+        sortable: true,
+        visible: true
+      },
+      {
+        key: 'doctorName',
+        label: 'Provider',
+        sortable: true,
+        visible: true
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        visible: true,
+        width: '140px'
+      },
+      {
+        key: 'reason',
+        label: 'Chief Complaint',
+        sortable: true,
+        visible: true,
+        width: '200px'
+      },
+      {
+        key: 'notes',
+        label: 'Clinical Notes',
+        sortable: false,
+        visible: true,
+        width: '200px'
+      }
+    ];
+  }
+
+  onTableRowClick(appointment: any) {
+    this.openStatusModal(appointment);
+  }
+
+  onTableSelectionChange(selected: any[]) {
+    this.selectedAppointments = selected;
+  }
+
+  onTableSortChange(sortConfig: SortConfig) {
+    const { column, direction } = sortConfig;
+    this.filteredAppointments.sort((a, b) => {
+      const aVal = this.getNestedValue(a, column);
+      const bVal = this.getNestedValue(b, column);
+      
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      
+      let comparison = 0;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        comparison = aVal.localeCompare(bVal);
+      } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+        comparison = aVal - bVal;
+      } else {
+        comparison = String(aVal).localeCompare(String(bVal));
+      }
+      
+      return direction === 'asc' ? comparison : -comparison;
+    });
+    this.updatePagination();
+  }
+
+  getNestedValue(obj: any, path: string): any {
+    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  }
+
+  bulkUpdateStatus(status: string) {
+    if (this.selectedAppointments.length === 0) {
+      this.toastService.warning('Please select at least one appointment');
+      return;
+    }
+    this.toastService.info(`Updating ${this.selectedAppointments.length} appointment(s) to ${status}`);
   }
 
   loadAppointments() {

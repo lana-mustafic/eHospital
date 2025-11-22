@@ -1,0 +1,165 @@
+<div class="data-table-wrapper">
+  <!-- Table Toolbar -->
+  <div class="table-toolbar">
+    <div class="toolbar-left">
+      @if (selectable && showBulkActions) {
+        <div class="bulk-actions">
+          <span class="selected-count">{{ getSelectedCount() }} selected</span>
+          <button class="btn-clear-selection" (click)="clearSelection()" title="Clear Selection">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+      }
+    </div>
+    
+    <div class="toolbar-right">
+      @if (columnCustomizable) {
+        <div class="column-menu-wrapper">
+          <button class="btn-toolbar" (click)="toggleColumnMenu()" title="Customize Columns">
+            <span class="material-icons">view_column</span>
+            Columns
+          </button>
+          @if (showColumnMenu) {
+            <div class="column-menu">
+              <div class="column-menu-header">
+                <span>Show/Hide Columns</span>
+                <button class="btn-close-menu" (click)="toggleColumnMenu()">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+              <div class="column-menu-items">
+                @for (column of columns; track column.key) {
+                  <label class="column-menu-item">
+                    <input 
+                      type="checkbox" 
+                      [checked]="column.visible !== false"
+                      (change)="toggleColumnVisibility(column)"
+                    />
+                    <span>{{ column.label }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+      
+      @if (exportable) {
+        <div class="export-menu-wrapper">
+          <button class="btn-toolbar" (click)="toggleExportMenu()" title="Export Options">
+            <span class="material-icons">download</span>
+            Export
+            <span class="material-icons">arrow_drop_down</span>
+          </button>
+          @if (showExportMenu) {
+            <div class="export-menu">
+              <button class="export-menu-item" (click)="onExportCSV(); toggleExportMenu()">
+                <span class="material-icons">file_download</span>
+                Export to CSV
+              </button>
+              <button class="export-menu-item" (click)="onExportExcel(); toggleExportMenu()">
+                <span class="material-icons">table_chart</span>
+                Export to Excel
+              </button>
+              <button class="export-menu-item" (click)="onExportPDF(); toggleExportMenu()">
+                <span class="material-icons">picture_as_pdf</span>
+                Export to PDF
+              </button>
+            </div>
+          }
+        </div>
+      }
+      
+      @if (printable) {
+        <button class="btn-toolbar" (click)="onPrint()" title="Print">
+          <span class="material-icons">print</span>
+          Print
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-container">
+    <table class="data-table" [class.selectable]="selectable">
+      <thead>
+        <tr>
+          @if (selectable) {
+            <th class="checkbox-column">
+              <input 
+                type="checkbox" 
+                [checked]="isAllSelected()"
+                [indeterminate]="isIndeterminate()"
+                (change)="onSelectAll($event)"
+                title="Select All"
+              />
+            </th>
+          }
+          @for (column of visibleColumns; track column.key) {
+            <th 
+              [style.width]="column.width"
+              [style.text-align]="column.align || 'left'"
+              [class.sortable]="column.sortable && sortable"
+              (click)="onSort(column)"
+            >
+              <div class="th-content">
+                <span>{{ column.label }}</span>
+                @if (column.sortable && sortable) {
+                  <span class="material-icons sort-icon">{{ getSortIcon(column) }}</span>
+                }
+              </div>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading) {
+          <tr>
+            <td [attr.colspan]="(selectable ? 1 : 0) + visibleColumns.length" class="loading-state">
+              <div class="spinner"></div>
+              <span>Loading data...</span>
+            </td>
+          </tr>
+        } @else if (sortedData.length === 0) {
+          <tr>
+            <td [attr.colspan]="(selectable ? 1 : 0) + visibleColumns.length" class="empty-state">
+              <div class="empty-state-content">
+                <span class="material-icons">inbox</span>
+                <p>{{ emptyMessage }}</p>
+              </div>
+            </td>
+          </tr>
+        } @else {
+          @for (row of sortedData; track $index) {
+            <tr 
+              [class.selected]="isRowSelected(row)"
+              [class.clickable]="rowClick.observed"
+              (click)="onRowClick(row)"
+            >
+              @if (selectable) {
+                <td class="checkbox-column">
+                  <input 
+                    type="checkbox" 
+                    [checked]="isRowSelected(row)"
+                    (change)="onRowSelect(row, $event)"
+                    (click)="$event.stopPropagation()"
+                  />
+                </td>
+              }
+              @for (column of visibleColumns; track column.key) {
+                <td [style.text-align]="column.align || 'left'">
+                      @if (column.cellTemplate) {
+                    <ng-container *ngTemplateOutlet="column.cellTemplate; context: { $implicit: row, column: column }"></ng-container>
+                  } @else {
+                    {{ getNestedValue(row, column.key) || '—' }}
+                  }
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+

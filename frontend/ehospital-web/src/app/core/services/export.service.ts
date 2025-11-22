@@ -130,7 +130,7 @@ export class ExportService {
             }
             h1 {
               color: #333;
-              border-bottom: 2px solid #667eea;
+              border-bottom: 2px solid #14b8a6;
               padding-bottom: 10px;
             }
             table {
@@ -139,7 +139,7 @@ export class ExportService {
               margin-top: 20px;
             }
             th {
-              background-color: #667eea;
+              background-color: #14b8a6;
               color: white;
               padding: 12px;
               text-align: left;
@@ -190,6 +190,101 @@ export class ExportService {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Export data to Excel file (XLSX format using HTML table method)
+   * Note: For better Excel support, consider using a library like xlsx
+   */
+  exportToExcel(data: any[], filename: string, headers: string[]): void {
+    if (!data || data.length === 0) {
+      console.warn('No data to export');
+      return;
+    }
+
+    // Create HTML table for Excel
+    const html = this.generateExcelHTML(data, headers, filename);
+    
+    // Create blob with Excel MIME type
+    const blob = new Blob([html], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    
+    // Alternative: Use CSV with .xls extension (works in most Excel versions)
+    const csvContent = this.convertToCSV(data, headers);
+    const excelBlob = new Blob(['\ufeff' + csvContent], { 
+      type: 'application/vnd.ms-excel;charset=utf-8;' 
+    });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(excelBlob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}_${this.getFormattedDate()}.xls`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Generate HTML for Excel export (alternative method)
+   */
+  private generateExcelHTML(data: any[], headers: string[], title: string): string {
+    const headerRow = headers.map(h => `<th style="background-color: #14b8a6; color: white; font-weight: bold; padding: 8px; border: 1px solid #ddd;">${this.escapeHTML(h)}</th>`).join('');
+    const dataRows = data.map((row, index) => {
+      const cells = headers.map(header => {
+        const value = this.getNestedValue(row, header);
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+        return `<td style="padding: 8px; border: 1px solid #ddd; background-color: ${bgColor};">${this.escapeHTML(String(value))}</td>`;
+      }).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+
+    return `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <title>${title}</title>
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>${title}</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            table { border-collapse: collapse; width: 100%; }
+            th { background-color: #14b8a6; color: white; font-weight: bold; }
+            td, th { padding: 8px; border: 1px solid #ddd; }
+            tr:nth-child(even) { background-color: #f9fafb; }
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>${headerRow}</tr>
+            </thead>
+            <tbody>
+              ${dataRows}
+            </tbody>
+          </table>
+          <p style="margin-top: 20px; font-size: 12px; color: #666;">Total records: ${data.length}</p>
+        </body>
+      </html>
+    `;
   }
 
   /**

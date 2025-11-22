@@ -62,8 +62,32 @@
     <app-table-skeleton [headers]="7" [rows]="8"></app-table-skeleton>
   }
 
-  <!-- Appointments Table -->
-  @if (!isLoading) {
+  <!-- Enhanced Data Table with All Features -->
+  @if (!isLoading && useDataTable) {
+    <app-data-table
+      [data]="filteredAppointments"
+      [columns]="tableColumns"
+      [selectable]="true"
+      [sortable]="true"
+      [exportable]="true"
+      [printable]="true"
+      [columnCustomizable]="true"
+      [loading]="isLoading"
+      tableTitle="Appointments"
+      emptyMessage="No appointments found"
+      (rowClick)="onTableRowClick($event)"
+      (selectionChange)="onTableSelectionChange($event)"
+      (sortChange)="onTableSortChange($event)"
+      (exportExcel)="exportToCSV()"
+      (exportPDF)="exportToPDF()"
+      (exportCSV)="exportToCSV()">
+      
+      <!-- Custom cell templates can be added here if needed -->
+    </app-data-table>
+  }
+
+  <!-- Legacy Table (can be removed after migration) -->
+  @if (!isLoading && !useDataTable) {
     <div class="table-container">
       <table class="appointments-table">
         <thead>
