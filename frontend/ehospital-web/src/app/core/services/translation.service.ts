@@ -158,6 +158,7 @@ export class TranslationService {
       appointments: {
         title: 'Appointments',
         scheduleAppointment: 'Schedule Appointment',
+        newAppointment: 'New Appointment',
         appointmentList: 'Appointment List',
         appointmentDetails: 'Appointment Details'
       },
@@ -203,7 +204,8 @@ export class TranslationService {
         name: 'Nombre',
         email: 'Correo electrónico',
         phone: 'Teléfono',
-        address: 'Dirección'
+        address: 'Dirección',
+        viewQueue: 'Ver Cola'
       },
       dashboard: {
         title: 'Panel de Control',
@@ -223,6 +225,7 @@ export class TranslationService {
       appointments: {
         title: 'Citas',
         scheduleAppointment: 'Programar Cita',
+        newAppointment: 'Nueva Cita',
         appointmentList: 'Lista de Citas',
         appointmentDetails: 'Detalles de la Cita'
       },
@@ -288,6 +291,7 @@ export class TranslationService {
       appointments: {
         title: 'Rendez-vous',
         scheduleAppointment: 'Planifier un Rendez-vous',
+        newAppointment: 'Nouveau Rendez-vous',
         appointmentList: 'Liste des Rendez-vous',
         appointmentDetails: 'Détails du Rendez-vous'
       },
@@ -353,6 +357,7 @@ export class TranslationService {
       appointments: {
         title: 'المواعيد',
         scheduleAppointment: 'جدولة موعد',
+        newAppointment: 'موعد جديد',
         appointmentList: 'قائمة المواعيد',
         appointmentDetails: 'تفاصيل الموعد'
       },
@@ -418,6 +423,7 @@ export class TranslationService {
       appointments: {
         title: 'Termine',
         scheduleAppointment: 'Termin Vereinbaren',
+        newAppointment: 'Neuer Termin',
         appointmentList: 'Terminliste',
         appointmentDetails: 'Termindetails'
       },
@@ -483,6 +489,7 @@ export class TranslationService {
       appointments: {
         title: '预约',
         scheduleAppointment: '安排预约',
+        newAppointment: '新预约',
         appointmentList: '预约列表',
         appointmentDetails: '预约详情'
       },
@@ -548,6 +555,7 @@ export class TranslationService {
       appointments: {
         title: '予約',
         scheduleAppointment: '予約をスケジュール',
+        newAppointment: '新しい予約',
         appointmentList: '予約リスト',
         appointmentDetails: '予約詳細'
       },
@@ -613,6 +621,7 @@ export class TranslationService {
       appointments: {
         title: 'Consultas',
         scheduleAppointment: 'Agendar Consulta',
+        newAppointment: 'Nova Consulta',
         appointmentList: 'Lista de Consultas',
         appointmentDetails: 'Detalhes da Consulta'
       },

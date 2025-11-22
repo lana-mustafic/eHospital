@@ -157,15 +157,29 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         map(() => this.router.url)
       )
       .subscribe(url => {
-        const menuItem = this.allMenuItems.find(item => url.includes(item.path));
-        this.currentPageTitle = menuItem ? menuItem.label : 'Dashboard';
+        this.updatePageTitle();
       });
 
     // Set initial title
+    this.updatePageTitle();
+
+    // Subscribe to language changes to update page title
+    this.translationService.getCurrentLanguage().subscribe(() => {
+      this.updatePageTitle();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private updatePageTitle(): void {
     const currentUrl = this.router.url;
     const menuItem = this.allMenuItems.find(item => currentUrl.includes(item.path));
     if (menuItem) {
-      this.currentPageTitle = menuItem.label;
+      // Try to translate the label
+      const translationKey = `menu.${menuItem.path.replace('/', '').replace(/-/g, '')}`;
+      const translated = this.translationService.translate(translationKey);
+      this.currentPageTitle = translated !== translationKey ? translated : menuItem.label;
+    } else {
+      this.currentPageTitle = this.translationService.translate('dashboard.title');
     }
   }
 

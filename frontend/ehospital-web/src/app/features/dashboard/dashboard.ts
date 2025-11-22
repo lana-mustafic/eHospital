@@ -25,6 +25,8 @@ import { MetricsService } from './services/metrics.service';
 import { MetricsSummary } from './models/metrics.model';
 import { forkJoin, of, interval, Subscription } from 'rxjs';
 import { catchError, timeout, switchMap } from 'rxjs/operators';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-dashboard',
@@ -39,7 +41,9 @@ import { catchError, timeout, switchMap } from 'rxjs/operators';
     DepartmentHeatmapComponent,
     RevenuePieChartComponent,
     AppointmentDistributionComponent,
-    BedOccupancyTrendsComponent
+    BedOccupancyTrendsComponent,
+    TranslatePipe,
+    LocalizedDatePipe
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']

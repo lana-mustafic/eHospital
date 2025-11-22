@@ -16,8 +16,11 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
     private translationService: TranslationService,
     private changeDetector: ChangeDetectorRef
   ) {
-    this.subscription = this.translationService.getCurrentLanguage().subscribe(() => {
+    this.subscription = this.translationService.getCurrentLanguage().subscribe((lang) => {
+      // Reset cache when language changes
       this.lastKey = '';
+      this.lastValue = '';
+      // Force change detection
       this.changeDetector.markForCheck();
     });
   }
@@ -27,11 +30,15 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
       return '';
     }
 
-    if (key === this.lastKey && !params) {
+    // Always get fresh translation (don't cache since language can change)
+    const currentLang = this.translationService.getCurrentLanguageCode();
+    const cacheKey = `${currentLang}:${key}:${params ? JSON.stringify(params) : ''}`;
+    
+    if (cacheKey === this.lastKey) {
       return this.lastValue;
     }
 
-    this.lastKey = key;
+    this.lastKey = cacheKey;
     this.lastValue = this.translationService.translate(key, params);
     return this.lastValue;
   }

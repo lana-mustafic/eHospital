@@ -16,42 +16,42 @@
       <div class="welcome-section">
         <h1 class="dashboard-title">
           @if (isDoctor) {
-            Welcome, Dr. {{ currentUserName }}
+            {{ 'dashboard.welcome' | translate }}, Dr. {{ currentUserName }}
           } @else if (isNurse) {
-            Welcome, {{ currentUserName }}
+            {{ 'dashboard.welcome' | translate }}, {{ currentUserName }}
           } @else {
-            Dashboard
+            {{ 'dashboard.title' | translate }}
           }
         </h1>
-        <p class="dashboard-subtitle">{{ getCurrentDate() }}</p>
+        <p class="dashboard-subtitle">{{ getCurrentDate() | localizedDate:'longDate' }}</p>
       </div>
       <div class="header-actions">
         @if (isNurse) {
           <button class="btn-secondary" [routerLink]="['/wizards/patient-registration']">
             <span class="material-icons">person_add</span>
-            Register Patient
+            {{ 'patients.addPatient' | translate }}
           </button>
           <button class="btn-primary" [routerLink]="['/queues']">
             <span class="material-icons">queue</span>
-            View Queue
+            {{ 'common.viewQueue' | translate }}
           </button>
         } @else if (isReceptionist) {
           <button class="btn-secondary" [routerLink]="['/wizards/patient-registration']">
             <span class="material-icons">person_add</span>
-            Register Patient
+            {{ 'patients.addPatient' | translate }}
           </button>
           <button class="btn-primary" [routerLink]="['/wizards/appointment-booking']">
             <span class="material-icons">event_available</span>
-            Book Appointment
+            {{ 'appointments.scheduleAppointment' | translate }}
           </button>
         } @else {
           <button class="btn-secondary" [routerLink]="['/wizards/appointment-booking']">
             <span class="material-icons">event_available</span>
-            Book Appointment
+            {{ 'appointments.scheduleAppointment' | translate }}
           </button>
           <button class="btn-primary" [routerLink]="['/appointments']">
             <span class="material-icons">add</span>
-            New Appointment
+            {{ 'appointments.newAppointment' | translate }}
           </button>
         }
       </div>
