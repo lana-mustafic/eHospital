@@ -147,8 +147,10 @@
                 </td>
               }
               @for (column of visibleColumns; track column.key) {
-                <td [style.text-align]="column.align || 'left'">
-                      @if (column.cellTemplate) {
+                <td 
+                  [style.text-align]="column.align || 'left'"
+                  [attr.data-label]="column.label">
+                  @if (column.cellTemplate) {
                     <ng-container *ngTemplateOutlet="column.cellTemplate; context: { $implicit: row, column: column }"></ng-container>
                   } @else {
                     {{ getNestedValue(row, column.key) || '—' }}

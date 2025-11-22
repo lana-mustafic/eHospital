@@ -1,4 +1,12 @@
 <div class="main-layout">
+  <!-- Mobile Sidebar Overlay -->
+  <div 
+    class="sidebar-overlay" 
+    *ngIf="isSidebarOpen"
+    (click)="toggleSidebar()"
+    [class.visible]="isSidebarOpen">
+  </div>
+
   <!-- Sidebar -->
   <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
     <div class="sidebar-header">
@@ -49,6 +57,11 @@
   <div class="main-content">
     <!-- Header -->
     <header class="header">
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" (click)="toggleSidebar()" aria-label="Toggle menu">
+        <span class="material-icons">menu</span>
+      </button>
+      
       <div class="header-left">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
         <div class="header-time">

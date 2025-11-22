@@ -3,6 +3,12 @@
 // Import color scheme
 @use 'styles/colors' as *;
 
+// Import responsive utilities
+@use 'styles/responsive' as *;
+
+// Import touch-friendly button styles
+@use 'styles/buttons' as *;
+
 * {
   margin: 0;
   padding: 0;

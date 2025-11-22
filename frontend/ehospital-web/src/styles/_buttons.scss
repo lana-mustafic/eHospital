@@ -1,0 +1,177 @@
+/**
+ * Touch-Friendly Button Styles
+ * WCAG 2.1 Level AAA compliant (minimum 44x44px touch targets)
+ */
+
+@use 'styles/colors' as *;
+@use 'styles/responsive' as *;
+
+// Base button styles with touch-friendly sizing
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-success,
+.btn-icon,
+.btn-export,
+.btn-toolbar {
+  // Base properties first
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; // Prevents double-tap zoom
+
+  // Remove default button styles
+  border: none;
+  font-family: inherit;
+  text-decoration: none;
+
+  // Touch-friendly sizing (mixin after base properties)
+  @include touch-friendly;
+
+  // Improve touch feedback
+  &:active {
+    transform: scale(0.98);
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// Primary button
+.btn-primary {
+  background: $gradient-primary;
+  color: white;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px $shadow-primary;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+// Secondary button
+.btn-secondary {
+  background: $button-secondary-bg;
+  color: $button-secondary-text;
+  border: 2px solid $button-secondary-border;
+
+  &:hover:not(:disabled) {
+    background: $button-secondary-hover-bg;
+    border-color: $gray-300;
+  }
+}
+
+// Icon button (smaller but still touch-friendly)
+.btn-icon {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem;
+  background: transparent;
+  color: $color-text-secondary;
+
+  @include mobile {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0.625rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    color: $color-text;
+  }
+}
+
+// Export button
+.btn-export {
+  background: $color-background-white;
+  border: 2px solid $color-border;
+  color: $color-text;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: $color-background-light;
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+// Toolbar button
+.btn-toolbar {
+  background: $color-background-white;
+  border: 1px solid $color-border;
+  color: $color-text;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: $color-background-light;
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+// Danger button
+.btn-danger {
+  background: $color-critical;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: $color-critical-dark;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px $shadow-critical;
+  }
+}
+
+// Success button
+.btn-success {
+  background: $color-success;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: $color-success-dark;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+  }
+}
+
+// Mobile-specific button enhancements
+@include mobile {
+  // Larger tap targets on mobile
+  button,
+  a.btn-primary,
+  a.btn-secondary,
+  .btn-primary,
+  .btn-secondary {
+    min-height: 48px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem; // Prevents zoom on iOS
+  }
+
+  // Form inputs should be at least 44px
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px; // Prevents zoom on iOS
+    padding: 0.75rem 1rem;
+  }
+}
+

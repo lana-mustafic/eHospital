@@ -45,6 +45,15 @@ import { catchError, timeout, switchMap } from 'rxjs/operators';
   styleUrls: ['./dashboard.scss']
 })
 export class Dashboard implements OnInit, OnDestroy {
+  // Collapsible sections state (for mobile)
+  collapsedSections: { [key: string]: boolean } = {
+    stats: false,
+    alerts: false,
+    appointments: false,
+    charts: false,
+    visualizations: false
+  };
+
   // Patient metrics
   totalPatients = 0;
   activePatients = 0;
@@ -234,6 +243,14 @@ export class Dashboard implements OnInit, OnDestroy {
     }
     // Start real-time monitoring
     this.startRealtimeMonitoring();
+  }
+
+  toggleSection(section: string): void {
+    this.collapsedSections[section] = !this.collapsedSections[section];
+  }
+
+  isSectionCollapsed(section: string): boolean {
+    return this.collapsedSections[section] || false;
   }
 
   ngOnDestroy() {

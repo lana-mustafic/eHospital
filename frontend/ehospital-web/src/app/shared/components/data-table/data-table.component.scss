@@ -1,4 +1,5 @@
 @use 'styles/colors' as *;
+@use 'styles/responsive' as *;
 
 .data-table-wrapper {
   background: $color-background-white;
@@ -350,22 +351,105 @@
 }
 
 // Responsive
-@media (max-width: 768px) {
+@include mobile {
   .table-toolbar {
     flex-direction: column;
     align-items: stretch;
+    padding: 1rem;
+    gap: 0.75rem;
+
+    .toolbar-left,
+    .toolbar-right {
+      width: 100%;
+    }
 
     .toolbar-right {
       flex-wrap: wrap;
+      gap: 0.5rem;
+
+      .btn-toolbar {
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
+        justify-content: center;
+      }
     }
   }
 
   .data-table {
     font-size: 0.875rem;
 
+    thead {
+      display: none; // Hide headers on mobile
+    }
+
+    tbody {
+      tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid $color-border;
+        border-radius: 8px;
+        padding: 1rem;
+        background: $color-background-white;
+
+        &:hover {
+          background: $color-background-light;
+        }
+      }
+
+      td {
+        display: block;
+        padding: 0.5rem 0;
+        text-align: left !important;
+        border: none;
+        position: relative;
+        padding-left: 40%;
+
+        &::before {
+          content: attr(data-label);
+          position: absolute;
+          left: 0;
+          width: 35%;
+          font-weight: 600;
+          color: $color-text;
+          font-size: 0.8125rem;
+        }
+
+        &.checkbox-column {
+          padding-left: 0;
+          text-align: center;
+
+          &::before {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+
+  // Stack export menu on mobile
+  .export-menu-wrapper,
+  .column-menu-wrapper {
+    .export-menu,
+    .column-menu {
+      right: 0;
+      left: 0;
+      width: 100%;
+      max-width: none;
+    }
+  }
+}
+
+@include tablet {
+  .table-toolbar {
+    padding: 1rem 1.25rem;
+  }
+
+  .data-table {
+    font-size: 0.9375rem;
+
     thead th,
     tbody td {
-      padding: 0.75rem 0.5rem;
+      padding: 0.875rem 0.75rem;
     }
   }
 }

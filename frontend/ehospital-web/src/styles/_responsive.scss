@@ -1,0 +1,190 @@
+/**
+ * Responsive Design Utilities
+ * Mobile-first approach with breakpoints
+ */
+
+// Breakpoints
+$breakpoint-xs: 480px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// Touch-friendly minimum sizes (WCAG 2.1 Level AAA)
+$touch-target-min: 44px; // Minimum touch target size
+$touch-target-comfortable: 48px; // Comfortable touch target size
+
+// Mixins for responsive design
+@mixin mobile {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-md}) and (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+@mixin mobile-and-tablet {
+  @media (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-lg}) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: #{$breakpoint-xl}) {
+    @content;
+  }
+}
+
+// Touch-friendly button mixin
+@mixin touch-friendly {
+  min-height: $touch-target-min;
+  min-width: $touch-target-min;
+  padding: 0.75rem 1rem;
+  
+  @include mobile {
+    min-height: $touch-target-comfortable;
+    min-width: $touch-target-comfortable;
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+// Collapsible section mixin
+@mixin collapsible-mobile {
+  @include mobile {
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      
+      .collapse-icon {
+        transition: transform 0.3s;
+        
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+    
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      
+      &.expanded {
+        max-height: 5000px;
+        transition: max-height 0.5s ease-in;
+      }
+    }
+  }
+}
+
+// Responsive grid mixin
+@mixin responsive-grid($mobile-cols: 1, $tablet-cols: 2, $desktop-cols: 3) {
+  display: grid;
+  grid-template-columns: repeat($mobile-cols, 1fr);
+  gap: 1rem;
+  
+  @include tablet {
+    grid-template-columns: repeat($tablet-cols, 1fr);
+    gap: 1.25rem;
+  }
+  
+  @include desktop {
+    grid-template-columns: repeat($desktop-cols, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+// Hide on mobile/tablet
+@mixin hide-mobile {
+  @include mobile {
+    display: none !important;
+  }
+}
+
+@mixin hide-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+@mixin hide-mobile-tablet {
+  @include mobile-and-tablet {
+    display: none !important;
+  }
+}
+
+// Show only on mobile/tablet
+@mixin show-mobile-only {
+  display: none;
+  
+  @include mobile {
+    display: block;
+  }
+}
+
+@mixin show-tablet-only {
+  display: none;
+  
+  @include tablet {
+    display: block;
+  }
+}
+
+@mixin show-mobile-tablet {
+  @include desktop {
+    display: none !important;
+  }
+}
+
+// Responsive typography
+@mixin responsive-text($mobile-size, $tablet-size, $desktop-size) {
+  font-size: $mobile-size;
+  
+  @include tablet {
+    font-size: $tablet-size;
+  }
+  
+  @include desktop {
+    font-size: $desktop-size;
+  }
+}
+
+// Responsive spacing
+@mixin responsive-padding($mobile: 1rem, $tablet: 1.5rem, $desktop: 2rem) {
+  padding: $mobile;
+  
+  @include tablet {
+    padding: $tablet;
+  }
+  
+  @include desktop {
+    padding: $desktop;
+  }
+}
+
+@mixin responsive-margin($mobile: 1rem, $tablet: 1.5rem, $desktop: 2rem) {
+  margin: $mobile;
+  
+  @include tablet {
+    margin: $tablet;
+  }
+  
+  @include desktop {
+    margin: $desktop;
+  }
+}
+

@@ -1,3 +1,6 @@
+@use 'styles/responsive' as *;
+@use 'styles/colors' as *;
+
 .dashboard {
   padding: 2rem;
   background: #f5f7fa;
@@ -3816,5 +3819,220 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// Collapsible section styles
+.collapsible-section {
+  @include mobile {
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      padding: 1rem;
+      background: $color-background-white;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid $color-border;
+      transition: all 0.2s;
+
+      &:hover {
+        background: $color-background-light;
+      }
+
+      h2, h3, h4 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+
+      .collapse-icon {
+        transition: transform 0.3s;
+        color: $color-text-secondary;
+
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+
+      &.expanded {
+        max-height: 5000px;
+        transition: max-height 0.5s ease-in;
+      }
+    }
+  }
+}
+
+// Mobile optimizations
+@include mobile {
+  .dashboard {
+    padding: 1rem;
+
+    .dashboard-header {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.5rem 1rem;
+
+      .welcome-section {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .dashboard-subtitle {
+          font-size: 0.875rem;
+        }
+      }
+
+      .header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .alerts-banner {
+      padding: 1rem;
+      margin-bottom: 1rem;
+
+      .alert-header {
+        h3 {
+          font-size: 1rem;
+        }
+      }
+
+      .alert-items {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+    }
+
+    .realtime-monitoring-section,
+    .stats-section,
+    .appointments-section,
+    .charts-section,
+    .advanced-visualizations-section {
+      margin-bottom: 1.5rem;
+
+      .monitoring-header,
+      .section-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+
+        h2 {
+          font-size: 1.125rem;
+        }
+
+        .btn-refresh {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .realtime-metrics-grid,
+    .metrics-grid,
+    .stats-grid,
+    .nurse-stats-grid,
+    .receptionist-stats-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .realtime-metric-card,
+    .metric-card,
+    .stat-card {
+      padding: 1rem;
+    }
+
+    .visualization-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .visualization-card {
+      padding: 1rem;
+    }
+
+    // Charts responsive
+    .chart-container {
+      padding: 1rem;
+      height: auto;
+      min-height: 250px;
+    }
+
+    // Tables
+    table {
+      font-size: 0.875rem;
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        tr {
+          display: block;
+          margin-bottom: 1rem;
+          border: 1px solid $color-border;
+          border-radius: 8px;
+          padding: 1rem;
+        }
+
+        td {
+          display: block;
+          padding: 0.5rem 0;
+          text-align: left;
+          padding-left: 40%;
+
+          &::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 35%;
+            font-weight: 600;
+            color: $color-text;
+            font-size: 0.8125rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Tablet optimizations
+@include tablet {
+  .dashboard {
+    padding: 1.5rem;
+
+    .dashboard-header {
+      padding: 1.5rem;
+    }
+
+    .realtime-metrics-grid,
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .visualization-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
   }
 }
