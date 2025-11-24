@@ -62,7 +62,7 @@
       <div class="alerts-banner">
         <div class="alert-header">
           <span class="material-icons">warning</span>
-          <h3>Critical Alerts</h3>
+          <h3>{{ 'dashboard.criticalAlerts' | translate }}</h3>
         </div>
         <div class="alert-items">
           @for (alert of criticalAlerts; track $index) {
@@ -81,15 +81,15 @@
         <div class="monitoring-header">
           <div class="monitoring-title-section">
             <span class="material-icons">monitor_heart</span>
-            <h2>Real-time Monitoring</h2>
+            <h2>{{ 'dashboard.realtimeMonitoring' | translate }}</h2>
             <div class="last-updated">
               <span class="material-icons">schedule</span>
-              <span>Auto-refreshes every 30s</span>
+              <span>{{ 'dashboard.autoRefreshes' | translate }}</span>
             </div>
           </div>
-          <button class="btn-refresh" (click)="refreshRealtimeData()" title="Refresh Now">
+          <button class="btn-refresh" (click)="refreshRealtimeData()" [title]="'dashboard.refresh' | translate">
             <span class="material-icons">refresh</span>
-            Refresh
+            {{ 'dashboard.refresh' | translate }}
           </button>
         </div>
 
@@ -102,18 +102,18 @@
                 <span class="material-icons">emergency</span>
               </div>
               <div class="metric-info">
-                <h3>Emergency Department</h3>
-                <p>Current Patients</p>
+                <h3>{{ 'dashboard.emergencyDepartment' | translate }}</h3>
+                <p>{{ 'dashboard.currentPatients' | translate }}</p>
               </div>
             </div>
             <div class="metric-value" [class]="getEDStatusClass(realtimeData.edPatientCount)">
               <span class="value-number">{{ realtimeData.edPatientCount }}</span>
-              <span class="value-label">Patients</span>
+              <span class="value-label">{{ 'dashboard.patients' | translate }}</span>
             </div>
             <div class="metric-status">
               <app-status-indicator 
                 [status]="realtimeData.edPatientCount <= 10 ? 'normal' : realtimeData.edPatientCount <= 20 ? 'high' : 'urgent'"
-                [label]="realtimeData.edPatientCount <= 10 ? 'Normal' : realtimeData.edPatientCount <= 20 ? 'Busy' : 'Critical'"
+                [label]="realtimeData.edPatientCount <= 10 ? ('dashboard.normal' | translate) : realtimeData.edPatientCount <= 20 ? ('dashboard.busy' | translate) : ('dashboard.critical' | translate)"
                 [showDot]="true">
               </app-status-indicator>
             </div>
@@ -126,18 +126,18 @@
                 <span class="material-icons">queue</span>
               </div>
               <div class="metric-info">
-                <h3>Patient Queue</h3>
-                <p>Waiting Patients</p>
+                <h3>{{ 'dashboard.patientQueue' | translate }}</h3>
+                <p>{{ 'dashboard.waitingPatients' | translate }}</p>
               </div>
             </div>
             <div class="metric-value" [class]="getQueueStatusClass(realtimeData.currentQueueLength)">
               <span class="value-number">{{ realtimeData.currentQueueLength }}</span>
-              <span class="value-label">Waiting</span>
+              <span class="value-label">{{ 'dashboard.waiting' | translate }}</span>
             </div>
             <div class="metric-status">
               <app-status-indicator 
                 [status]="realtimeData.currentQueueLength <= 5 ? 'normal' : realtimeData.currentQueueLength <= 15 ? 'high' : 'urgent'"
-                [label]="realtimeData.currentQueueLength <= 5 ? 'Low' : realtimeData.currentQueueLength <= 15 ? 'Moderate' : 'High'"
+                [label]="realtimeData.currentQueueLength <= 5 ? ('dashboard.low' | translate) : realtimeData.currentQueueLength <= 15 ? ('dashboard.moderate' | translate) : ('dashboard.high' | translate)"
                 [showDot]="true">
               </app-status-indicator>
             </div>
@@ -150,13 +150,13 @@
                 <span class="material-icons">people</span>
               </div>
               <div class="metric-info">
-                <h3>Available Staff</h3>
-                <p>On Duty Now</p>
+                <h3>{{ 'dashboard.availableStaff' | translate }}</h3>
+                <p>{{ 'dashboard.onDutyNow' | translate }}</p>
               </div>
             </div>
             <div class="metric-value" [class]="getStaffStatusClass(realtimeData.availableStaffCount)">
               <span class="value-number">{{ realtimeData.availableStaffCount }}</span>
-              <span class="value-label">Staff</span>
+              <span class="value-label">{{ 'dashboard.staff' | translate }}</span>
             </div>
             <div class="metric-status">
               <app-status-indicator 
@@ -301,11 +301,11 @@
             <div class="trend-summary">
               @if (selectedRevenuePeriod === 'monthly') {
                 <div class="summary-stat">
-                  <span class="stat-label">Total Revenue (Last 12 Months)</span>
+                  <span class="stat-label">{{ 'dashboard.totalRevenue' | translate }}</span>
                   <span class="stat-value">{{ formatCurrencyShort(getTotalMonthlyRevenue()) }}</span>
                 </div>
                 <div class="summary-stat">
-                  <span class="stat-label">Average Monthly Growth</span>
+                  <span class="stat-label">{{ 'dashboard.averageMonthlyGrowth' | translate }}</span>
                   <span class="stat-value" [class]="getLatestMonthlyGrowth() >= 0 ? 'positive' : 'negative'">
                     {{ formatPercentage(getLatestMonthlyGrowth()) }}
                   </span>
@@ -365,9 +365,9 @@
                 @for (item of trendAnalysisData.patientVolumeTrends.daily; track $index) {
                   <div class="volume-day-container">
                     <div class="volume-bars">
-                      <div class="volume-bar inpatient" [style.height.px]="item.inPatients" title="In-Patients: {{ item.inPatients }}"></div>
-                      <div class="volume-bar outpatient" [style.height.px]="item.outPatients" title="Out-Patients: {{ item.outPatients }}"></div>
-                      <div class="volume-bar emergency" [style.height.px]="item.emergency" title="Emergency: {{ item.emergency }}"></div>
+                      <div class="volume-bar inpatient" [style.height.px]="item.inPatients" [title]="('dashboard.inPatients' | translate) + ': ' + item.inPatients"></div>
+                      <div class="volume-bar outpatient" [style.height.px]="item.outPatients" [title]="('dashboard.outPatients' | translate) + ': ' + item.outPatients"></div>
+                      <div class="volume-bar emergency" [style.height.px]="item.emergency" [title]="('dashboard.emergency' | translate) + ': ' + item.emergency"></div>
                     </div>
                     <div class="volume-label">{{ item.date.split('-')[2] }}</div>
                   </div>
