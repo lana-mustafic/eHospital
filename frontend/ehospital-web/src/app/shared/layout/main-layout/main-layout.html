@@ -29,7 +29,7 @@
     
     <nav class="sidebar-nav">
       <div *ngIf="visibleMenuSections.length === 0 && currentUser" class="menu-loading">
-        <p>Loading menu...</p>
+        <p>{{ 'common.loading' | translate }}</p>
       </div>
       <div *ngFor="let section of visibleMenuSections; trackBy: trackBySectionTitle" class="menu-section">
         <button 
@@ -38,7 +38,7 @@
           [title]="!isSidebarOpen ? section.title : ''"
         >
           <span class="material-icons section-icon">{{ section.icon }}</span>
-          <span class="section-title" *ngIf="isSidebarOpen">{{ section.title }}</span>
+          <span class="section-title" *ngIf="isSidebarOpen">{{ getTranslatedSectionTitle(section.title) }}</span>
           <span class="material-icons expand-icon" *ngIf="isSidebarOpen" [class.expanded]="section.expanded">
             {{ section.expanded ? 'expand_less' : 'expand_more' }}
           </span>
@@ -49,11 +49,11 @@
               [routerLink]="item.path" 
               routerLinkActive="active"
               class="nav-item"
-              [attr.aria-label]="item.label"
-              [title]="!isSidebarOpen ? item.label : ''"
+              [attr.aria-label]="getTranslatedMenuLabel(item)"
+              [title]="!isSidebarOpen ? getTranslatedMenuLabel(item) : ''"
             >
               <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
-              <span class="nav-label" *ngIf="isSidebarOpen">{{ item.label }}</span>
+              <span class="nav-label" *ngIf="isSidebarOpen">{{ getTranslatedMenuLabel(item) }}</span>
             </a>
           </li>
         </ul>
@@ -82,28 +82,28 @@
           <span class="material-icons">search</span>
           <input
             type="text"
-            placeholder="Quick search: patients, appointments, records..."
+            [placeholder]="'header.quickSearch' | translate"
             [(ngModel)]="globalSearchTerm"
             (keyup.enter)="performGlobalSearch()"
             (focus)="showSearchSuggestions = true"
             (blur)="hideSearchSuggestions()"
           />
-          <button class="search-btn" (click)="performGlobalSearch()" title="Search">
+          <button class="search-btn" (click)="performGlobalSearch()" [title]="'common.search' | translate">
             <span class="material-icons">search</span>
           </button>
           @if (showSearchSuggestions && globalSearchTerm) {
             <div class="search-suggestions">
               <div class="suggestion-item" (click)="searchPatients()">
                 <span class="material-icons">people</span>
-                <span>Search Patients</span>
+                <span>{{ 'header.searchPatients' | translate }}</span>
               </div>
               <div class="suggestion-item" (click)="searchAppointments()">
                 <span class="material-icons">event</span>
-                <span>Search Appointments</span>
+                <span>{{ 'header.searchAppointments' | translate }}</span>
               </div>
               <div class="suggestion-item" (click)="searchRecords()">
                 <span class="material-icons">folder_shared</span>
-                <span>Search Medical Records</span>
+                <span>{{ 'header.searchRecords' | translate }}</span>
               </div>
             </div>
           }
@@ -111,12 +111,11 @@
       </div>
       <div class="header-right">
         <div class="header-actions">
-          <app-language-selector></app-language-selector>
           <div class="notification-wrapper">
             <button 
               class="header-btn" 
               (click)="toggleNotificationCenter()" 
-              title="Notifications"
+              [title]="'header.notifications' | translate"
               [class.has-notifications]="unreadNotificationCount > 0">
               <span class="material-icons">notifications</span>
               <span class="badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
@@ -128,17 +127,17 @@
           <button 
             class="header-btn" 
             [routerLink]="getDashboardRoute()" 
-            title="Dashboard"
+            [title]="'dashboard.title' | translate"
             *ngIf="canAccessDashboard()">
             <span class="material-icons">dashboard</span>
           </button>
         </div>
         <div class="user-menu">
           <div class="user-info">
-            <span class="user-name">{{ currentUser?.name || 'User' }}</span>
+            <span class="user-name">{{ currentUser?.name || ('header.user' | translate) }}</span>
             <span class="user-role" *ngIf="currentUser?.role">{{ currentUser?.role }}</span>
           </div>
-          <button class="logout-btn" (click)="logout()" title="Logout">
+          <button class="logout-btn" (click)="logout()" [title]="'header.logout' | translate">
             <span class="material-icons">logout</span>
           </button>
         </div>

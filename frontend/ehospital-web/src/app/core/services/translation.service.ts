@@ -30,10 +30,12 @@ export class TranslationService {
   ];
 
   constructor() {
-    // Load saved language preference
-    const savedLang = localStorage.getItem('preferredLanguage') || 'en';
-    this.setLanguage(savedLang);
+    // Language is locked to English only
+    this.currentLanguage$.next('en');
     this.loadTranslations();
+    // Set document language and direction for English
+    document.documentElement.setAttribute('dir', 'ltr');
+    document.documentElement.setAttribute('lang', 'en');
   }
 
   getCurrentLanguage(): Observable<string> {
@@ -44,20 +46,7 @@ export class TranslationService {
     return this.currentLanguage$.value;
   }
 
-  setLanguage(langCode: string): void {
-    if (this.languages.find(l => l.code === langCode)) {
-      this.currentLanguage$.next(langCode);
-      localStorage.setItem('preferredLanguage', langCode);
-      // Update document direction for RTL languages
-      if (langCode === 'ar') {
-        document.documentElement.setAttribute('dir', 'rtl');
-        document.documentElement.setAttribute('lang', langCode);
-      } else {
-        document.documentElement.setAttribute('dir', 'ltr');
-        document.documentElement.setAttribute('lang', langCode);
-      }
-    }
-  }
+  // Language switching removed - locked to English only
 
   translate(key: string, params?: { [key: string]: any }): string {
     const lang = this.currentLanguage$.value;
@@ -146,7 +135,79 @@ export class TranslationService {
         totalPatients: 'Total Patients',
         activePatients: 'Active Patients',
         todayAppointments: 'Today\'s Appointments',
-        upcomingAppointments: 'Upcoming Appointments'
+        upcomingAppointments: 'Upcoming Appointments',
+        criticalAlerts: 'Critical Alerts',
+        realtimeMonitoring: 'Real-time Monitoring',
+        autoRefreshes: 'Auto-refreshes every 30s',
+        refresh: 'Refresh',
+        emergencyDepartment: 'Emergency Department',
+        currentPatients: 'Current Patients',
+        patients: 'Patients',
+        patientQueue: 'Patient Queue',
+        waitingPatients: 'Waiting Patients',
+        waiting: 'Waiting',
+        availableStaff: 'Available Staff',
+        onDutyNow: 'On Duty Now',
+        staff: 'Staff',
+        totalRevenue: 'Total Revenue (Last 12 Months)',
+        averageMonthlyGrowth: 'Average Monthly Growth',
+        inPatients: 'In-Patients',
+        outPatients: 'Out-Patients',
+        emergency: 'Emergency',
+        normal: 'Normal',
+        busy: 'Busy',
+        critical: 'Critical',
+        low: 'Low',
+        moderate: 'Moderate',
+        high: 'High'
+      },
+      header: {
+        quickSearch: 'Quick search: patients, appointments, records...',
+        searchPatients: 'Search Patients',
+        searchAppointments: 'Search Appointments',
+        searchRecords: 'Search Medical Records',
+        notifications: 'Notifications',
+        user: 'User',
+        logout: 'Logout'
+      },
+      menu: {
+        dashboard: 'Dashboard',
+        patients: 'Patient Registry',
+        appointments: 'Appointments',
+        records: 'Medical Records',
+        vitalsigns: 'Vital Signs',
+        labtests: 'Laboratory',
+        radiology: 'Radiology & Imaging',
+        medicalhistory: 'Patient History',
+        diagnoses: 'Diagnoses',
+        prescriptions: 'Prescriptions',
+        dischargesummaries: 'Discharge Summaries',
+        clinicaldecisionsupport: 'Clinical Decision Support',
+        queues: 'Queue Management',
+        emergency: 'Emergency Department',
+        rooms: 'Room Management',
+        pharmacy: 'Pharmacy',
+        medications: 'Medication Inventory',
+        invoices: 'Billing & Finance',
+        insurance: 'Insurance & Claims',
+        bulkoperations: 'Bulk Operations',
+        wizardspatientregistration: 'Patient Registration Wizard',
+        wizardsappointmentbooking: 'Appointment Booking Wizard',
+        doctors: 'Physician Management',
+        schedules: 'Staff Schedules',
+        departments: 'Departments',
+        reports: 'Reports & Analytics',
+        audit: 'Audit Trail',
+        integrations: 'Integrations',
+        documents: 'Document Management',
+        notifications: 'Notifications',
+        section: {
+          overview: 'Overview',
+          clinical: 'Clinical',
+          operations: 'Operations',
+          administration: 'Administration',
+          system: 'System'
+        }
       },
       patients: {
         title: 'Patients',

@@ -6,15 +6,15 @@ import { filter, map, Subscription } from 'rxjs';
 import { AuthService, User } from '../../../core/services/auth';
 import { NotificationService } from '../../../features/notifications/services/notification.service';
 import { NotificationCenterComponent } from '../../components/notification-center/notification-center';
-import { LanguageSelectorComponent } from '../../components/language-selector/language-selector.component';
 import { TranslationService } from '../../../core/services/translation.service';
 import { AccessibilitySettingsComponent } from '../../components/accessibility-settings/accessibility-settings.component';
 import { AccessibilityService } from '../../../core/services/accessibility.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent, LanguageSelectorComponent, AccessibilitySettingsComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, NotificationCenterComponent, AccessibilitySettingsComponent, TranslatePipe],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss']
 })
@@ -169,12 +169,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     // Set initial title
     this.updatePageTitle();
-
-    // Subscribe to language changes to update page title
-    this.translationService.getCurrentLanguage().subscribe(() => {
-      this.updatePageTitle();
-      this.cdr.markForCheck();
-    });
   }
 
   private updatePageTitle(): void {
@@ -283,6 +277,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   trackByItemPath(index: number, item: any): string {
     return item.path;
+  }
+
+  getTranslatedMenuLabel(item: any): string {
+    // Try to translate based on path
+    const pathKey = item.path.replace('/', '').replace(/-/g, '').replace(/\//g, '');
+    const translationKey = `menu.${pathKey}`;
+    const translated = this.translationService.translate(translationKey);
+    return translated !== translationKey ? translated : item.label;
+  }
+
+  getTranslatedSectionTitle(title: string): string {
+    const translationKey = `menu.section.${title.toLowerCase()}`;
+    const translated = this.translationService.translate(translationKey);
+    return translated !== translationKey ? translated : title;
   }
 
   getCurrentTime(): string {
