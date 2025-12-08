@@ -18,58 +18,75 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Laboratory Management System</h2>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Laboratory</span>
+      </div>
+      <h2>Laboratory Management</h2>
       <p>Order tests, track specimens, enter results, and manage lab workflow</p>
     </div>
     <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
       <button class="btn-secondary" (click)="openAddModal()">
         <span class="material-icons">add</span>
         Quick Order
       </button>
       <button class="btn-primary" (click)="openOrderingWizard()">
         <span class="material-icons">science</span>
-        Order Test (Workflow)
+        Order Test
       </button>
     </div>
   </div>
 
   <!-- Search and Filters -->
   <div class="search-section">
-    <div class="search-box">
-      <span class="material-icons">search</span>
-      <input
-        type="text"
-        placeholder="Search by test name, type, code, patient, or doctor..."
-        [(ngModel)]="searchTerm"
-        (input)="applyFilters()"
-      />
-    </div>
-    <div class="filter-controls">
-      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
-        <option [ngValue]="null">All Patients</option>
-        @for (patient of patients; track patient.id) {
-          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
-        }
-      </select>
-      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
-        <option value="">All Statuses</option>
-        @for (status of testStatuses; track status) {
-          <option [value]="status">{{ status }}</option>
-        }
-      </select>
-    </div>
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
-        <span class="material-icons">file_download</span>
-        CSV
-      </button>
-      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
-        <span class="material-icons">picture_as_pdf</span>
-        PDF
+    <div class="search-container">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Search by test name, type, code, patient, or doctor..."
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+      </div>
+      <div class="filter-controls">
+        <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+          <option [ngValue]="null">All Patients</option>
+          @for (patient of patients; track patient.id) {
+            <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+          }
+        </select>
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="">All Statuses</option>
+          @for (status of testStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+      <button class="btn-filter" [class.active]="searchTerm || patientFilter || statusFilter" (click)="searchTerm = ''; patientFilter = null; statusFilter = ''; applyFilters()" *ngIf="searchTerm || patientFilter || statusFilter">
+        <span class="material-icons">clear</span>
+        Clear
       </button>
     </div>
-    <div class="results-count">
-      {{ filteredLabTests.length }} test(s) found
+    <div class="search-actions">
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+          <span class="material-icons">file_download</span>
+          CSV
+        </button>
+        <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+          <span class="material-icons">picture_as_pdf</span>
+          PDF
+        </button>
+      </div>
+      <div class="results-count">
+        {{ filteredLabTests.length }} test(s) found
+      </div>
     </div>
   </div>
 
@@ -113,17 +130,26 @@
                   </button>
                 }
               </td>
-              <td class="name-cell">
-                <strong>{{ lt.patientName || 'Patient #' + lt.patientId }}</strong>
-                <p class="doctor-name">{{ lt.doctorName || 'Doctor #' + lt.doctorId }}</p>
-                @if (lt.isCritical) {
-                  <span class="critical-badge">
-                    <span class="material-icons">warning</span>
-                    Critical
-                  </span>
-                }
+              <td>
+                <div class="patient-cell">
+                  <strong>{{ lt.patientName || 'Patient #' + lt.patientId }}</strong>
+                  <span class="doctor-name">{{ lt.doctorName || 'Doctor #' + lt.doctorId }}</span>
+                  @if (lt.isCritical) {
+                    <span class="critical-badge">
+                      <span class="material-icons">warning</span>
+                      Critical
+                    </span>
+                  }
+                </div>
               </td>
-              <td>{{ lt.testName }}</td>
+              <td>
+                <div class="test-name-cell">
+                  <strong>{{ lt.testName }}</strong>
+                  @if (lt.testCode) {
+                    <span class="test-code">{{ lt.testCode }}</span>
+                  }
+                </div>
+              </td>
               <td>
                 <span class="type-badge">{{ lt.testType }}</span>
               </td>
@@ -142,7 +168,7 @@
                   <div class="specimen-info">
                     <span class="specimen-type">{{ lt.specimenType }}</span>
                     @if (lt.specimenCollectedDate) {
-                      <span class="specimen-date">{{ lt.specimenCollectedDate | date:'short' }}</span>
+                      <span class="specimen-date">{{ lt.specimenCollectedDate | date:'shortDate' }}</span>
                     }
                   </div>
                 } @else {
@@ -152,7 +178,12 @@
                   </button>
                 }
               </td>
-              <td>{{ lt.orderedDate | date:'short' }}</td>
+              <td>
+                <div class="date-cell">
+                  <span class="date">{{ lt.orderedDate | date:'shortDate' }}</span>
+                  <span class="time">{{ lt.orderedDate | date:'shortTime' }}</span>
+                </div>
+              </td>
               <td class="actions-cell">
                 <div class="action-buttons">
                   @if (lt.status === 'Ordered' && !lt.specimenType) {
@@ -220,22 +251,25 @@
 
     <!-- Pagination Controls -->
     @if (totalPages > 1) {
-      <div class="pagination-controls">
-        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+      <div class="pagination">
+        <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <span class="material-icons">chevron_left</span>
         </button>
-        @for (page of [].constructor(totalPages); track $index) {
+        @for (page of getPageNumbers(); track page) {
           <button
-            class="btn-pagination"
-            [class.active]="currentPage === $index + 1"
-            (click)="goToPage($index + 1)"
+            class="pagination-btn"
+            [class.active]="currentPage === page"
+            (click)="goToPage(page)"
           >
-            {{ $index + 1 }}
+            {{ page }}
           </button>
         }
-        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
           <span class="material-icons">chevron_right</span>
         </button>
+        <span class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }} ({{ filteredLabTests.length }} total)
+        </span>
       </div>
     }
   }
