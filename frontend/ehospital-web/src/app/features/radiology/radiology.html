@@ -2,10 +2,19 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h2>Radiology & Imaging Management</h2>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Radiology</span>
+      </div>
+      <h2>Radiology & Imaging</h2>
       <p>Order imaging studies, view DICOM images, generate reports, and manage radiology workflow</p>
     </div>
     <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
       <button class="btn-primary" (click)="openOrderingWizard()">
         <span class="material-icons">add</span>
         Order Imaging Study
@@ -15,43 +24,51 @@
 
   <!-- Search and Filters -->
   <div class="search-section">
-    <div class="search-box">
-      <span class="material-icons">search</span>
-      <input
-        type="text"
-        placeholder="Search by accession number, patient, study type, or description..."
-        [(ngModel)]="searchTerm"
-        (input)="applyFilters()"
-      />
-    </div>
-    <div class="filter-controls">
-      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
-        <option [ngValue]="null">All Patients</option>
-        @for (patient of patients; track patient.id) {
-          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
-        }
-      </select>
-      <select [(ngModel)]="statusFilter" (change)="applyFilters()">
-        <option value="">All Statuses</option>
-        @for (status of statuses; track status) {
-          <option [value]="status">{{ status }}</option>
-        }
-      </select>
-      <select [(ngModel)]="studyTypeFilter" (change)="applyFilters()">
-        <option value="">All Study Types</option>
-        @for (type of studyTypes; track type) {
-          <option [value]="type">{{ type }}</option>
-        }
-      </select>
-    </div>
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
-        <span class="material-icons">file_download</span>
-        CSV
+    <div class="search-container">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Search by accession number, patient, study type, or description..."
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+      </div>
+      <div class="filter-controls">
+        <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+          <option [ngValue]="null">All Patients</option>
+          @for (patient of patients; track patient.id) {
+            <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+          }
+        </select>
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="">All Statuses</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+        <select [(ngModel)]="studyTypeFilter" (change)="applyFilters()">
+          <option value="">All Study Types</option>
+          @for (type of studyTypes; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+      <button class="btn-filter" [class.active]="searchTerm || patientFilter || statusFilter || studyTypeFilter" (click)="searchTerm = ''; patientFilter = null; statusFilter = ''; studyTypeFilter = ''; applyFilters()" *ngIf="searchTerm || patientFilter || statusFilter || studyTypeFilter">
+        <span class="material-icons">clear</span>
+        Clear
       </button>
     </div>
-    <div class="results-count">
-      {{ filteredStudies.length }} study(ies) found
+    <div class="search-actions">
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+          <span class="material-icons">file_download</span>
+          CSV
+        </button>
+      </div>
+      <div class="results-count">
+        {{ filteredStudies.length }} study(ies) found
+      </div>
     </div>
   </div>
 
@@ -81,18 +98,26 @@
         <tbody>
           @for (study of paginatedStudies; track study.id) {
             <tr>
-              <td class="accession-cell">
-                <strong>{{ study.accessionNumber || 'Pending' }}</strong>
-              </td>
-              <td class="name-cell">
-                <strong>{{ study.patientName || 'Patient #' + study.patientId }}</strong>
-                <p class="doctor-name">{{ study.orderingPhysicianName || 'Doctor #' + study.orderingPhysicianId }}</p>
+              <td>
+                <div class="accession-cell">
+                  <strong>{{ study.accessionNumber || 'Pending' }}</strong>
+                </div>
               </td>
               <td>
-                <span class="type-badge">{{ study.studyType }}</span>
-                <span class="modality-badge">{{ study.modality }}</span>
+                <div class="patient-cell">
+                  <strong>{{ study.patientName || 'Patient #' + study.patientId }}</strong>
+                  <span class="doctor-name">{{ study.orderingPhysicianName || 'Doctor #' + study.orderingPhysicianId }}</span>
+                </div>
               </td>
-              <td>{{ study.bodyPart || '—' }}</td>
+              <td>
+                <div class="study-type-cell">
+                  <span class="type-badge">{{ study.studyType }}</span>
+                  <span class="modality-badge">{{ study.modality }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="body-part">{{ study.bodyPart || '—' }}</span>
+              </td>
               <td>
                 <span class="priority-badge" [ngClass]="getPriorityClass(study.priority)">
                   {{ study.priority }}
@@ -103,7 +128,12 @@
                   {{ study.status }}
                 </span>
               </td>
-              <td>{{ study.studyDate | date:'short' }}</td>
+              <td>
+                <div class="date-cell">
+                  <span class="date">{{ study.studyDate | date:'shortDate' }}</span>
+                  <span class="time">{{ study.studyDate | date:'shortTime' }}</span>
+                </div>
+              </td>
               <td>
                 @if (study.hasImages) {
                   <span class="image-count">
@@ -184,22 +214,25 @@
 
     <!-- Pagination Controls -->
     @if (totalPages > 1) {
-      <div class="pagination-controls">
-        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+      <div class="pagination">
+        <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <span class="material-icons">chevron_left</span>
         </button>
-        @for (page of [].constructor(totalPages); track $index) {
+        @for (page of getPageNumbers(); track page) {
           <button
-            class="btn-pagination"
-            [class.active]="currentPage === $index + 1"
-            (click)="goToPage($index + 1)"
+            class="pagination-btn"
+            [class.active]="currentPage === page"
+            (click)="goToPage(page)"
           >
-            {{ $index + 1 }}
+            {{ page }}
           </button>
         }
-        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
           <span class="material-icons">chevron_right</span>
         </button>
+        <span class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }} ({{ filteredStudies.length }} total)
+        </span>
       </div>
     }
   }
