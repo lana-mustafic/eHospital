@@ -1,4 +1,4 @@
-<div class="records">
+<div class="records-container">
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
@@ -10,81 +10,174 @@
       <h2>Medical Records</h2>
       <p>Manage electronic health records, clinical documentation, and patient medical history</p>
     </div>
-  </div>
-
-  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
-    <div class="row">
-      <input type="number" placeholder="Patient ID" formControlName="patientId" />
-      <input type="text" placeholder="Diagnosis" formControlName="diagnosis" />
-      <input type="text" placeholder="Clinical Notes" formControlName="notes" />
-      <button type="submit" class="btn-primary">{{ isEdit ? 'Update Record' : 'Create Record' }}</button>
-      <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="isEdit">Cancel</button>
-    </div>
-  </form>
-
-  <!-- Search -->
-  <div class="search-section">
-    <div class="search-box">
-      <span class="material-icons">search</span>
-      <input
-        type="text"
-        placeholder="Search by patient, doctor, diagnosis, or notes..."
-        [(ngModel)]="searchTerm"
-        (input)="search()"
-      />
-    </div>
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
         <span class="material-icons">file_download</span>
-        CSV
+        Export CSV
       </button>
-      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
-        <span class="material-icons">picture_as_pdf</span>
-        PDF
+      <button class="btn-primary" (click)="showCreateForm()">
+        <span class="material-icons">add</span>
+        Create Record
       </button>
-    </div>
-    <div class="results-count">
-      {{ filteredRecords.length }} record(s) found
     </div>
   </div>
 
-  <app-table-skeleton *ngIf="isLoading" [headers]="6" [rows]="6"></app-table-skeleton>
-  <table *ngIf="!isLoading" class="table">
-    <thead>
-      <tr>
-        <th>Patient</th>
-        <th>Doctor</th>
-        <th>Diagnosis</th>
-        <th>Notes</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of paginatedRecords">
-        <td>{{ r.patientName || r.patientId }}</td>
-        <td>{{ r.doctorName || '—' }}</td>
-        <td>{{ r.diagnosis || '—' }}</td>
-        <td>{{ r.notes || '—' }}</td>
-        <td>{{ r.createdAt | date:'short' }}</td>
-        <td>
-          <button class="btn-small" (click)="edit(r)">Edit</button>
-          <button class="btn-small" (click)="onDelete(r)">Delete</button>
-        </td>
-      </tr>
-      <tr *ngIf="filteredRecords.length === 0">
-        <td colspan="6" class="empty-state">
-          <div class="empty-state-content">
-            <span class="material-icons">folder_off</span>
-            <h3>No medical records found</h3>
-            <p>
-              <span *ngIf="searchTerm">Try adjusting your search criteria</span>
-              <span *ngIf="!searchTerm">No medical records have been created yet</span>
-            </p>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Create/Edit Form Card -->
+  <div *ngIf="showForm" class="form-card">
+    <div class="form-card-header">
+      <h3>{{ isEdit ? 'Edit Medical Record' : 'Create Medical Record' }}</h3>
+      <button type="button" class="btn-close" (click)="resetForm()" *ngIf="isEdit">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-content">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="patientId">Patient ID <span class="required">*</span></label>
+          <input 
+            id="patientId"
+            type="number" 
+            placeholder="Enter patient ID" 
+            formControlName="patientId"
+            [class.error]="form.get('patientId')?.invalid && form.get('patientId')?.touched"
+          />
+          <span class="error-message" *ngIf="form.get('patientId')?.invalid && form.get('patientId')?.touched">
+            Patient ID is required
+          </span>
+        </div>
+        <div class="form-group">
+          <label for="diagnosis">Diagnosis</label>
+          <input 
+            id="diagnosis"
+            type="text" 
+            placeholder="Enter diagnosis" 
+            formControlName="diagnosis"
+          />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="notes">Clinical Notes</label>
+        <textarea 
+          id="notes"
+          placeholder="Enter clinical notes and observations..."
+          formControlName="notes"
+          rows="4"
+        ></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="resetForm()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid">
+          {{ isEdit ? 'Update Record' : 'Create Record' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <div class="search-container">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Search by patient, doctor, diagnosis, or notes..."
+          [(ngModel)]="searchTerm"
+          (input)="search()"
+        />
+      </div>
+      <button class="btn-filter" [class.active]="searchTerm" (click)="searchTerm = ''; search()" *ngIf="searchTerm">
+        <span class="material-icons">clear</span>
+        Clear
+      </button>
+    </div>
+    <div class="search-actions">
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+          <span class="material-icons">file_download</span>
+          CSV
+        </button>
+        <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+          <span class="material-icons">picture_as_pdf</span>
+          PDF
+        </button>
+      </div>
+      <div class="results-count">
+        {{ filteredRecords.length }} record(s) found
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <app-table-skeleton *ngIf="isLoading" [headers]="6" [rows]="8"></app-table-skeleton>
+
+  <!-- Records Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="records-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Diagnosis</th>
+          <th>Clinical Notes</th>
+          <th>Created Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let record of paginatedRecords">
+          <td>
+            <div class="patient-cell">
+              <strong>{{ record.patientName || ('Patient #' + record.patientId) }}</strong>
+              <span class="patient-id" *ngIf="record.patientId">ID: {{ record.patientId }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="doctor-name">{{ record.doctorName || '—' }}</span>
+          </td>
+          <td>
+            <span class="diagnosis-badge" *ngIf="record.diagnosis">{{ record.diagnosis }}</span>
+            <span class="text-muted" *ngIf="!record.diagnosis">—</span>
+          </td>
+          <td>
+            <div class="notes-cell">
+              <span *ngIf="record.notes">{{ record.notes }}</span>
+              <span class="text-muted" *ngIf="!record.notes">—</span>
+            </div>
+          </td>
+          <td>
+            <div class="date-cell">
+              <span class="date">{{ record.createdAt | date:'shortDate' }}</span>
+              <span class="time">{{ record.createdAt | date:'shortTime' }}</span>
+            </div>
+          </td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="edit(record)" title="Edit Record">
+              <span class="material-icons">edit</span>
+            </button>
+            <button class="btn-icon btn-danger" (click)="onDelete(record)" title="Delete Record">
+              <span class="material-icons">delete</span>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredRecords.length === 0">
+          <td colspan="6" class="empty-state">
+            <div class="empty-state-content">
+              <span class="material-icons">folder_off</span>
+              <h3>No medical records found</h3>
+              <p>
+                <span *ngIf="searchTerm">Try adjusting your search criteria</span>
+                <span *ngIf="!searchTerm">No medical records have been created yet</span>
+              </p>
+              <button *ngIf="!searchTerm" class="btn-primary" (click)="showCreateForm()">
+                <span class="material-icons">add</span>
+                Create First Record
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   
   <!-- Pagination -->
   <div *ngIf="totalPages > 1 && !isLoading" class="pagination">
@@ -109,4 +202,3 @@
     </span>
   </div>
 </div>
-

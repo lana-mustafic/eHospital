@@ -22,6 +22,7 @@ export class MedicalRecordsComponent implements OnInit {
   form: FormGroup;
   isEdit = false;
   editingId: number | null = null;
+  showForm = false;
   
   // Pagination
   currentPage = 1;
@@ -65,20 +66,22 @@ export class MedicalRecordsComponent implements OnInit {
     const payload = this.form.value as Partial<MedicalRecord>;
     if (this.isEdit && this.editingId) {
       this.recordService.update(this.editingId, payload).subscribe({
-        next: () => {
-          this.toastService.success('Medical record updated successfully');
-          this.reload();
-        },
+      next: () => {
+        this.toastService.success('Medical record updated successfully');
+        this.resetForm();
+        this.reload();
+      },
         error: (err) => {
           this.toastService.error(err.error?.message || 'Failed to update medical record');
         }
       });
     } else {
       this.recordService.create(payload).subscribe({
-        next: () => {
-          this.toastService.success('Medical record created successfully');
-          this.reload();
-        },
+      next: () => {
+        this.toastService.success('Medical record created successfully');
+        this.resetForm();
+        this.reload();
+      },
         error: (err) => {
           this.toastService.error(err.error?.message || 'Failed to create medical record');
         }
@@ -88,12 +91,20 @@ export class MedicalRecordsComponent implements OnInit {
 
   edit(r: MedicalRecord) {
     this.isEdit = true;
+    this.showForm = true;
     this.editingId = r.id;
     this.form.patchValue({
       patientId: r.patientId,
       diagnosis: r.diagnosis || '',
       notes: r.notes || ''
     });
+    // Scroll to form
+    setTimeout(() => {
+      const formCard = document.querySelector('.form-card');
+      if (formCard) {
+        formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   }
 
   onDelete(r: MedicalRecord) {
@@ -113,6 +124,14 @@ export class MedicalRecordsComponent implements OnInit {
   resetForm() {
     this.isEdit = false;
     this.editingId = null;
+    this.showForm = false;
+    this.form.reset();
+  }
+
+  showCreateForm() {
+    this.isEdit = false;
+    this.editingId = null;
+    this.showForm = true;
     this.form.reset();
   }
 
