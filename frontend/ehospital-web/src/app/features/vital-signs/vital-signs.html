@@ -2,46 +2,65 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Clinical</span>
+        <span class="material-icons breadcrumb-separator">chevron_right</span>
+        <span class="breadcrumb-item active">Vital Signs</span>
+      </div>
       <h2>Vital Signs</h2>
       <p>Record and manage patient vital signs measurements</p>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="material-icons">add</span>
-      Record Vital Signs
-    </button>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportToCSV()" title="Export to CSV">
+        <span class="material-icons">file_download</span>
+        Export CSV
+      </button>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="material-icons">add</span>
+        Record Vital Signs
+      </button>
+    </div>
   </div>
 
   <!-- Search and Filters -->
   <div class="search-section">
-    <div class="search-box">
-      <span class="material-icons">search</span>
-      <input
-        type="text"
-        placeholder="Search by patient name or notes..."
-        [(ngModel)]="searchTerm"
-        (input)="applyFilters()"
-      />
-    </div>
-    <div class="filter-controls">
-      <select [(ngModel)]="patientFilter" (change)="applyFilters()">
-        <option [ngValue]="null">All Patients</option>
-        @for (patient of patients; track patient.id) {
-          <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
-        }
-      </select>
-    </div>
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
-        <span class="material-icons">file_download</span>
-        CSV
-      </button>
-      <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
-        <span class="material-icons">picture_as_pdf</span>
-        PDF
+    <div class="search-container">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Search by patient name or notes..."
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+      </div>
+      <div class="filter-controls">
+        <select [(ngModel)]="patientFilter" (change)="applyFilters()">
+          <option [ngValue]="null">All Patients</option>
+          @for (patient of patients; track patient.id) {
+            <option [ngValue]="patient.id">{{ patient.firstName }} {{ patient.lastName }}</option>
+          }
+        </select>
+      </div>
+      <button class="btn-filter" [class.active]="searchTerm || patientFilter" (click)="searchTerm = ''; patientFilter = null; applyFilters()" *ngIf="searchTerm || patientFilter">
+        <span class="material-icons">clear</span>
+        Clear
       </button>
     </div>
-    <div class="results-count">
-      {{ filteredVitalSigns.length }} record(s) found
+    <div class="search-actions">
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToCSV()" title="Export to CSV">
+          <span class="material-icons">file_download</span>
+          CSV
+        </button>
+        <button class="btn-export" (click)="exportToPDF()" title="Export to PDF">
+          <span class="material-icons">picture_as_pdf</span>
+          PDF
+        </button>
+      </div>
+      <div class="results-count">
+        {{ filteredVitalSigns.length }} record(s) found
+      </div>
     </div>
   </div>
 
@@ -73,10 +92,18 @@
         <tbody>
           @for (vs of paginatedVitalSigns; track vs.id) {
             <tr>
-              <td class="name-cell">
-                <strong>{{ vs.patientName || 'Patient #' + vs.patientId }}</strong>
+              <td>
+                <div class="patient-cell">
+                  <strong>{{ vs.patientName || 'Patient #' + vs.patientId }}</strong>
+                  <span class="patient-id" *ngIf="vs.patientId">ID: {{ vs.patientId }}</span>
+                </div>
               </td>
-              <td>{{ vs.recordedDate | date:'short' }}</td>
+              <td>
+                <div class="date-cell">
+                  <span class="date">{{ vs.recordedDate | date:'shortDate' }}</span>
+                  <span class="time">{{ vs.recordedDate | date:'shortTime' }}</span>
+                </div>
+              </td>
               <td>
                 @if (vs.bloodPressure) {
                   <span class="value-badge">{{ vs.bloodPressure }}</span>
@@ -179,22 +206,25 @@
 
     <!-- Pagination Controls -->
     @if (totalPages > 1) {
-      <div class="pagination-controls">
-        <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage === 1">
+      <div class="pagination">
+        <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <span class="material-icons">chevron_left</span>
         </button>
-        @for (page of [].constructor(totalPages); track $index) {
+        @for (page of getPageNumbers(); track page) {
           <button
-            class="btn-pagination"
-            [class.active]="currentPage === $index + 1"
-            (click)="goToPage($index + 1)"
+            class="pagination-btn"
+            [class.active]="currentPage === page"
+            (click)="goToPage(page)"
           >
-            {{ $index + 1 }}
+            {{ page }}
           </button>
         }
-        <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
           <span class="material-icons">chevron_right</span>
         </button>
+        <span class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }} ({{ filteredVitalSigns.length }} total)
+        </span>
       </div>
     }
   }
