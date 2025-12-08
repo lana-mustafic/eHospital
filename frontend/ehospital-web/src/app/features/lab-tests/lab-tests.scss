@@ -380,111 +380,109 @@
           }
         }
 
-            .type-badge {
-              display: inline-block;
-              padding: 0.25rem 0.75rem;
-              background: #F0FDFA;
-              color: #0D9488;
-              border-radius: 6px;
-              font-weight: 500;
-              font-size: 0.875rem;
-              border: 1px solid #99F6E4;
+        .type-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background: #F0FDFA;
+          color: #0D9488;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 0.875rem;
+          border: 1px solid #99F6E4;
+        }
+
+        .status-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          text-transform: uppercase;
+
+          &.status-ordered {
+            background-color: #dbeafe;
+            color: #1e40af;
+          }
+          &.status-in-progress {
+            background-color: #fef3c7;
+            color: #92400e;
+          }
+          &.status-completed {
+            background-color: #d1fae5;
+            color: #065f46;
+          }
+          &.status-cancelled {
+            background-color: #fee2e2;
+            color: #991b1b;
+          }
+          &.status-default {
+            background-color: #e5e7eb;
+            color: #4b5563;
+          }
+        }
+
+        .empty-value {
+          color: #9ca3af;
+          font-style: italic;
+        }
+
+        &.actions-cell {
+          white-space: nowrap;
+
+          .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+          }
+
+          .btn-icon {
+            background: transparent;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+
+            &:hover {
+              background-color: #f3f4f6;
+              color: #374151;
             }
 
-            .status-badge {
-              display: inline-block;
-              padding: 0.25rem 0.75rem;
-              border-radius: 4px;
-              font-size: 0.75rem;
-              font-weight: 500;
-              text-transform: uppercase;
+            &.btn-danger:hover {
+              background-color: #fef2f2;
+              color: #dc2626;
+            }
 
-              &.status-ordered {
-                background-color: #dbeafe;
-                color: #1e40af;
-              }
-              &.status-in-progress {
-                background-color: #fef3c7;
-                color: #92400e;
-              }
-              &.status-completed {
+            &.btn-success {
+              color: #10b981;
+              &:hover {
                 background-color: #d1fae5;
-                color: #065f46;
-              }
-              &.status-cancelled {
-                background-color: #fee2e2;
-                color: #991b1b;
-              }
-              &.status-default {
-                background-color: #e5e7eb;
-                color: #4b5563;
+                color: #059669;
               }
             }
 
-            .empty-value {
-              color: #9ca3af;
-              font-style: italic;
+            &.btn-info {
+              color: #3b82f6;
+              &:hover {
+                background-color: #dbeafe;
+                color: #2563eb;
+              }
             }
 
-            &.actions-cell {
-              white-space: nowrap;
-
-              .action-buttons {
-                display: flex;
-                gap: 0.25rem;
-                flex-wrap: wrap;
+            &.btn-warning {
+              color: #f59e0b;
+              &:hover {
+                background-color: #fef3c7;
+                color: #d97706;
               }
+            }
 
-              .btn-icon {
-                background: transparent;
-                border: none;
-                color: #6b7280;
-                cursor: pointer;
-                padding: 0.5rem;
-                border-radius: 6px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s;
-
-                &:hover {
-                  background-color: #f3f4f6;
-                  color: #374151;
-                }
-
-                &.btn-danger:hover {
-                  background-color: #fef2f2;
-                  color: #dc2626;
-                }
-
-                &.btn-success {
-                  color: #10b981;
-                  &:hover {
-                    background-color: #d1fae5;
-                    color: #059669;
-                  }
-                }
-
-                &.btn-info {
-                  color: #3b82f6;
-                  &:hover {
-                    background-color: #dbeafe;
-                    color: #2563eb;
-                  }
-                }
-
-                &.btn-warning {
-                  color: #f59e0b;
-                  &:hover {
-                    background-color: #fef3c7;
-                    color: #d97706;
-                  }
-                }
-
-                .material-icons {
-                  font-size: 20px;
-                }
-              }
+            .material-icons {
+              font-size: 20px;
             }
           }
         }
