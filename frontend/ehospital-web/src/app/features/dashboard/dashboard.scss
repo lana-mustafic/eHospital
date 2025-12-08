@@ -102,8 +102,8 @@
         gap: 0.5rem;
         padding: 0.75rem 1.5rem;
         background: white;
-        color: #667eea;
-        border: 2px solid #667eea;
+        color: #0D9488;
+        border: 2px solid #0D9488;
         border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
@@ -112,8 +112,10 @@
 
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-          background: #f8fafc;
+          box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+          background: #F0FDFA;
+          border-color: #14B8A6;
+          color: #14B8A6;
         }
 
         .material-icons {
@@ -126,7 +128,7 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
         color: white;
         border: none;
         border-radius: 8px;
@@ -137,7 +139,8 @@
 
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4);
+          background: linear-gradient(135deg, #14B8A6 0%, #2DD4BF 100%);
         }
 
         .material-icons {
@@ -2659,7 +2662,7 @@
 
         .material-icons {
           font-size: 32px;
-          color: #667eea;
+          color: #0D9488;
         }
 
         h2 {
@@ -2692,7 +2695,7 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #0D9488, #14B8A6);
         color: white;
         border: none;
         border-radius: 10px;
@@ -2702,7 +2705,8 @@
 
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4);
+          background: linear-gradient(135deg, #14B8A6, #2DD4BF);
         }
 
         .material-icons {
